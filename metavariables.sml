@@ -57,15 +57,6 @@ struct
 
       val (e, Psi) = t1 J
 
-      (* build up a telescope of proof states by applying t2 to every subgoal of t1 *)
-      fun unfoldStates T =
-        case out T of
-             Empty => Telescope.empty
-           | Snoc (T', x, Jx) =>
-               Telescope.snoc
-                (unfoldStates T')
-                (x, t2 Jx)
-
       (* fold the telescope of proof states into a single proof state *)
       fun foldStates T (R as (e, Psi)) =
         case out T of
@@ -82,7 +73,7 @@ struct
                foldStates T (e'', Psi'')
              end
     in
-      foldStates (unfoldStates Psi) (e, Psi)
+      foldStates (Telescope.map Psi t2) (e, Psi)
     end
 
   exception RemainingSubgoals of subgoals
