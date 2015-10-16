@@ -11,8 +11,10 @@ signature REFINER_KIT =
 sig
   type name
   type term
-  type judgment = term
+  type judgment
   type sort
+
+  val substJudgment : name * term -> judgment -> judgment
 
   structure Telescope : TELESCOPE where type Label.t = name
   structure Term : TERM where type term = term and type name = name
@@ -77,7 +79,7 @@ struct
                val Psi'' =
                  Telescope.map
                    (telescopeAppend (Psi, Psi'))
-                   (fn m => Term.subst x2e m)
+                   (fn m => substJudgment x2e m)
              in
                foldStates T (e'', Psi'')
              end
