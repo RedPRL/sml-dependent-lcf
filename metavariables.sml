@@ -12,7 +12,6 @@ sig
   type name
   type term
   type judgment
-  type sort
 
   val substJudgment : name * term -> judgment -> judgment
 
@@ -35,8 +34,7 @@ sig
   exception UnsolvedMetavariables of name list
 end
 
-functor Refiner
-  (structure Kit : REFINER_KIT where type sort = unit) : REFINER =
+functor Refiner (Kit : REFINER_KIT) : REFINER =
 struct
   open Kit
 
