@@ -1,83 +1,44 @@
-signature CONTEXT =
+signature TERM =
 sig
-  type name
-  type 'a context
-
-  val empty : 'a context
-  val insert : 'a context * name * 'a -> 'a context
-  val append : 'a context * 'a context -> 'a context
-  val eq : ''a context * ''a context -> bool
-end
-
-signature SUBST =
-sig
-  structure Context : CONTEXT
-
   type term
-  type subst
-
-  val id : subst
-  val subst : Context.name * term -> subst
-  val seq : subst * subst -> subst
-
-  val union : subst * subst -> subst
-  exception UNION
-
-  val apply : term * subst -> term
-
-  val infer : 'a Context.context * subst -> 'a Context.context
-end
-
-signature SUBST_UTIL =
-sig
-  include SUBST
-
-  val check : subst * ''a Context.context * ''a Context.context -> bool
-end
-
-functor SubstUtil (S : SUBST) : SUBST_UTIL =
-struct
-  open S
-
-  fun check (rho, G, D) =
-    Context.eq (D, infer (G, rho))
+  type name
+  type subst = name * term
+  val subst : subst -> term -> term
+  val freeVariables : term -> name list
 end
 
 signature REFINER_KIT =
 sig
   type name
   type term
-  type judgment
+  type judgment = term
   type sort
 
-  structure Context : CONTEXT where type name = name
   structure Telescope : TELESCOPE where type Label.t = name
-  structure Subst : SUBST where Context = Context and type term = term
+  structure Term : TERM where type term = term and type name = name
 end
 
 signature REFINER =
 sig
   include REFINER_KIT
 
-  type metavars = sort Context.context
   type subgoals = judgment Telescope.telescope
-  type subst = Subst.subst
 
-  type tactic = metavars * judgment -> subst * term * subgoals
+  type tactic = judgment -> term * subgoals
 
   val THEN : tactic * tactic -> tactic
-  val SUBST : tactic * subst -> tactic
+
+  val COMPLETE : tactic -> tactic
+  exception RemainingSubgoals of subgoals
+  exception UnsolvedMetavariables of name list
 end
 
 functor Refiner
-  (structure Kit : REFINER_KIT where type sort = unit
-   sharing type Kit.judgment = Kit.term) : REFINER =
+  (structure Kit : REFINER_KIT where type sort = unit) : REFINER =
 struct
   open Kit
 
-  type metavars = sort Context.context
   type subgoals = judgment Telescope.telescope
-  type subst = Subst.subst
 
   local
     open Telescope.SnocView
@@ -86,21 +47,15 @@ struct
       case out T of
            Empty => T'
          | Snoc (_, x, _) => Telescope.interposeAfter T (x, T')
-
-    fun subgoalsToMetavars T =
-      case out T of
-           Empty => Context.empty
-         | Snoc (T', x, A) => Context.insert (subgoalsToMetavars T', x, ())
   end
 
-  type tactic = metavars * judgment -> subst * term * subgoals
+  type tactic = judgment -> term * subgoals
 
-  fun THEN (t1, t2) (X, J) =
+  fun THEN (t1, t2) J =
     let
       open Telescope.SnocView
 
-      val (rho, e, Psi) = t1 (X, J)
-      val Y = Subst.infer (X, rho)
+      val (e, Psi) = t1 J
 
       (* build up a telescope of proof states by applying t2 to every subgoal of t1 *)
       fun unfoldStates T =
@@ -109,34 +64,50 @@ struct
            | Snoc (T', x, Jx) =>
                Telescope.snoc
                 (unfoldStates T')
-                (x, t2 (Context.append (Y, subgoalsToMetavars T'), Jx))
+                (x, t2 Jx)
 
       (* fold the telescope of proof states into a single proof state *)
-      fun foldStates T (R as (rho, e, Psi)) =
+      fun foldStates T (R as (e, Psi)) =
         case out T of
              Empty => R
-           | Snoc (T, x, (rho', e', Psi')) =>
+           | Snoc (T, x, (e', Psi')) =>
              let
-               val rho'' = Subst.union (rho, rho')
-               val x2e = Subst.subst (x, e')
-               val e'' = Subst.apply (e, x2e)
+               val x2e = (x, e')
+               val e'' = Term.subst x2e e'
                val Psi'' =
                  Telescope.map
                    (telescopeAppend (Psi, Psi'))
-                   (fn m => Subst.apply (m, x2e))
+                   (fn m => Term.subst x2e m)
              in
-               foldStates T (rho'', e'', Psi'')
+               foldStates T (e'', Psi'')
              end
     in
-      foldStates (unfoldStates Psi) (rho, e, Psi)
+      foldStates (unfoldStates Psi) (e, Psi)
     end
 
-  fun SUBST (t, rho) goal =
-    let
-      val (rho', e, psi) = t goal
-    in
-      (Subst.seq (rho', rho), e, psi)
-    end
+  exception RemainingSubgoals of subgoals
+  exception UnsolvedMetavariables of name list
+
+  local
+    open Telescope.SnocView
+    fun assertClosed e =
+      case Term.freeVariables e of
+           [] => ()
+         | xs => raise UnsolvedMetavariables xs
+    fun assertEmpty Psi =
+      case out Psi of
+           Empty => ()
+         | _ => raise RemainingSubgoals Psi
+  in
+    fun COMPLETE t J =
+      let
+        val (e, Psi) = t J
+        val _ = assertEmpty Psi
+        val _ = assertClosed e
+      in
+        (e, Telescope.empty)
+      end
+  end
 
 end
 
