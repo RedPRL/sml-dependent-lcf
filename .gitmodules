@@ -1,0 +1,6 @@
+[submodule "lib/sml-telescopes"]
+	path = lib/sml-telescopes
+	url = git@github.com:jonsterling/sml-telescopes.git
+[submodule "lib/cmlib"]
+	path = lib/cmlib
+	url = git@github.com:standardml/cmlib.git
