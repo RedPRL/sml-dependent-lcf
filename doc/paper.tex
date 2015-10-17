@@ -1,0 +1,288 @@
+\documentclass[11pt]{amsart}
+
+\usepackage[usenames,dvipsnames,svgnames,table]{xcolor}
+\usepackage{amsmath, stmaryrd, scalerel}
+\usepackage{listings}
+\usepackage{graphicx}
+\usepackage{fontspec}
+\usepackage{geometry}
+\usepackage{proof}
+\usepackage{supertabular}
+\usepackage{unicode-math}
+\usepackage{xltxtra}
+\usepackage{xunicode}
+
+\usepackage{setspace,url,hyperref}
+
+% fonts
+\setromanfont[Mapping=tex-text, Ligatures=Rare, Numbers=OldStyle]{Linux Libertine O}
+\setmathfont{Asana Math}
+
+\newtheorem{thm}{Theorem}[section]
+\newtheorem{prop}[thm]{Proposition}
+\newtheorem{lem}[thm]{Lemma}
+\newtheorem{cor}[thm]{Corollary}
+\theoremstyle{definition}
+\newtheorem{definition}[thm]{Definition}
+\newtheorem{example}[thm]{Example}
+\theoremstyle{remark}
+\newtheorem{remark}[thm]{Remark}
+\numberwithin{equation}{section}
+
+\lstset{
+  language=[Objective]Caml,
+  extendedchars=\true,
+  inputencoding=utf8,
+  showspaces=false,
+  showstringspaces=false,
+  showtabs=false,
+  basicstyle=\ttfamily,
+  xleftmargin=6mm,
+  framesep=4mm,
+  moredelim=*[s][\itshape]{(*}{*)},
+  moredelim=[is][\textcolor{darkgray}]{§}{§},
+  escapechar=°,
+  keywords=[6]{signature, structure, struct type, sig, end},
+  keywordstyle=\color{MidnightBlue},
+  stringstyle=\color[rgb]{0.545098, 0.278431, 0.364706},
+  commentstyle=\color[rgb]{0.698039, 0.133333, 0.133333},
+  numberstyle=\color[rgb]{0.372549, 0.619608, 0.627451},
+  literate=
+    {->}{{$\rightharpoonup$}}{1}
+    {*}{{$\otimes$}}{1}
+}
+
+
+\def\InputModeColorName{MidnightBlue}
+\def\OutputModeColorName{Maroon}
+\newcommand\InputMode[1]{{\color{\InputModeColorName}{#1}}}
+\newcommand\OutputMode[1]{{\color{\OutputModeColorName}{#1}}}
+\newcommand\Quote[1]{{\color{Gray}{«}}#1{\color{Gray}{»}}}
+
+\newcommand\HypJ[2]{#1\ \ (#2)}
+\newcommand\GenJ[2]{\vert_{\InputMode{#1}}\; #2}
+\newcommand\JJ{J}
+\newcommand\Tuple[1]{\left\langle#1\right\rangle}
+\newcommand\HTuple[1]{\left\lBrace#1\right\rBrace}
+\newcommand\RSet{\mathfrak{R}}
+\newcommand\JSet{\mathfrak{J}}
+
+\newcommand\IsTac[1]{\InputMode{#1}\ \textit{tactic}}
+
+%% subgoals
+\newcommand\SG[2]{\InputMode{#1}\,{\color{Black}:}\,\OutputMode{#2}}
+
+%% refinement
+\newcommand\Refine[4]{\InputMode{#1}\Vdash\InputMode{#2}\Rightarrow\OutputMode{#4}\dashv\OutputMode{#3}}
+\newcommand\NoRefine[2]{\InputMode{#1}\Vdash\InputMode{#2}\Uparrow}
+
+\newcommand\Member[2]{\InputMode{#1}\in\InputMode{#2}}
+\newcommand\IdTac{\mathtt{id}}
+\newcommand\FailTac{\mathtt{fail}}
+\newcommand\OrElseTac[2]{#1\vert#2}
+\newcommand\ThenTac[2]{#1;#2}
+\newcommand\ThenLTac[2]{#1;[#2]}
+\newcommand\ProdIntroRule{\mathtt{ProdIntro}}
+\newcommand\DProdIntroRule[1]{\mathtt{DepProdIntro}\{#1\}}
+\newcommand\DProdIntroRuleNullary{\mathtt{DepProdIntro}}
+\newcommand\TyProd[2]{#1 \times #2}
+\newcommand\TyDProd[3]{(#2:#1) \times #3}
+\newcommand\TyMember[2]{#1\in#2}
+\newcommand\Dom[1]{\left\vert#1\right\vert}
+\newcommand\SubsetEq[2]{\InputMode{#1}\subseteq\InputMode{#2}}
+\newcommand\FV[1]{\textit{FV}\left(#1\right)}
+\newcommand\Subst[3]{\left[#1\;/\;#2\right]#3}
+
+\begin{document}
+
+\title{Dependency in Refinement Logics}
+
+\author{Jonathan Sterling}
+\address{}
+\maketitle
+
+\onehalfspacing
+
+Over the past four decades, there have been many incarnations of the \emph{LCF}
+(Logic for Computable Functions) interface, but the one that will concern us
+here is its extension to \emph{LCF with Validations} as found in Cambridge LCF,
+which outfits the proving activity with the synthesis of explicit evidence.
+The Cambridge LCF signature is as follows:
+
+%% cite "Logic and Computation: Interactive Proof with Cambridge LCF"
+
+\begin{lstlisting}
+  signature CAMBRIDGE_LCF =
+  sig
+    type form
+    type thm
+    type proof = thm list -> thm
+    type goal = form list * form
+    type tactic = goal -> goal list * proof
+  end
+\end{lstlisting}
+
+The \verb!goal! type represents sequents, where \verb!form! represents logical
+propositions. The LCF methodology, however, may be used to give a refinement
+treatment to many kinds of judgments, not just sequents; therefore, it
+is better to not include this in the core signature at all, and make the
+type of judgments abstract; for clarity, we will replace the name \verb!thm!
+with \verb!evidence!.
+
+\begin{lstlisting}
+  signature LCF =
+  sig
+    type judgment
+    type evidence
+    type proof = evidence list -> evidence
+    type tactic = judgment -> judgment list * proof
+  end
+\end{lstlisting}
+
+Then, a tactic is something that refines a judgment to a list of judgments (its
+subgoals), and synthesizes its evidence (provided the evidence of its
+subgoals). There are many different tactics which can be implemented
+generically over this signature; here are a few:
+
+\begin{lstlisting}
+  signature TACTICALS =
+  sig
+    structure Lcf : LCF
+    val ID : Lcf.tactic
+    val FAIL : Lcftactic
+    val THEN : Lcf.tactic * Lcf.tactic -> Lcf.tactic
+    val THENL : Lcf.tactic * Lcf.tactic list -> Lcf.tactic
+  end
+\end{lstlisting}
+
+\section{modernized lcf: the logic of tactics}
+
+In order to study the design space for LCF refiners, we would like to give a
+judgmental characterization of tactic systems. First, we will recognize that
+the type of validations (\verb!proof!) in the ML implementation is essentially
+a HOAS (higher-order abstract syntax) encoding of a hypothetical proof or
+synthesis. Then, it is clear that the list of subgoals generated by a tactic
+are a context which explains the variables bound by the hypothetical synthesis.
+
+To make the preceding observations precise, we can recover the character of an
+LCF refiner in a single form of judgment,
+\framebox{$\Refine{\JJ}{\tau}{\Psi}{E}$}, where $\JJ$ is a judgment of the
+logical theory, $\tau$ is a tactic, $\Psi$ is a context of judgments,
+representing the subgoals generated by the tactic $\tau$, and $E$ is the
+synthesis of the judgment $\JJ$, binding variables $\Dom{\Psi}$ which represent
+the syntheses of the subgoals. The meaning of this assertion is that $\tau$ is
+applicable to demonstrating the judgment $\JJ$, producing synthesis $e$ under
+the assumptions that the judgments in $\Psi$ can be demonstrated. In addition
+to the refinement judgment, there is also refinement failure
+$\NoRefine{\JJ}{\tau}$, which expresses the inapplicability of $\tau$ to $\JJ$.
+We require as a matter of policy that the applicability of a tactic be
+discrete, and in practice, we leave implicit the rules which explain the
+inapplicability of a tactic.
+
+\begin{remark}
+  The refinement judgments $\Refine{\JJ}{\tau}{\Psi}{E}$ and
+  $\NoRefine{\JJ}{\tau}$ are not higher-order judgments, because the variable
+  $\JJ$ is ranges not over judgments of the refinement theory, but of the
+  object theory.
+\end{remark}
+
+
+Let $\JSet$ be the open-ended collection of judgments in our logical theory,
+and let $\RSet$ be a collection of rule names. Each rule $\Member{R}{\RSet}$
+must be interpretable as a tactic, i.e.\ the meaning of the assertions
+$\Refine{\JJ}{R}{\Psi}{E}$ and $\NoRefine{\JJ}{R}$ must be explained for
+$\Member{J}{\JSet}$. We say $\IsTac{\tau}$ in case for all object-judgments
+$\Member{\JJ}{\JSet}$, the assertion conditions for
+$\Refine{\JJ}{\tau}{\Psi}{E}$ and $\NoRefine{\JJ}{\tau}$ are disjoint, and
+moreover, if $\Refine{\JJ}{\tau}{\Psi}{E}$, then
+$\SubsetEq{\FV{E}}{\Dom{\Psi}}$.
+
+In practice, we will explain only the assertion conditions for one of
+$\Refine{\JJ}{\tau}{\Psi}{E}$ and $\NoRefine{\JJ}{\tau}$, and take the other to
+be its complement.
+
+Numerous general purpose tactics can be defined over a logical theory,
+including identity, failure, disjunction and sequencing:
+
+\begin{gather*}
+  \infer{
+    \Refine{\JJ}{\IdTac}{\SG{\alpha}{\JJ}}{\alpha}
+  }{
+  }
+  \qquad
+  \infer{
+    \NoRefine{\JJ}{\FailTac}
+  }{
+  }\\[6pt]
+  \infer{
+    \Refine{\JJ}{\OrElseTac{\tau_1}{\tau_2}}{\Psi}{E}
+  }{
+    \Refine{\JJ}{\tau_1}{\Psi}{E}
+  }
+  \qquad
+  \infer{
+    \Refine{\JJ}{\OrElseTac{\tau_1}{\tau_2}}{\Psi}{E}
+  }{
+    \NoRefine{\JJ}{\tau_1} &
+    \Refine{\JJ}{\tau_2}{\Psi}{E}
+  }\\[6pt]
+  \infer{
+    \Refine{\JJ}{\ThenTac{\tau_1}{\tau_2}}{\bigoplus_{\Dom\Phi}\Psi}{\Subst{F}{\Dom\Phi}{E}}
+  }{
+    \Refine{\JJ}{\tau_1}{\Phi}{E} &
+    \GenJ{\alpha}{
+      \HypJ{
+        \Refine{\Phi(\alpha)}{\tau_2}{\Psi_\alpha}{F_\alpha}
+      }{
+        \Member{\alpha}{\Dom\Phi}
+      }
+    }
+  }
+\end{gather*}
+
+\begin{remark}
+  The nominal treatment that we have given here allows for a much more
+  economical presentation of the standard tacticals, which are quite ardruous
+  to define in the HOAS treatment used in ML implementations.
+\end{remark}
+
+\begin{thm}
+  The above rules all define valid tactics:.
+  \begin{enumerate}
+    \item $\IsTac{\IdTac}$.
+    \item $\IsTac{\FailTac}$.
+    \item If $\IsTac{\tau_1}$ and $\IsTac{\tau_2}$, then
+      $\IsTac{\OrElseTac{\tau_1}{\tau_2}}$.
+    \item If $\IsTac{\tau_1}$ and $\IsTac{\tau_2}$, then
+      $\IsTac{\ThenTac{\tau_1}{\tau_2}}$.
+  \end{enumerate}
+\end{thm}
+\begin{proof}
+  It suffices to verify that the synthesis $E$ of each tactical is well-scoped
+  in $\Psi$; in each case, this follows by induction.
+  \begin{enumerate}
+    \item[(1--2)] Immediate.
+    \item[(3)]
+      By induction on derivations of
+      $\Refine{\JJ}{\OrElseTac{\tau_1}{\tau_1}}{E}{\Psi}$.
+      \begin{description}
+        \item[Case $\Refine{\JJ}{\tau_1}{\Psi}{E}$] Validity follows from the
+          inductive hypothesis $\IsTac{\tau_1}$.
+        \item[Case $\NoRefine{\JJ}{\tau_1}$] Validity follows from the
+          inductive hypothesis $\IsTac{\tau_2}$.
+      \end{description}
+
+    \item[(4)] We need to show that
+      $\SubsetEq{\FV{\Subst{F}{\Dom\Phi}{E}}}{\Dom{\bigoplus_{\Dom\Phi}\Psi}}$.
+      From our inductive hypotheses, it is evident that
+      $\SubsetEq{\FV{E}}{\Dom\Phi}$ and that for each $\Member{\alpha}{\Phi}$,
+      $\SubsetEq{\FV{F_\alpha}}{\Dom{\Psi_\alpha}}$; all of the free variables
+      of the term got by substituting each $F_\alpha$ for
+      $\Member{\alpha}{\Dom\Phi}$ clearly reside in one of the fibres of the
+      family of contexts $\Psi$, and so they must comprise a subset of the
+      union $\bigoplus_{\Dom\Phi}\Psi$ of $\Psi$'s fibres.
+
+  \end{enumerate}
+\end{proof}
+
+\end{document}
