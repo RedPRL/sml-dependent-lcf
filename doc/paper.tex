@@ -149,7 +149,7 @@ generically over this signature; here are a few:
   sig
     structure Lcf : LCF
     val ID : Lcf.tactic
-    val FAIL : Lcftactic
+    val FAIL : Lcf.tactic
     val THEN : Lcf.tactic * Lcf.tactic -> Lcf.tactic
     val THENL : Lcf.tactic * Lcf.tactic list -> Lcf.tactic
   end
@@ -198,8 +198,8 @@ moreover, if $\Refine{\JJ}{\tau}{\Psi}{E}$, then
 $\SubsetEq{\FV{E}}{\Dom{\Psi}}$.
 
 In practice, we will explain only the assertion conditions for one of
-$\Refine{\JJ}{\tau}{\Psi}{E}$ and $\NoRefine{\JJ}{\tau}$, and take the other to
-be its complement.
+$\Refine{\JJ}{\tau}{\Psi}{E}$ and $\NoRefine{\JJ}{\tau}$, and implicitly take
+the other to be its complement.
 
 Numerous general purpose tactics can be defined over a logical theory,
 including identity, failure, disjunction and sequencing:
