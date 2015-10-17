@@ -85,9 +85,8 @@
 \newcommand\OrElseTac[2]{#1\vert#2}
 \newcommand\ThenTac[2]{#1;#2}
 \newcommand\ThenLTac[2]{#1;[#2]}
-\newcommand\ProdIntroRule{\mathtt{ProdIntro}}
-\newcommand\DProdIntroRule[1]{\mathtt{DepProdIntro}\{#1\}}
-\newcommand\DProdIntroRuleNullary{\mathtt{DepProdIntro}}
+\newcommand\DProdIntroRule[1]{\mathtt{PairIntro}\{#1\}}
+\newcommand\DProdIntroRuleNullary{\mathtt{PairIntro}}
 \newcommand\TyProd[2]{#1 \times #2}
 \newcommand\TyDProd[3]{(#2:#1) \times #3}
 \newcommand\TyMember[2]{#1\in#2}
@@ -303,7 +302,7 @@ consequence of this principle is that it is impossible to define a refinement
 rule which expresses a dependency between subgoals. The canonical example is
 the introduction rule for dependent pairs in Type Theory:
 \[
-  \infer{
+  \infer[\textit{PairIntro}]{
     \Member{\Tuple{M,N}}{\TyDProd{A}{x}{B}}
   }{
     \Member{M}{A} &
@@ -337,5 +336,33 @@ committing in advance to a particular solution. However, a more palatable
 refinement rule that allows $\IsTrue{A}$ to be demonstrated by refinement is
 simply not expressible in \ModLCF, since the sense of the second subgoal cannot
 be expressed except by referring to the synthesis of the first subgoal.
+
+\section{\DepLCF\ and generalized refinement rules}
+
+At the crux of our problem is that a tactic produces a context of subgoals
+without any dependencies; if we were to construe the judgment
+$\Refine{\JJ}{\tau}{\Psi}{E}$ as synthesizing a \emph{telescope} $\Psi$ rather
+than a mere context, a proper refinement rule for \emph{PairIntro} would be
+within reach. In fact, whilst the ML signature for LCF refiners rules out this
+interpretation, the notation we have used for \ModLCF\ immediately suggests
+this generalization. Going forward, we will call the theory \DepLCF\ when we
+take $\Psi$ to be a telescope rather than a context.
+
+We can now encode \emph{PairIntro} as a single refinement rule,
+$\DProdIntroRuleNullary$:
+
+\[
+  \Refine{\IsTrueUnmoded{\TyDProd{A}{x}{B}}}{\DProdIntroRuleNullary}{%
+    \left\{\begin{array}{l}
+        \SG{\alpha}{\IsTrueUnmoded{A}}\\
+        \SG{\beta}{\IsTrueUnmoded{\Subst{\alpha}{x}{B}}}
+    \end{array}\right.
+  }{
+    \Tuple{\alpha,\beta}
+  }
+\]
+
+All that remains is to give a new definition of the sequencing tactical
+$\ThenTac{\tau_1}{\tau_2}$ which accounts for this dependency.
 
 \end{document}
