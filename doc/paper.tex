@@ -80,7 +80,7 @@
 
 \newcommand\ThenStateTrans[5]{%
   \InputMode{#2}\dashv\InputMode{#3}%
-  \hookrightarrow_\InputMode{#1}%
+  \Downarrow_\InputMode{#1}%
   \OutputMode{#4}\dashv\OutputMode{#5}%
 }
 
@@ -341,7 +341,7 @@ witnesses of the left conjunct $w$:
 This is clearly unsatisfactory, since it breaks the natural flow of proof
 development, whereby multiple goals may be refined simultaneously without
 committing in advance to a particular solution. However, a more palatable
-refinement rule that allows $\IsTrue{A}$ to be demonstrated by refinement is
+rule that allows $\IsTrue{A}$ to be demonstrated by refinement is
 simply not expressible in \ModLCF, since the sense of the second subgoal cannot
 be expressed except by referring to the synthesis of the first subgoal.
 
