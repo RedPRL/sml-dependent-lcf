@@ -144,20 +144,20 @@ propositions. The LCF methodology, however, may be used to give a refinement
 treatment to many kinds of judgments, not just sequents; therefore, it
 is better to not include this in the core signature at all, and make the
 type of judgments abstract; for clarity, we will replace the name \verb!thm!
-with \verb!evidence!.
+with \verb!synthesis!.
 
 \begin{lstlisting}
   signature LCF =
   sig
     type judgment
-    type evidence
-    type proof = evidence list -> evidence
+    type synthesis
+    type proof = synthesis list -> synthesis
     type tactic = judgment -> judgment list * proof
   end
 \end{lstlisting}
 
 Then, a tactic is something that refines a judgment to a list of judgments (its
-subgoals), and synthesizes its evidence (provided the evidence of its
+subgoals), and synthesizes its evidence (provided the syntheses of its
 subgoals). There are many different tactics which can be implemented
 generically over this signature; here are a few:
 
@@ -347,7 +347,7 @@ be expressed except by referring to the synthesis of the first subgoal.
 
 \section{\DepLCF\ and generalized refinement rules}
 
-At the crux of our problem is that a tactic produces a context of subgoals
+At the crux of our problem is the fact that a tactic produces a context of subgoals
 without any dependencies; if we were to construe the judgment
 $\Refine{\JJ}{\tau}{\Psi}{E}$ as synthesizing a \emph{telescope} $\Psi$ rather
 than a mere context, a proper refinement rule for \emph{PairIntro} would be
