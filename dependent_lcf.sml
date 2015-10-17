@@ -1,13 +1,4 @@
-signature TERM =
-sig
-  type term
-  type name
-  type subst = name * term
-  val subst : subst -> term -> term
-  val freeVariables : term -> name list
-end
-
-signature REFINER_KIT =
+signature DLCF_KIT =
 sig
   type name
   type term
@@ -16,56 +7,69 @@ sig
   val substJudgment : name * term -> judgment -> judgment
 
   structure Telescope : TELESCOPE where type Label.t = name
-  structure Term : TERM where type term = term and type name = name
+  structure Term : ABT where type t = term and type Variable.t = name
 end
 
-signature REFINER =
+signature DLCF =
 sig
-  include REFINER_KIT
+  include DLCF_KIT
 
   type subgoals = judgment Telescope.telescope
 
   type tactic = judgment -> term * subgoals
 
   val THEN : tactic * tactic -> tactic
+  val ORELSE : tactic * tactic -> tactic
+  val ID : tactic
+  val TRY : tactic -> tactic
 
   val COMPLETE : tactic -> tactic
   exception RemainingSubgoals of subgoals
   exception UnsolvedMetavariables of name list
 end
 
-functor Refiner (Kit : REFINER_KIT) : REFINER =
+functor DLcf (Kit : DLCF_KIT) : DLCF =
 struct
   open Kit
 
   type subgoals = judgment Telescope.telescope
 
   type tactic = judgment -> term * subgoals
+  structure Term = AbtUtil (Term)
 
   fun THEN (t1, t2) J =
     let
       open Telescope.SnocView
 
-      val (e, Psi) = t1 J
-
-      (* fold the telescope of proof states into a single proof state *)
-      fun foldStates T (R as (e, Psi)) =
+      fun foldStates T (R as (e, Psi))=
         case out T of
              Empty => R
-           | Snoc (T, x, (e', Psi')) =>
-             let
-               val x2e = (x, e')
-               val e'' = Term.subst x2e e'
-               val Psi'' =
-                 Telescope.map
-                   (Telescope.append (Psi, Psi'))
-                   (substJudgment x2e)
-             in
-               foldStates T (e'', Psi'')
-             end
+           | Snoc (T', x, (e', Psi')) =>
+               let
+                 val e'' = Term.subst e' x e
+                 val Psi'' = Telescope.append (Psi', Telescope.remove Psi x)
+                 val Psi''' = Telescope.map Psi'' (substJudgment (x, e'))
+               in
+                 foldStates T' (e'', Psi''')
+               end
+
+      val (e, Psi) = t1 J
     in
       foldStates (Telescope.map Psi t2) (e, Psi)
     end
+
+  fun ID J =
+    let
+      val q = Term.Variable.new ()
+      val Psi = Telescope.snoc Telescope.empty (q, J)
+    in
+      (Term.`` q, Psi)
+    end
+
+  fun ORELSE (t1, t2) J =
+    t1 J handle _ => t2 J
+
+  fun TRY t = ORELSE (t, ID)
 
   exception RemainingSubgoals of subgoals
   exception UnsolvedMetavariables of name list
@@ -90,6 +94,5 @@ struct
         (e, Telescope.empty)
       end
   end
-
 end
 

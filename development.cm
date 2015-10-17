@@ -1,5 +1,7 @@
 Group
 is
-  metavariables.sml
+  $/basis.cm
   lib/sml-telescopes/telescopes.cm (bind:(anchor:libs value:lib))
   lib/sml-abt/abt.cm
+  dependent_lcf.sml
+  example.sml
