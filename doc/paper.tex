@@ -2,6 +2,7 @@
 
 \usepackage[usenames,dvipsnames,svgnames,table]{xcolor}
 \usepackage{amsmath, amsthm, stmaryrd, scalerel}
+\usepackage{mathtools}
 \usepackage{listings}
 \usepackage{graphicx}
 \usepackage{fontspec}
@@ -70,11 +71,18 @@
 \newcommand\IsTac[1]{\InputMode{#1}\ \textit{tactic}}
 
 %% subgoals
-\newcommand\SG[2]{\InputMode{#1}\,{\color{Black}:}\,\OutputMode{#2}}
+\newcommand\ISG[2]{\InputMode{#1}\,{\color{Black}:}\,\InputMode{#2}}
+\newcommand\OSG[2]{\InputMode{#1}\,{\color{Black}:}\,\OutputMode{#2}}
 
 %% refinement
 \newcommand\Refine[4]{\InputMode{#1}\Vdash\InputMode{#2}\Rightarrow\OutputMode{#4}\dashv\OutputMode{#3}}
 \newcommand\NoRefine[2]{\InputMode{#1}\Vdash\InputMode{#2}\Uparrow}
+
+\newcommand\ThenStateTrans[5]{%
+  \InputMode{#2}\dashv\InputMode{#3}%
+  \hookrightarrow_\InputMode{#1}%
+  \OutputMode{#4}\dashv\OutputMode{#5}%
+}
 
 \newcommand\Member[2]{\InputMode{#1}\in\InputMode{#2}}
 \newcommand\MemberUnmoded[2]{#1\in #2}
@@ -214,7 +222,7 @@ including identity, failure, disjunction and sequencing:
 
 \begin{gather*}
   \infer{
-    \Refine{\JJ}{\IdTac}{\SG{\alpha}{\JJ}}{\alpha}
+    \Refine{\JJ}{\IdTac}{\OSG{\alpha}{\JJ}}{\alpha}
   }{
   }
   \qquad
@@ -324,8 +332,8 @@ witnesses of the left conjunct $w$:
 \[
   \Refine{\IsTrueUnmoded{\TyDProd{A}{x}{B}}}{\DProdIntroRule{w}}{%
     \left\{\begin{array}{l}
-      \SG{\alpha}{\MemberUnmoded{w}{A}}\\
-      \SG{\beta}{\IsTrueUnmoded{\Subst{w}{x}{B}}}
+      \OSG{\alpha}{\MemberUnmoded{w}{A}}\\
+      \OSG{\beta}{\IsTrueUnmoded{\Subst{w}{x}{B}}}
     \end{array}\right.
   }{\Tuple{w,\beta}}
 \]
@@ -348,14 +356,14 @@ interpretation, the notation we have used for \ModLCF\ immediately suggests
 this generalization. Going forward, we will call the theory \DepLCF\ when we
 take $\Psi$ to be a telescope rather than a context.
 
-We can now encode \emph{PairIntro} as a single refinement rule,
+We can now encode \emph{PairIntro} with a single refinement rule,
 $\DProdIntroRuleNullary$:
 
 \[
   \Refine{\IsTrueUnmoded{\TyDProd{A}{x}{B}}}{\DProdIntroRuleNullary}{%
     \left\{\begin{array}{l}
-        \SG{\alpha}{\IsTrueUnmoded{A}}\\
-        \SG{\beta}{\IsTrueUnmoded{\Subst{\alpha}{x}{B}}}
+        \OSG{\alpha}{\IsTrueUnmoded{A}}\\
+        \OSG{\beta}{\IsTrueUnmoded{\Subst{\alpha}{x}{B}}}
     \end{array}\right.
   }{
     \Tuple{\alpha,\beta}
@@ -363,6 +371,38 @@ $\DProdIntroRuleNullary$:
 \]
 
 All that remains is to give a new definition of the sequencing tactical
-$\ThenTac{\tau_1}{\tau_2}$ which accounts for this dependency.
+$\ThenTac{\tau_1}{\tau_2}$ which accounts for this dependency. In order to do
+this, we will need to implement an auxiliary judgment
+\framebox{$\ThenStateTrans{\tau}{E}{\Phi}{E'}{\Phi'}$} that allows us to
+gradually apply the tactic $\tau$ to a proof state, propagating refinements
+rightward through substitution. This judgment is defined by recursion on the
+telescope $\Phi$, viewed as a \emph{cons}-list:
+
+\begin{gather*}
+  \infer{
+    \ThenStateTrans{\tau}{E}{\cdot}{E}{\cdot}
+  }{
+  }\\[6pt]
+  \infer{
+    \ThenStateTrans{\tau}{E}{\ISG{\alpha}{\JJ},\Phi}{E'}{\Psi_\alpha\oplus\Phi'}
+  }{
+    \Refine{\JJ}{\tau}{\Psi_\alpha}{E_\alpha} &
+    \ThenStateTrans{\tau}{%
+      \Subst{E_\alpha}{\alpha}{E}%
+    }{
+      \Subst{E_\alpha}{\alpha}{\Phi}
+    }{E'}{\Phi'}
+  }
+\end{gather*}
+
+Now, the sequencing tactical is readily definable:
+\[
+  \infer{
+    \Refine{\JJ}{\ThenTac{\tau_1}{\tau_2}}{\Phi'}{E'}
+  }{
+    \Refine{\JJ}{\tau_1}{\Phi}{E} &
+    \ThenStateTrans{\tau_2}{E}{\Phi}{E'}{\Phi'}
+  }
+\]
 
 \end{document}
