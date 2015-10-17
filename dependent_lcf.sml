@@ -39,22 +39,37 @@ struct
 
   fun THEN (t1, t2) J =
     let
-      open Telescope.SnocView
+      open Telescope.ConsView
 
-      fun go T (R as (e, Psi)) =
-        case out T of
-             Empty => R
-           | Snoc (T', x, Jx) =>
+      (*
+      * -----------------------------nil
+      *    E -| <> ==[t]==> E -| <>
+      *
+      *    Jα ||- t => Eα -| Ψα
+      *    [Eα/α]E -| [Eα/α]Φ \ α ==[t]==> E' -| Φ'
+      * ----------------------------------------------cons
+      *    E -| α:Jα,Φ ==[t]==> E' -| Ψα <+> Φ'
+      *
+      *    J ||- t1 => E -| Φ
+      *    E -| Φ ==[t2]==> E' -| Φ'
+      * ------------------------------------THEN
+      *    J ||- t1;t2 => E' -| Φ'
+      *)
+      fun go (e, Phi) =
+        case out Phi of
+             Empty => (e, Phi)
+           | Cons (x, Jx, Phi) =>
                let
                  val (ex, Psix) = t2 Jx
-                 val Psi' = Telescope.remove (Telescope.map Psi (substJudgment (x, ex))) x
+                 val Phi' = Telescope.remove (Telescope.map Phi (substJudgment (x, ex))) x
+
+                 val (e', Phi'') = go (Term.subst ex x e, Phi')
                in
-                 go T' (Term.subst ex x e, Telescope.append (Psix, Psi'))
+                 (e', Telescope.append (Psix, Phi''))
                end
 
-      val (e, Psi) = t1 J
     in
-      go Psi (e, Psi)
+      go (t1 J)
     end
 
   fun ID J =

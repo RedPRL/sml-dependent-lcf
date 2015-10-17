@@ -119,10 +119,10 @@ struct
   (* to interact with the refiner, try commenting out some of the following lines *)
   val script =
     SigmaIntro
-      THEN TRY SigmaIntro
-      THEN TRY UnitIntro
-      THEN ConstIntro
-      THEN UnitIntro
+    THEN TRY SigmaIntro
+    THEN TRY UnitIntro
+    THEN ConstIntro
+    THEN UnitIntro
 
   val _ = run (TRUE goal) script
 end
