@@ -61,7 +61,7 @@ struct
            | Cons (x, Jx, Phi) =>
                let
                  val (ex, Psix) = t2 Jx
-                 val Phi' = Telescope.remove (Telescope.map Phi (substJudgment (x, ex))) x
+                 val Phi' = Telescope.map Phi (substJudgment (x, ex))
 
                  val (e', Phi'') = go (Term.subst ex x e, Phi')
                in
