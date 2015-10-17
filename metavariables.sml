@@ -40,15 +40,6 @@ struct
 
   type subgoals = judgment Telescope.telescope
 
-  local
-    open Telescope.SnocView
-  in
-    fun telescopeAppend (T, T') =
-      case out T of
-           Empty => T'
-         | Snoc (_, x, _) => Telescope.interposeAfter T (x, T')
-  end
-
   type tactic = judgment -> term * subgoals
 
   fun THEN (t1, t2) J =
@@ -67,8 +58,8 @@ struct
                val e'' = Term.subst x2e e'
                val Psi'' =
                  Telescope.map
-                   (telescopeAppend (Psi, Psi'))
-                   (fn m => substJudgment x2e m)
+                   (Telescope.append (Psi, Psi'))
+                   (substJudgment x2e)
              in
                foldStates T (e'', Psi'')
              end

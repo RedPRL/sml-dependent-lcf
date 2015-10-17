@@ -2,3 +2,4 @@ Group
 is
   metavariables.sml
   lib/sml-telescopes/telescopes.cm (bind:(anchor:libs value:lib))
+  lib/sml-abt/abt.cm
