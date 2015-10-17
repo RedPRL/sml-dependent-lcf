@@ -41,21 +41,20 @@ struct
     let
       open Telescope.SnocView
 
-      fun foldStates T (R as (e, Psi))=
+      fun go T (R as (e, Psi)) =
         case out T of
              Empty => R
-           | Snoc (T', x, (e', Psi')) =>
+           | Snoc (T', x, Jx) =>
                let
-                 val e'' = Term.subst e' x e
-                 val Psi'' = Telescope.append (Psi', Telescope.remove Psi x)
-                 val Psi''' = Telescope.map Psi'' (substJudgment (x, e'))
+                 val (ex, Psix) = t2 Jx
+                 val Psi' = Telescope.remove (Telescope.map Psi (substJudgment (x, ex))) x
                in
-                 foldStates T' (e'', Psi''')
+                 go T' (Term.subst ex x e, Telescope.append (Psix, Psi'))
                end
 
       val (e, Psi) = t1 J
     in
-      foldStates (Telescope.map Psi t2) (e, Psi)
+      go Psi (e, Psi)
     end
 
   fun ID J =
