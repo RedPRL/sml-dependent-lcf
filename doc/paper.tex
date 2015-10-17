@@ -92,6 +92,7 @@
 \newcommand\SubsetEq[2]{\InputMode{#1}\subseteq\InputMode{#2}}
 \newcommand\FV[1]{\textit{FV}\left(#1\right)}
 \newcommand\Subst[3]{\left[#1\;/\;#2\right]#3}
+\newcommand\DepLCF{\textbf{\emph{Dependent LCF}}}
 
 \begin{document}
 
@@ -100,6 +101,14 @@
 \author{Jonathan Sterling}
 \address{}
 \maketitle
+
+\begin{abstract}
+
+  We propose a new generalization of LCF-style refinement logics called \DepLCF,
+  which allows the definition of refinement rules which express a dependency
+  between subgoals, without the use of unification variables.
+
+\end{abstract}
 
 \onehalfspacing
 
