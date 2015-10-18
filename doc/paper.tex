@@ -15,6 +15,8 @@
 
 \usepackage{setspace,url,hyperref}
 
+\definecolor{dark-gray}{gray}{0.20}
+
 % fonts
 % \setromanfont[Mapping=tex-text, Ligatures=Rare, Numbers=OldStyle]{Linux Libertine O}
 \setmathfont{Asana Math}
@@ -54,61 +56,83 @@
 }
 
 
-\def\InputModeColorName{MidnightBlue}
-\def\OutputModeColorName{Maroon}
-\newcommand\InputMode[1]{{\color{\InputModeColorName}{#1}}}
-\newcommand\OutputMode[1]{{\color{\OutputModeColorName}{#1}}}
+\def\IModeColorName{MidnightBlue}
+\def\OModeColorName{Maroon}
+\newcommand\IMode[1]{{\color{\IModeColorName}{#1}}}
+\newcommand\OMode[1]{{\color{\OModeColorName}{#1}}}
 \newcommand\Quote[1]{{\color{Gray}{«}}#1{\color{Gray}{»}}}
 
 \newcommand\HypJ[2]{#1\ \ (#2)}
-\newcommand\GenJ[2]{\vert_{\InputMode{#1}}\; #2}
+\newcommand\GenJ[2]{\vert_{\IMode{#1}}\; #2}
 \newcommand\JJ{J}
-\newcommand\Tuple[1]{\left\langle#1\right\rangle}
-\newcommand\HTuple[1]{\left\lBrace#1\right\rBrace}
 \newcommand\RSet{\mathfrak{R}}
 \newcommand\JSet{\mathfrak{J}}
 
-\newcommand\IsTac[1]{\InputMode{#1}\ \textit{tactic}}
+\newcommand\IsTac[1]{\IMode{#1}\ \textit{tactic}}
 
 \newcommand\MkSet[1]{\left\{#1\right\}}
 \newcommand\MkFam[3]{\MkSet{#1_{#2}}_{#2\in #3}}
 
 %% subgoals
-\newcommand\ISG[2]{\InputMode{#1}\,{\color{Black}:}\,\InputMode{#2}}
-\newcommand\OSG[2]{\InputMode{#1}\,{\color{Black}:}\,\OutputMode{#2}}
+\newcommand\ISG[2]{\IMode{#1}\,{\color{Black}:}\,\IMode{#2}}
+\newcommand\OSG[2]{\IMode{#1}\,{\color{Black}:}\,\OMode{#2}}
 
 %% refinement
-\newcommand\Refine[4]{\InputMode{#1}\Vdash\InputMode{#2}\Rightarrow\OutputMode{#4}\dashv\OutputMode{#3}}
-\newcommand\NoRefine[2]{\InputMode{#1}\Vdash\InputMode{#2}\Uparrow}
+\newcommand\Refine[4]{\IMode{#1}\Vdash\IMode{#2}\Rightarrow\OMode{#4}\dashv\OMode{#3}}
+\newcommand\NoRefine[2]{\IMode{#1}\Vdash\IMode{#2}\Uparrow}
 
 \newcommand\ThenMultiAux[5]{%
-  \InputMode{#2}\dashv\InputMode{#3}%
-  \Vdash^\star\InputMode{#1}\Rightarrow%
-  \OutputMode{#4}\dashv\OutputMode{#5}%
+  \IMode{#2}\dashv\IMode{#3}%
+  \Vdash^\star\IMode{#1}\Rightarrow%
+  \OMode{#4}\dashv\OMode{#5}%
 }
 
-\newcommand\Member[2]{\InputMode{#1}\in\InputMode{#2}}
+\newcommand\Member[2]{\IMode{#1}\in\IMode{#2}}
 \newcommand\MemberUnmoded[2]{#1\in #2}
-\newcommand\IsTrue[1]{\InputMode{#1}\ \textit{true}}
+\newcommand\EqMemberUnmoded[3]{#1 = #2\in #3}
+\newcommand\IsTrue[1]{\IMode{#1}\ \textit{true}}
 \newcommand\IsTrueUnmoded[1]{#1\ \textit{true}}
 \newcommand\IdTac{\mathtt{id}}
 \newcommand\FailTac{\mathtt{fail}}
 \newcommand\OrElseTac[2]{#1\vert#2}
 \newcommand\ThenTac[2]{#1;#2}
 \newcommand\ThenLTac[2]{#1;[#2]}
-\newcommand\DProdIntroRule[1]{\mathtt{PairIntro}\{#1\}}
-\newcommand\DProdIntroRuleNullary{\mathtt{PairIntro}}
-\newcommand\TyProd[2]{#1 \times #2}
-\newcommand\TyDProd[3]{(#2:#1) \times #3}
+\newcommand\DPairIntroRule[1]{\mathtt{PairIntro}\{#1\}}
+\newcommand\DPairIntroRuleNullary{\mathtt{PairIntro}}
+\newcommand\DPairElimRule[1]{\mathtt{PairElim}\{#1\}}
+\newcommand\DFunIntroRule{\mathtt{FunIntro}}
+\newcommand\DFunElimRule[1]{\mathtt{FunElim}\{#1\}}
+\newcommand\TyDPair[3]{(#2:#1) \times #3}
+\newcommand\TyDFun[3]{(#2:#1) \to #3}
+\newcommand\Lam[2]{\lambda(#1.#2)}
+\newcommand\Ap[2]{\mathsf{ap}(#1;#2)}
+\newcommand\Ax{\mathsf{Ax}}
+\newcommand\Tuple[1]{\left\langle#1\right\rangle}
+\newcommand\Spread[4]{\mathsf{spread}(#1;#2,#3.#4)}
+\newcommand\TyUniv{\mathbb{U}}
 \newcommand\TyMember[2]{#1\in#2}
 \newcommand\Dom[1]{\left\vert#1\right\vert}
-\newcommand\SubsetEq[2]{\InputMode{#1}\subseteq\InputMode{#2}}
+\newcommand\SubsetEq[2]{\IMode{#1}\subseteq\IMode{#2}}
 \newcommand\FV[1]{\textit{FV}\left(#1\right)}
 \newcommand\Subst[3]{\left[#1\;/\;#2\right]#3}
 \newcommand\ModLCF{\textbf{\emph{Modernized LCF}}}
 \newcommand\DepLCF{\textbf{\emph{Dependent LCF}}}
 
-\newcommand\IsEquiv[2]{\InputMode{#1}\equiv\InputMode{#2}}
+\newcommand\IsEquiv[2]{\IMode{#1}\equiv\IMode{#2}}
+
+\newcommand\Seq[2]{#1 \gg #2}
+
+\newcommand\Ext[1]{{\color{dark-gray}\left\lfloor\mathbf{ext}\ \OMode{#1}\right\rfloor}}
+\newcommand\SeqExt[3]{
+  \Seq{\IMode{#1}}{\IMode{#2}}\ \Ext{#3}
+}
+\newcommand\NuprlRule[3]{%
+  \begin{array}{l}%
+    #2\\
+    \ \ \mathbf{by}\ #1\\
+    \quad #3
+  \end{array}%
+}
 
 \begin{document}
 
@@ -273,9 +297,9 @@ $\ThenTac{\tau_1}{\MkFam{\tau}{\alpha}{I}}$ corresponds to
 recovered as a definitional extension, with its second argument given as the
 constant family:
 \[
-    \InputMode{\ThenTac{\tau_1}{\tau_2}}
+    \IMode{\ThenTac{\tau_1}{\tau_2}}
     \triangleq
-    \OutputMode{\ThenTac{\tau_1}{\MkSet{\tau_2}}}
+    \OMode{\ThenTac{\tau_1}{\MkSet{\tau_2}}}
 \]
 
 \begin{thm}
@@ -335,7 +359,7 @@ rule which expresses a dependency between subgoals. The canonical example is
 the introduction rule for dependent pairs in Type Theory:
 \[
   \infer[\textit{PairIntro}]{
-    \Member{\Tuple{M,N}}{\TyDProd{A}{x}{B}}
+    \Member{\Tuple{M,N}}{\TyDPair{A}{x}{B}}
   }{
     \Member{M}{A} &
     \Member{N}{\Subst{M}{x}{B}}
@@ -343,18 +367,18 @@ the introduction rule for dependent pairs in Type Theory:
 \]
 
 However, consider what a refinement rule for this would look like; we would
-like to take the goal $\IsTrue{\TyDProd{A}{x}{B}}$ to two subgoals (one for
+like to take the goal $\IsTrue{\TyDPair{A}{x}{B}}$ to two subgoals (one for
 each conjunct); the first subgoal $\IsTrue{A}$ is clear enough, but it is not
 possible to even write down the second subgoal until we know the synthesis of
 the first one.
 
 Because a tactic in \ModLCF\ produces only a \emph{context} of independent
 subgoals, we cannot give a refinement treatment to this rule, and must
-instead write a family of refinement rules $\DProdIntroRule{w}$ fibred over
+instead write a family of refinement rules $\DPairIntroRule{w}$ fibred over
 witnesses of the left conjunct $w$:
 
 \[
-  \Refine{\IsTrueUnmoded{\TyDProd{A}{x}{B}}}{\DProdIntroRule{w}}{%
+  \Refine{\IsTrueUnmoded{\TyDPair{A}{x}{B}}}{\DPairIntroRule{w}}{%
     \left\{\begin{array}{l}
       \OSG{\alpha}{\MemberUnmoded{w}{A}}\\
       \OSG{\beta}{\IsTrueUnmoded{\Subst{w}{x}{B}}}
@@ -381,10 +405,10 @@ this generalization. Going forward, we will call the theory \DepLCF\ when we
 take $\Psi$ to be a telescope rather than a context.
 
 We can now encode \emph{PairIntro} with a single refinement rule,
-$\DProdIntroRuleNullary$:
+$\DPairIntroRuleNullary$:
 
 \[
-  \Refine{\IsTrueUnmoded{\TyDProd{A}{x}{B}}}{\DProdIntroRuleNullary}{%
+  \Refine{\IsTrueUnmoded{\TyDPair{A}{x}{B}}}{\DPairIntroRuleNullary}{%
     \left\{\begin{array}{l}
         \OSG{\alpha}{\IsTrueUnmoded{A}}\\
         \OSG{\beta}{\IsTrueUnmoded{\Subst{\alpha}{x}{B}}}
@@ -441,6 +465,103 @@ Now, the sequencing tactical is readily definable, presupposing $\IsEquiv{I}{\Do
   }
 \]
 
-%% \section{ML Implementation of \DepLCF}
+\section{Case Study: Constructive Type Theory}
+
+The refinement logic for CTT is a sequent calculus with a single form of
+judgment, \framebox{$\Seq{\IMode{H}}{\IMode{P}}$}, which means that the
+proposition $P$ is true (and functionally so) under the assumptions in the
+telescope $H$. The synthesis of this judgment is a hypothetical witness for the
+truth or $P$ (or \emph{extract term}) with free variables in $H$.
+
+The type theory CTT is then approximated in the refinement logic by adding
+valid refinement rules for $\Seq{\IMode{H}}{\IMode{P}}$. For the sake of
+familiarity, we will re-use Nuprl's rule notation such that
+\[
+  \NuprlRule{\texttt{RuleName}}{
+    \SeqExt{H}{P}{E(\alpha_0,\alpha_1,\dots,\alpha_n)}
+  }{
+    \begin{array}{l}
+      \SeqExt{H_0}{Q_0}{\alpha_0}\\
+      \SeqExt{H_1(\alpha_0)}{Q_1(\alpha_0)}{\alpha_1(\alpha_0)}\\
+      \vdots\\
+      \SeqExt{H_n(\alpha_0,\alpha_1,\dots,\alpha_{n-1})}{Q_n(\alpha_0,\alpha_1,\dots,\alpha_{n-1})}{\alpha_n(\alpha_0,\dots,\alpha_{n-1})}
+    \end{array}
+  }
+\]
+shall mean
+\[
+  \Refine{
+    \Seq{H}{P}
+  }{
+    \mathtt{RuleName}
+  }{
+    \left\{\begin{array}{l}
+      \OSG{\alpha_0}{\Seq{H_0}{Q_0}}\\
+      \OSG{\alpha_1}{\Seq{H_1}{Q_1}}\\
+      \multicolumn{1}{c}{\color{Black}\vdots}\\
+      \OSG{\alpha_n}{\Seq{H_n}{Q_n}}\\
+    \end{array}\right.
+  }{
+    E(\alpha_0,\alpha_1,\dots,\alpha_n)
+  }
+\]
+
+
+Let us first give some of the refinement rules for the dependent pair type:
+
+\begin{gather*}
+  \NuprlRule{\DPairIntroRuleNullary}{
+    \SeqExt{H}{\TyDPair{A}{x}{B}}{\Tuple{\alpha,\beta}}
+  }{
+    \begin{array}{l}
+      \SeqExt{H}{A}{\alpha}\\
+      \SeqExt{H}{\Subst{\alpha}{x}{B}}{\beta}\\
+      \SeqExt{H,x:A}{\MemberUnmoded{B}{\TyUniv}}{\gamma(x)}
+    \end{array}
+  }\\[6pt]
+  \NuprlRule{\DPairElimRule{z}}{
+    \SeqExt{H,z:\TyDPair{A}{x}{B},J}{C}{
+      \Spread{z}{u}{v}{\alpha(u,v)}
+    }
+  }{
+    \SeqExt{H,z:\TyDPair{A}{x}{B},u:A,v:\Subst{u}{x}{B},\Subst{\Tuple{u,v}}{z}{J}}{C}{
+      \alpha(u,v)
+    }
+  }
+\end{gather*}
+
+We can also give refinement rules for dependent function introduction and
+elimination; in the same way \ModLCF\ could not express a refinement rule for
+pair introduction, a refinement rule for function elimination likewise only
+becomes attainable via the generalization to \DepLCF.
+
+\begin{gather*}
+  \NuprlRule{\DFunIntroRule}{
+    \SeqExt{H}{\TyDFun{A}{x}{B}}{\Lam{x}{\alpha(x)}}
+  }{
+    \begin{array}{l}
+      \SeqExt{H,x:A}{B}{\alpha(x)}\\
+      \SeqExt{H}{\MemberUnmoded{A}{\TyUniv}}{\beta}
+    \end{array}
+  }\\[6pt]
+  \NuprlRule{\DFunElimRule{z}}{
+    \SeqExt{
+      H,z:\TyDFun{A}{x}{B},J
+    }{C}{
+      \beta(\Ap{z}{\alpha}, \Ax)
+    }
+  }{
+    \begin{array}{l}
+      \SeqExt{H,z:\TyDFun{A}{x}{B}, J}{A}{\alpha}\\
+      \SeqExt{
+        H,z:\TyDFun{A}{x}{B},%
+        y:\Subst{\alpha}{x}{B},%
+        p:\EqMemberUnmoded{y}{\Ap{z}{\alpha}}{\Subst{\alpha}{x}{B}}, J
+      }{C}{
+        \beta(y,p)
+      }
+    \end{array}
+  }
+\end{gather*}
 
 \end{document}
