@@ -70,6 +70,9 @@
 
 \newcommand\IsTac[1]{\InputMode{#1}\ \textit{tactic}}
 
+\newcommand\MkSet[1]{\left\{#1\right\}}
+\newcommand\MkFam[3]{\MkSet{#1_{#2}}_{#2\in #3}}
+
 %% subgoals
 \newcommand\ISG[2]{\InputMode{#1}\,{\color{Black}:}\,\InputMode{#2}}
 \newcommand\OSG[2]{\InputMode{#1}\,{\color{Black}:}\,\OutputMode{#2}}
@@ -78,9 +81,9 @@
 \newcommand\Refine[4]{\InputMode{#1}\Vdash\InputMode{#2}\Rightarrow\OutputMode{#4}\dashv\OutputMode{#3}}
 \newcommand\NoRefine[2]{\InputMode{#1}\Vdash\InputMode{#2}\Uparrow}
 
-\newcommand\ThenStateTrans[5]{%
+\newcommand\ThenMultiAux[5]{%
   \InputMode{#2}\dashv\InputMode{#3}%
-  \Downarrow_\InputMode{#1}%
+  \Vdash^\star\InputMode{#1}\Rightarrow%
   \OutputMode{#4}\dashv\OutputMode{#5}%
 }
 
@@ -104,6 +107,8 @@
 \newcommand\Subst[3]{\left[#1\;/\;#2\right]#3}
 \newcommand\ModLCF{\textbf{\emph{Modernized LCF}}}
 \newcommand\DepLCF{\textbf{\emph{Dependent LCF}}}
+
+\newcommand\IsEquiv[2]{\InputMode{#1}\equiv\InputMode{#2}}
 
 \begin{document}
 
@@ -243,12 +248,12 @@ including identity, failure, disjunction and sequencing:
     \Refine{\JJ}{\tau_2}{\Psi}{E}
   }\\[6pt]
   \infer{
-    \Refine{\JJ}{\ThenTac{\tau_1}{\tau_2}}{\bigoplus_{\Dom\Phi}\Psi}{\Subst{F}{\Dom\Phi}{E}}
+    \Refine{\JJ}{\ThenTac{\tau_1}{\MkFam{\tau}{\alpha}{\Dom\Phi}}}{\bigoplus_{\Dom\Phi}\mathbf\Psi}{\Subst{F}{\Dom\Phi}{E}}
   }{
     \Refine{\JJ}{\tau_1}{\Phi}{E} &
     \GenJ{\alpha}{
       \HypJ{
-        \Refine{\Phi(\alpha)}{\tau_2}{\Psi_\alpha}{F_\alpha}
+        \Refine{\Phi(\alpha)}{\tau_\alpha}{\Psi_\alpha}{F_\alpha}
       }{
         \Member{\alpha}{\Dom\Phi}
       }
@@ -262,6 +267,17 @@ including identity, failure, disjunction and sequencing:
   to define in the HOAS treatment used in ML implementations.
 \end{remark}
 
+The sequencing tactical
+$\ThenTac{\tau_1}{\MkFam{\tau}{\alpha}{I}}$ corresponds to
+\verb!THENL! in LCF; the uniform sequencing tactical \verb!THEN! may be
+recovered as a definitional extension, with its second argument given as the
+constant family:
+\[
+    \InputMode{\ThenTac{\tau_1}{\tau_2}}
+    \triangleq
+    \OutputMode{\ThenTac{\tau_1}{\MkSet{\tau_2}}}
+\]
+
 \begin{thm}
   The above rules all define valid tactics:.
   \begin{enumerate}
@@ -269,8 +285,13 @@ including identity, failure, disjunction and sequencing:
     \item $\IsTac{\FailTac}$.
     \item If $\IsTac{\tau_1}$ and $\IsTac{\tau_2}$, then
       $\IsTac{\OrElseTac{\tau_1}{\tau_2}}$.
-    \item If $\IsTac{\tau_1}$ and $\IsTac{\tau_2}$, then
-      $\IsTac{\ThenTac{\tau_1}{\tau_2}}$.
+
+    \item If $\IsTac{\tau_1}$ and for any $\Member{\alpha}{I}$,
+      $\IsTac{\tau_\alpha}$, then
+      $\IsTac{\ThenTac{\tau_1}{\MkFam{\tau}{\alpha}{I}}}$.
+
+     %% If $\IsTac{\tau_1}$ and $\IsTac{\tau_2}$, then
+     %% $\IsTac{\ThenTac{\tau_1}{\tau_2}}$.
   \end{enumerate}
 \end{thm}
 \begin{proof}
@@ -288,7 +309,10 @@ including identity, failure, disjunction and sequencing:
           inductive hypothesis $\IsTac{\tau_2}$.
       \end{description}
 
-    \item[(4)] We need to show that
+    \item[(4)] It suffices to verify the cases where
+      $\IsEquiv{\Dom\Phi}{I}$, since otherwise
+      $\NoRefine{\JJ}{\ThenTac{\tau_1}{\MkFam{\tau}{\alpha}{I}}}$.
+      We need to show that
       $\SubsetEq{\FV{\Subst{F}{\Dom\Phi}{E}}}{\Dom{\bigoplus_{\Dom\Phi}\Psi}}$.
       From our inductive hypotheses, it is evident that
       $\SubsetEq{\FV{E}}{\Dom\Phi}$ and that for each $\Member{\alpha}{\Phi}$,
@@ -371,23 +395,33 @@ $\DProdIntroRuleNullary$:
 \]
 
 All that remains is to give a new definition of the sequencing tactical
-$\ThenTac{\tau_1}{\tau_2}$ which accounts for this dependency. In order to do
-this, we will need to implement an auxiliary judgment
-\framebox{$\ThenStateTrans{\tau}{E}{\Phi}{E'}{\Phi'}$} that allows us to
-gradually apply the tactic $\tau$ to a proof state, propagating refinements
-rightward through substitution. This judgment is defined by recursion on the
-telescope $\Phi$, viewed as a \emph{cons}-list:
+$\ThenTac{\tau_1}{\MkFam{\tau}{\alpha}{I}}$ which accounts for this dependency.
+In order to do this, we will need to implement an auxiliary judgment
+\framebox{$\ThenMultiAux{\MkFam{\tau}{\alpha}{I}}{E}{\Phi}{E'}{\Phi'}$} that
+allows us to apply the family of tactics $\MkFam{\tau}{\alpha}{I}$ pointwise to
+a proof state, simultaneously propagating refinements rightward through
+substitution. This judgment, which presupposes $\IsEquiv{I}{\Dom\Phi}$, is defined
+by recursion on the telescope $\Phi$, viewed as a \emph{cons}-list:
 
 \begin{gather*}
   \infer{
-    \ThenStateTrans{\tau}{E}{\cdot}{E}{\cdot}
+    \ThenMultiAux{\MkSet{}}{E}{\cdot}{E}{\cdot}
   }{
   }\\[6pt]
+  %
   \infer{
-    \ThenStateTrans{\tau}{E}{\ISG{\alpha}{\JJ},\Phi}{E'}{\Psi_\alpha\oplus\Phi'}
+    \ThenMultiAux{
+      \MkFam{\tau}{\beta}{\Dom{\ISG{\alpha}{\JJ},\Phi}}
+    }{E}{
+      \ISG{\alpha}{\JJ},\Phi
+    }{E'}{
+      \Psi_\alpha\oplus\Phi'
+    }
   }{
     \Refine{\JJ}{\tau}{\Psi_\alpha}{E_\alpha} &
-    \ThenStateTrans{\tau}{%
+    \ThenMultiAux{
+      \MkFam{\tau}{\beta}{\Phi}
+    }{
       \Subst{E_\alpha}{\alpha}{E}%
     }{
       \Subst{E_\alpha}{\alpha}{\Phi}
@@ -395,16 +429,18 @@ telescope $\Phi$, viewed as a \emph{cons}-list:
   }
 \end{gather*}
 
-Now, the sequencing tactical is readily definable:
+Now, the sequencing tactical is readily definable, presupposing $\IsEquiv{I}{\Dom\Phi}$:
 \[
   \infer{
-    \Refine{\JJ}{\ThenTac{\tau_1}{\tau_2}}{\Phi'}{E'}
+    \Refine{\JJ}{\ThenTac{\tau_1}{\MkFam{\tau}{\alpha}{I}}}{\Phi'}{E'}
   }{
     \Refine{\JJ}{\tau_1}{\Phi}{E} &
-    \ThenStateTrans{\tau_2}{E}{\Phi}{E'}{\Phi'}
+    \ThenMultiAux{
+      \MkFam{\tau}{\alpha}{I}
+    }{E}{\Phi}{E'}{\Phi'}
   }
 \]
 
-\section{ML Implementation of \DepLCF}
+%% \section{ML Implementation of \DepLCF}
 
 \end{document}
