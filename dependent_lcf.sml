@@ -15,7 +15,6 @@ sig
   include DLCF_KIT
 
   type subgoals = judgment Telescope.telescope
-
   type tactic = judgment -> term * subgoals
 
   val THEN : tactic * tactic -> tactic
@@ -41,20 +40,6 @@ struct
     let
       open Telescope.ConsView
 
-      (*
-      * -----------------------------nil
-      *    E -| <> ==[t]==> E -| <>
-      *
-      *    Jα ||- t => Eα -| Ψα
-      *    [Eα/α]E -| [Eα/α]Φ \ α ==[t]==> E' -| Φ'
-      * ----------------------------------------------cons
-      *    E -| α:Jα,Φ ==[t]==> E' -| Ψα <+> Φ'
-      *
-      *    J ||- t1 => E -| Φ
-      *    E -| Φ ==[t2]==> E' -| Φ'
-      * ------------------------------------THEN
-      *    J ||- t1;t2 => E' -| Φ'
-      *)
       fun go (e, Phi) =
         case out Phi of
              Empty => (e, Phi)

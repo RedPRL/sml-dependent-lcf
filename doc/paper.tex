@@ -177,7 +177,7 @@ generically over this signature; here are a few:
 In order to study the design space for LCF refiners, we would like to give a
 judgmental characterization of tactic systems, which we will call $\ModLCF$.
 To begin with, note that the type of validations (\verb!proof!) in the ML
-implementation is is essentially a HOAS (higher-order abstract syntax) encoding
+implementation is essentially a HOAS (higher-order abstract syntax) encoding
 of a hypothetical proof or synthesis of a judgment.  With this insight in hand,
 we are in a position to unify the list of subgoals and the validation generated
 by a tactic into a single concept, namely that of a \emph{hypothetical proof}
@@ -404,5 +404,7 @@ Now, the sequencing tactical is readily definable:
     \ThenStateTrans{\tau_2}{E}{\Phi}{E'}{\Phi'}
   }
 \]
+
+\section{ML Implementation of \DepLCF}
 
 \end{document}
