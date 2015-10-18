@@ -509,59 +509,63 @@ shall mean
 
 Let us first give some of the refinement rules for the dependent pair type:
 
-\begin{gather*}
-  \NuprlRule{\DPairIntroRuleNullary}{
-    \SeqExt{H}{\TyDPair{A}{x}{B}}{\Tuple{\alpha,\beta}}
-  }{
-    \begin{array}{l}
-      \SeqExt{H}{A}{\alpha}\\
-      \SeqExt{H}{\Subst{\alpha}{x}{B}}{\beta}\\
-      \SeqExt{H,x:A}{\MemberUnmoded{B}{\TyUniv}}{\gamma(x)}
-    \end{array}
-  }\\[6pt]
-  \NuprlRule{\DPairElimRule{z}}{
-    \SeqExt{H,z:\TyDPair{A}{x}{B},J}{C}{
-      \Spread{z}{u}{v}{\alpha(u,v)}
+\[
+  \begin{array}{l}
+    \NuprlRule{\DPairIntroRuleNullary}{
+      \SeqExt{H}{\TyDPair{A}{x}{B}}{\Tuple{\alpha,\beta}}
+    }{
+      \begin{array}{l}
+        \SeqExt{H}{A}{\alpha}\\
+        \SeqExt{H}{\Subst{\alpha}{x}{B}}{\beta}\\
+        \SeqExt{H,x:A}{\MemberUnmoded{B}{\TyUniv}}{\gamma(x)}
+      \end{array}
+    }\\\\
+    \NuprlRule{\DPairElimRule{z}}{
+      \SeqExt{H,z:\TyDPair{A}{x}{B},J}{C}{
+        \Spread{z}{u}{v}{\alpha(u,v)}
+      }
+    }{
+      \SeqExt{H,z:\TyDPair{A}{x}{B},u:A,v:\Subst{u}{x}{B},\Subst{\Tuple{u,v}}{z}{J}}{C}{
+        \alpha(u,v)
+      }
     }
-  }{
-    \SeqExt{H,z:\TyDPair{A}{x}{B},u:A,v:\Subst{u}{x}{B},\Subst{\Tuple{u,v}}{z}{J}}{C}{
-      \alpha(u,v)
-    }
-  }
-\end{gather*}
+  \end{array}
+\]
 
 We can also give refinement rules for dependent function introduction and
 elimination; in the same way \ModLCF\ could not express a refinement rule for
 pair introduction, a refinement rule for function elimination likewise only
 becomes attainable via the generalization to \DepLCF.
 
-\begin{gather*}
-  \NuprlRule{\DFunIntroRule}{
-    \SeqExt{H}{\TyDFun{A}{x}{B}}{\Lam{x}{\alpha(x)}}
-  }{
-    \begin{array}{l}
-      \SeqExt{H,x:A}{B}{\alpha(x)}\\
-      \SeqExt{H}{\MemberUnmoded{A}{\TyUniv}}{\beta}
-    \end{array}
-  }\\[6pt]
-  \NuprlRule{\DFunElimRule{z}}{
-    \SeqExt{
-      H,z:\TyDFun{A}{x}{B},J
-    }{C}{
-      \beta(\Ap{z}{\alpha}, \Ax)
-    }
-  }{
-    \begin{array}{l}
-      \SeqExt{H,z:\TyDFun{A}{x}{B}, J}{A}{\alpha}\\
+\[
+  \begin{array}{l}
+    \NuprlRule{\DFunIntroRule}{
+      \SeqExt{H}{\TyDFun{A}{x}{B}}{\Lam{x}{\alpha(x)}}
+    }{
+      \begin{array}{l}
+        \SeqExt{H,x:A}{B}{\alpha(x)}\\
+        \SeqExt{H}{\MemberUnmoded{A}{\TyUniv}}{\beta}
+      \end{array}
+    }\\\\
+    \NuprlRule{\DFunElimRule{z}}{
       \SeqExt{
-        H,z:\TyDFun{A}{x}{B},%
-        y:\Subst{\alpha}{x}{B},%
-        p:\EqMemberUnmoded{y}{\Ap{z}{\alpha}}{\Subst{\alpha}{x}{B}}, J
+        H,z:\TyDFun{A}{x}{B},J
       }{C}{
-        \beta(y,p)
+        \beta(\Ap{z}{\alpha}, \Ax)
       }
-    \end{array}
-  }
-\end{gather*}
+    }{
+      \begin{array}{l}
+        \SeqExt{H,z:\TyDFun{A}{x}{B}, J}{A}{\alpha}\\
+        \SeqExt{
+          H,z:\TyDFun{A}{x}{B},%
+          y:\Subst{\alpha}{x}{B},%
+          p:\EqMemberUnmoded{y}{\Ap{z}{\alpha}}{\Subst{\alpha}{x}{B}}, J
+        }{C}{
+          \beta(y,p)
+        }
+      \end{array}
+    }
+  \end{array}
+\]
 
 \end{document}
