@@ -420,12 +420,12 @@ $\DPairIntroRuleNullary$:
 
 All that remains is to give a new definition of the sequencing tactical
 $\ThenTac{\tau_1}{\MkFam{\tau}{\alpha}{I}}$ which accounts for this dependency.
-In order to do this, we will need to implement an auxiliary judgment
+To this end, we will need to implement an auxiliary judgment
 \framebox{$\ThenMultiAux{\MkFam{\tau}{\alpha}{I}}{E}{\Phi}{E'}{\Phi'}$} that
 allows us to apply the family of tactics $\MkFam{\tau}{\alpha}{I}$ pointwise to
 a proof state, simultaneously propagating refinements rightward through
-substitution. This judgment, which presupposes $\IsEquiv{I}{\Dom\Phi}$, is defined
-by recursion on the telescope $\Phi$, viewed as a \emph{cons}-list:
+substitution. This judgment, which presupposes $\IsEquiv{I}{\Dom\Phi}$, is
+defined by recursion on the telescope $\Phi$, viewed as a \emph{cons}-list:
 
 \begin{gather*}
   \infer{
@@ -471,7 +471,7 @@ The refinement logic for CTT is a sequent calculus with a single form of
 judgment, \framebox{$\Seq{\IMode{H}}{\IMode{P}}$}, which means that the
 proposition $P$ is true (and functionally so) under the assumptions in the
 telescope $H$. The synthesis of this judgment is a hypothetical witness for the
-truth or $P$ (or \emph{extract term}) with free variables in $H$.
+truth or $P$ (or \emph{extract term}) with free variables bound in $H$.
 
 The type theory CTT is then approximated in the refinement logic by adding
 valid refinement rules for $\Seq{\IMode{H}}{\IMode{P}}$. For the sake of
