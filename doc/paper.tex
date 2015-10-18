@@ -411,14 +411,14 @@ by recursion on the telescope $\Phi$, viewed as a \emph{cons}-list:
   %
   \infer{
     \ThenMultiAux{
-      \MkFam{\tau}{\beta}{\Dom{\ISG{\alpha}{\JJ},\Phi}}
+      \MkFam{\tau}{\beta}{\MkSet{\alpha}\cup\Dom\Phi}
     }{E}{
       \ISG{\alpha}{\JJ},\Phi
     }{E'}{
       \Psi_\alpha\oplus\Phi'
     }
   }{
-    \Refine{\JJ}{\tau}{\Psi_\alpha}{E_\alpha} &
+    \Refine{\JJ}{\tau_\alpha}{\Psi_\alpha}{E_\alpha} &
     \ThenMultiAux{
       \MkFam{\tau}{\beta}{\Phi}
     }{
