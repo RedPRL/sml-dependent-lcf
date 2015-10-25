@@ -485,8 +485,9 @@ To this end, we will need to implement an auxiliary judgment
 \framebox{$\ThenMultiAux{\MkFam{\tau}{\alpha}{I}}{E}{\Phi}{E'}{\Phi'}$} that
 allows us to apply the family of tactics $\MkFam{\tau}{\alpha}{I}$ pointwise to
 a proof state, simultaneously propagating refinements rightward through
-substitution. This judgment, which presupposes $\IsEquiv{I}{\Dom\Phi}$, is
-defined by recursion on the telescope $\Phi$, viewed as a \emph{cons}-list:
+metavariable substitution. This judgment, which presupposes
+$\IsEquiv{I}{\Dom\Phi}$, is defined by recursion on the telescope $\Phi$,
+viewed as a \emph{cons}-list:
 
 \begin{gather*}
   \infer{
