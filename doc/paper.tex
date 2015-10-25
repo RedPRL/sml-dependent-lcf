@@ -1,7 +1,7 @@
 \documentclass[11pt]{article}
 
 \usepackage[usenames,dvipsnames,svgnames,table]{xcolor}
-\usepackage{amsmath, amsthm, stmaryrd, scalerel}
+\usepackage{amsmath, amssymb, amsthm, stmaryrd, scalerel}
 \usepackage{mathtools}
 \usepackage{listings}
 \usepackage{graphicx}
@@ -86,10 +86,16 @@
   \IMode{#4}\in_{\mathbf{wf}}\IMode{#5}%
 }
 
+\newcommand\IsCtx[2]{
+  \IMode{#1}\ \textit{ctx}\leadsto \OMode{#2}
+}
+\newcommand\IsTele[2]{
+  \IMode{#1}\ \textit{tele}\leadsto \OMode{#2}
+}
+
 \newcommand\SortJdg{\mathsf{jdg}}
 \newcommand\MkBTm[3]{\{#1\}[#2].\, #3}
 \newcommand\JdgValence[1]{\mathfrak{v}(#1)}
-\newcommand\Metavars[1]{\mathfrak{M}(#1)}
 
 %% subgoals
 \newcommand\ISG[2]{\IMode{#1}\,{\color{Black}:}\,\IMode{#2}}
@@ -259,24 +265,34 @@ universal domain of discourse, with a distinguished sort $\SortJdg$ for
 object-judgments; and to each judgment $\JJ$ such that
 $\IsWf{\Omega}{\Upsilon}{\Gamma}{\JJ}{\SortJdg}$, a \emph{valence}
 $\JdgValence{\JJ}$ shall be associated which describes the binding structure of
-its synthesis. Then, to each subgoal context $\Psi$, we shall associate a
-metavariable context $\Metavars{\Psi}$ as follows:
+its synthesis.
 
-\begin{align*}
-  \IMode{\Metavars{\cdot}} &= \OMode{\cdot}\\
-  \IMode{\Metavars{\Psi, \alpha:\JJ}} &= \OMode{\Metavars{\Psi}, \alpha : \JdgValence{\JJ}}
-\end{align*}
+Then, we will need to define the wellformedness of subgoal contexts $\Psi$,
+simultaneously associating to $\Psi$ a metavariable context $\Omega$ which will
+stand for the collected syntheses of $\Psi$:
+\begin{gather*}
+  \infer{
+    \IsCtx{\cdot}{\cdot}
+  }{
+  }\qquad
+  \infer{
+    \IsCtx{\Psi,\alpha:\JJ}{\Omega,\alpha:\JdgValence{\JJ}}
+  }{
+    \IsCtx{\Psi}{\Omega} &
+    \IsWf{\cdot}{\cdot}{\cdot}{\JJ}{\SortJdg}
+  }
+\end{gather*}
+
+\begin{remark}
+  Note how the context-wellformedness judgment artificially requires that $\JJ$
+  be wellformed in the empty metavariable context.
+\end{remark}
 
 Then, the judgments $\NoRefine{\JJ}{\tau}$ and $\Refine{\JJ}{\tau}{\Psi}{E}$
 shall presuppose $\IsWf{\cdot}{\cdot}{\cdot}{\JJ}{\SortJdg}$, and the latter
-shall postsuppose $\IsWf{\Metavars{\Psi}}{\cdot}{\cdot}{E}{\JdgValence{\JJ}}$.
+shall postsuppose $\IsCtx{\Psi}{\Omega}$ and $\IsWf{\Omega}{\cdot}{\cdot}{E}{\JdgValence{\JJ}}$.
 When $E$ binds no variables or symbols, we shall write $E$ instead of
 $\MkBTm{\cdot}{\cdot}{E}$.
-
-%% In practice, this means that the
-%% judgment $\Refine{\JJ}{\tau}{\Psi}{E}$ shall presuppose
-%% $\IsWf{\cdot}{\cdot}{\cdot}{\JJ}{\SortJdg}$
-
 
 Let $\JSet$ be the open-ended collection of judgments in our logical theory,
 and let $\RSet$ be a collection of rule names. Each rule $\Member{R}{\RSet}$
@@ -344,7 +360,7 @@ constant family:
 \]
 
 \begin{thm}
-  The above rules all wellformed definitions of tactics.
+  The above rules all define valid tactics.
   \begin{enumerate}
     \item $\IsTac{\IdTac}$.
     \item $\IsTac{\FailTac}$.
@@ -358,8 +374,8 @@ constant family:
 \end{thm}
 \begin{proof}
   Disjointness for each tactical is immediately evident; it suffices, then, to
-  verify the postsupposition
-  $\IsWf{\Metavars{\Psi}}{\cdot}{\cdot}{E}{\JdgValence{\JJ}}$ in each case.
+  verify the postsuppositions $\IsCtx{\Psi}{\Omega}$ and
+  $\IsWf{\Omega}{\cdot}{\cdot}{E}{\JdgValence{\JJ}}$ in each case.
   \begin{enumerate}
     \item[(1--2)] Immediate.
     \item[(3)]
@@ -443,20 +459,26 @@ interpretation, the notation we have used for \ModLCF\ immediately suggests
 this generalization. Going forward, we will call the theory \DepLCF\ when we
 take $\Psi$ to be a telescope rather than a context.
 
-We can now encode \emph{PairIntro} with a single refinement rule,
-$\DPairIntroRuleNullary$:
-
-\[
-  \Refine{\IsTrueUnmoded{\TyDPair{A}{x}{B}}}{\DPairIntroRuleNullary}{%
-    \left\{\begin{array}{l}
-        \OSG{\alpha}{\IsTrueUnmoded{A}}\\
-        \OSG{\beta}{\IsTrueUnmoded{\Subst{\alpha}{x}{B}}}
-    \end{array}\right.
+Briefly, we can adjust the postsuppositions of the refinement judgment to
+account for this generalization, by first characterizing the wellformed
+telescopes:
+\begin{gather*}
+  \infer{
+    \IsTele{\cdot}{\cdot}
   }{
-    \Tuple{\alpha,\beta}
+  }\qquad
+  \infer{
+    \IsTele{\Psi,\alpha:\JJ}{\Omega,\alpha:\JdgValence{\JJ}}
+  }{
+    \IsTele{\Psi}{\Omega} &
+    \IsWf{\Omega}{\cdot}{\cdot}{\JJ}{\SortJdg}
   }
-\]
+\end{gather*}
 
+Now, $\Refine{\JJ}{\tau}{\Psi}{E}$ shall postsuppose $\IsTele{\Psi}{\Omega}$
+and $\IsWf{\Omega}{\cdot}{\cdot}{E}{\JdgValence{\JJ}}$.
+
+\subsection{Dependent Tacticals}
 All that remains is to give a new definition of the sequencing tactical
 $\ThenTac{\tau_1}{\MkFam{\tau}{\alpha}{I}}$ which accounts for this dependency.
 To this end, we will need to implement an auxiliary judgment
