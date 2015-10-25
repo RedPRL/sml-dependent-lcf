@@ -294,7 +294,7 @@ shall postsuppose $\IsCtx{\Psi}{\Omega}$ and $\IsWf{\Omega}{\cdot}{\cdot}{E}{\Jd
 When $E$ binds no variables or symbols, we shall write $E$ instead of
 $\MkBTm{\cdot}{\cdot}{E}$.
 
-Let $\JSet$ be the open-ended collection of judgments in our logical theory,
+Let $\JSet$ be the set $\MkSet{\JJ\mid\IsWf{\cdot}{\cdot}{\cdot}{\JJ}{\SortJdg}}$,
 and let $\RSet$ be a collection of rule names. Each rule $\Member{R}{\RSet}$
 must be interpretable as a tactic, i.e.\ the meaning of the assertions
 $\Refine{\JJ}{R}{\Psi}{E}$ and $\NoRefine{\JJ}{R}$ must be explained for
