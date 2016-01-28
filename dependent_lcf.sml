@@ -5,9 +5,12 @@ sig
   type judgment
   val judgmentToString : judgment -> string
 
-  (* the valence of the evidence of the judgment *)
+  (* the valence of the evidence of the judgment; categorical judgments
+   * tend to take evidence of trivial valence, but generic and parametric
+   * judgments will induce non-trivial valences for their evidence.*)
   val evidenceValence : judgment -> Term.valence
 
+  (* Substitute an abstraction for a hole in the statement of a judgment. *)
   val substJudgment
     : Term.metavariable * Term.abs
     -> judgment
@@ -26,12 +29,14 @@ sig
   type validation = environment -> Term.abs
   type state = subgoals * validation
   type tactic = judgment -> state
+
   val stateToString : state -> string
 
   val ID : tactic
   val THEN : tactic * tactic -> tactic
   val ORELSE : tactic * tactic -> tactic
   val TRY : tactic -> tactic
+
   (* val COMPLETE : tactic -> tactic *)
   exception RemainingSubgoals of subgoals
   exception UnsolvedMetavariables of Term.metavariable list
