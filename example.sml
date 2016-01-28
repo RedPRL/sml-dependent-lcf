@@ -1,44 +1,73 @@
+structure Sort : SORT =
+struct
+  type t = unit
+  val eq = op=
+  fun toString () = "exp"
+end
+
+structure Valence = Valence (structure Sort = Sort and Spine = ListSpine)
+structure Arity = Arity (Valence)
+
 structure O =
 struct
-  datatype t =
+  structure Arity = Arity
+
+  datatype 'i t =
       UNIT
     | SIGMA
     | AX
     | PAIR
     | CONST (* a dummy proposition to demonstrate dependency *)
 
-  val eq : t * t -> bool = op=
+  fun eq _ =
+    fn (UNIT, UNIT) => true
+     | (SIGMA, SIGMA) => true
+     | (AX, AX) => true
+     | (PAIR, PAIR) => true
+     | (CONST, CONST) => true
+     | _ => false
 
-  fun arity UNIT = Vector.fromList []
-    | arity SIGMA = Vector.fromList [0,1]
-    | arity AX = Vector.fromList []
-    | arity PAIR = Vector.fromList [0,0]
-    | arity CONST = Vector.fromList [0,0]
+  fun arity UNIT = ([], ())
+    | arity SIGMA = ([(([],[]),()), (([], [()]), ())], ())
+    | arity AX = ([], ())
+    | arity PAIR = ([(([],[]),()), (([], []), ())], ())
+    | arity CONST = ([(([],[]),()), (([], []), ())], ())
 
-  fun toString UNIT = "Unit"
-    | toString SIGMA = "Σ"
-    | toString AX = "Ax"
-    | toString PAIR = "Pair"
-    | toString CONST = "Const"
+  fun map _ =
+    fn UNIT => UNIT
+     | SIGMA => SIGMA
+     | AX => AX
+     | PAIR => PAIR
+     | CONST => CONST
+
+  fun support _ = []
+
+  fun toString _ UNIT = "Unit"
+    | toString _ SIGMA = "Σ"
+    | toString _ AX = "Ax"
+    | toString _ PAIR = "Pair"
+    | toString _ CONST = "Const"
 end
 
-structure V = Variable ()
-
-structure Term = Abt (structure Operator = O and Variable = V)
-
-structure Kit =
+structure V = Symbol ()
+structure Lbl =
 struct
-  type name = V.t
-  type term = Term.t
-  datatype judgment = TRUE of term
-
-  structure Telescope = Telescope (V)
-  structure Term = AbtUtil (Term)
-  fun substJudgment (x, e) (TRUE p) =
-    TRUE (Term.subst e x p)
+  open V
+  fun prime x = named (toString x ^ "'")
 end
 
-structure Lcf = DLcf (Kit)
+structure MC = Metacontext (structure Metavariable = V and Valence = Valence)
+structure Term = Abt (structure Operator = O and Variable = V and Symbol = V and Metavariable = V and Metacontext = MC)
+
+structure Kit : DLCF_KIT =
+struct
+  structure Term = Term and Telescope = Telescope (Lbl)
+  datatype judgment = TRUE of Term.abt
+  fun evidenceValence _ = (([], []), ())
+  fun substJudgment (x, e) (TRUE p) =
+    TRUE (Term.metasubst (e,x) p)
+end
+structure Lcf = DepLcf (Kit)
 
 signature REFINER =
 sig
@@ -46,6 +75,8 @@ sig
   val SigmaIntro : Lcf.tactic
   val ConstIntro : Lcf.tactic
 end
+
+(*
 
 structure Refiner :> REFINER =
 struct
@@ -127,3 +158,4 @@ struct
   val _ = run (TRUE goal) script
 end
 
+*)

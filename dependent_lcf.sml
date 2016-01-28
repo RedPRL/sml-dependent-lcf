@@ -1,13 +1,19 @@
 signature DLCF_KIT =
 sig
-  type name
-  type term
+  structure Term : ABT
+
   type judgment
 
-  val substJudgment : name * term -> judgment -> judgment
+  (* the valence of the evidence of the judgment *)
+  val evidenceValence : judgment -> Term.valence
 
-  structure Telescope : TELESCOPE where type Label.t = name
-  structure Term : ABT where type t = term and type Variable.t = name
+  val substJudgment
+    : Term.metavariable * Term.abs
+    -> judgment
+    -> judgment
+
+  structure Telescope : TELESCOPE
+    where type Label.t = Term.metavariable
 end
 
 signature DLCF =
@@ -15,64 +21,102 @@ sig
   include DLCF_KIT
 
   type subgoals = judgment Telescope.telescope
-  type tactic = judgment -> term * subgoals
+  type environment = Term.abs Telescope.telescope
+  type validation = environment -> Term.abs
+  type tactic = judgment -> subgoals * validation
 
+  val ID : tactic
   val THEN : tactic * tactic -> tactic
   val ORELSE : tactic * tactic -> tactic
-  val ID : tactic
   val TRY : tactic -> tactic
-
-  val COMPLETE : tactic -> tactic
+  (* val COMPLETE : tactic -> tactic *)
   exception RemainingSubgoals of subgoals
-  exception UnsolvedMetavariables of name list
+  exception UnsolvedMetavariables of Term.metavariable list
 end
 
-functor DLcf (Kit : DLCF_KIT) : DLCF =
+functor DepLcf (Kit : DLCF_KIT) : DLCF =
 struct
   open Kit
 
-  type subgoals = judgment Telescope.telescope
+  structure T = Telescope and Tm = Term
+  structure Spine = Tm.Operator.Arity.Valence.Spine
 
-  type tactic = judgment -> term * subgoals
-  structure Term = AbtUtil (Term)
-
-  fun THEN (t1, t2) J =
-    let
-      open Telescope.ConsView
-
-      fun go (e, Phi) =
-        case out Phi of
-             Empty => (e, Phi)
-           | Cons (x, Jx, Phi) =>
-               let
-                 val (ex, Psix) = t2 Jx
-                 val Phi' = Telescope.map Phi (substJudgment (x, ex))
-
-                 val (e', Phi'') = go (Term.subst ex x e, Phi')
-               in
-                 (e', Telescope.append (Psix, Phi''))
-               end
-
-    in
-      go (t1 J)
-    end
-
-  fun ID J =
-    let
-      val q = Term.Variable.new ()
-      val Psi = Telescope.snoc Telescope.empty (q, J)
-    in
-      (Term.`` q, Psi)
-    end
-
-  fun ORELSE (t1, t2) J =
-    t1 J handle _ => t2 J
-
-  fun TRY t = ORELSE (t, ID)
+  structure Meta = Tm.Metavariable
+  type subgoals = judgment T.telescope
+  type environment = Term.abs T.telescope
+  type validation = environment -> Term.abs
+  type state = subgoals * validation
+  type tactic = judgment -> state
 
   exception RemainingSubgoals of subgoals
-  exception UnsolvedMetavariables of name list
+  exception UnsolvedMetavariables of Term.metavariable list
 
+  fun ID jdg =
+    let
+      val v = Meta.named "?"
+      val theta = T.snoc T.empty (v, jdg)
+    in
+      (theta, fn rho =>
+         T.lookup rho v)
+    end
+
+  fun makeHole (v : Tm.metavariable, vl : Tm.valence) : Tm.abs =
+    let
+      open Tm infix \ $#
+      val ((sigmas, taus), tau) = vl
+      val theta =
+        Tm.Metacontext.extend
+          Tm.Metacontext.empty
+          (v, vl)
+      val syms = Spine.map (fn _ => Symbol.named "?") sigmas
+      val vars = Spine.map (fn _ => Variable.named "?") taus
+      val varTms =
+        Spine.Pair.mapEq
+          (fn (x,tau) => check theta (`x, tau))
+          (vars, taus)
+      val tm = check theta (v $# (syms, varTms), tau)
+    in
+      checkb theta ((syms, vars) \ tm, vl)
+    end
+
+  fun openEnv psi =
+    let
+      open T.ConsView
+      fun go Empty rho = rho
+        | go (Cons (x, jdg, phi)) rho =
+            go (out phi)
+              (T.snoc rho (x, makeHole (x, evidenceValence jdg)))
+    in
+      go (out psi) T.empty
+    end
+
+  fun THEN (t1, t2) jdg =
+    let
+      open T.ConsView
+      fun go (psi, vld) =
+        case out psi of
+             Empty => (psi, vld)
+           | Cons (x, jdgx, psi) =>
+               let
+                 val (psix, vldx) = t2 jdgx
+                 val evx = vldx (openEnv psix)
+                 val psi' = T.map psi (substJudgment (x, evx))
+                 fun vld' rho = vld (T.modify rho (x, fn _ => evx))
+                 val (psi'', vld'') = go (psi', vld')
+               in
+                 (T.append (psix, psi''), vld'')
+               end
+    in
+      go (t1 jdg)
+    end
+
+  fun ORELSE (t1, t2) jdg =
+    t1 jdg handle _ => t2 jdg
+
+  fun TRY t = ORELSE (t, ID)
+end
+
+(*
   local
     open Telescope.SnocView
     fun assertClosed e =
@@ -95,3 +139,4 @@ struct
   end
 end
 
+*)
