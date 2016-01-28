@@ -17,28 +17,28 @@ struct
     | SIGMA
     | AX
     | PAIR
-    | CONST (* a dummy proposition to demonstrate dependency *)
+    | FOO (* a dummy proposition to demonstrate dependency *)
 
   fun eq _ =
     fn (UNIT, UNIT) => true
      | (SIGMA, SIGMA) => true
      | (AX, AX) => true
      | (PAIR, PAIR) => true
-     | (CONST, CONST) => true
+     | (FOO, FOO) => true
      | _ => false
 
   fun arity UNIT = ([], ())
     | arity SIGMA = ([(([],[]),()), (([], [()]), ())], ())
     | arity AX = ([], ())
     | arity PAIR = ([(([],[]),()), (([], []), ())], ())
-    | arity CONST = ([(([],[]),()), (([], []), ())], ())
+    | arity FOO = ([(([],[]),()), (([], []), ())], ())
 
   fun map _ =
     fn UNIT => UNIT
      | SIGMA => SIGMA
      | AX => AX
      | PAIR => PAIR
-     | CONST => CONST
+     | FOO => FOO
 
   fun support _ = []
 
@@ -46,7 +46,7 @@ struct
     | toString _ SIGMA = "Σ"
     | toString _ AX = "Ax"
     | toString _ PAIR = "Pair"
-    | toString _ CONST = "Const"
+    | toString _ FOO = "Foo"
 end
 
 structure V = Symbol ()
@@ -59,10 +59,14 @@ end
 structure MC = Metacontext (structure Metavariable = V and Valence = Valence)
 structure Term = Abt (structure Operator = O and Variable = V and Symbol = V and Metavariable = V and Metacontext = MC)
 
-structure Kit : DLCF_KIT =
+structure Kit =
 struct
   structure Term = Term and Telescope = Telescope (Lbl)
+  structure ShowTm = DebugShowAbt (Term)
   datatype judgment = TRUE of Term.abt
+  fun judgmentToString (TRUE p) =
+    ShowTm.toString p ^ " true"
+
   fun evidenceValence _ = (([], []), ())
   fun substJudgment (x, e) (TRUE p) =
     TRUE (Term.metasubst (e,x) p)
@@ -73,89 +77,125 @@ signature REFINER =
 sig
   val UnitIntro : Lcf.tactic
   val SigmaIntro : Lcf.tactic
-  val ConstIntro : Lcf.tactic
+  val FooIntro : Lcf.tactic
 end
-
-(*
 
 structure Refiner :> REFINER =
 struct
-  open Kit
-  open Term
-  infix $$ $ //
+  open Kit Term
+  infix $ $# \
 
-  fun >: (T, p) = Telescope.snoc T p
+  structure T = Telescope
+  fun >: (T, p) = T.snoc T p
   infix >:
+
+  fun teleToMctx (tele : judgment T.telescope) =
+    let
+      open T.ConsView
+      fun go Empty theta = theta
+        | go (Cons (l, jdg, psi)) theta =
+            go (out psi) (MC.extend theta (l, evidenceValence jdg))
+    in
+      go (out tele) MC.empty
+    end
+
+
+  local
+    val i = ref 0
+  in
+    fun newMeta str =
+      (i := !i + 1;
+       V.named (str ^ Int.toString (!i)))
+  end
 
   fun UnitIntro (TRUE P) =
     let
-      val O.UNIT $ #[] = out P
+      val O.UNIT $ [] = out P
+      val psi = T.empty
+      val theta = teleToMctx psi
+      val ax = check theta (O.AX $ [], ())
+      val vl = (([],[]), ())
     in
-      (O.AX $$ #[], Telescope.empty)
+      (psi, (fn rho =>
+         checkb theta (([],[]) \ ax, vl)))
     end
 
   fun SigmaIntro (TRUE P) =
     let
-      val O.SIGMA $ #[A, xB] = out P
-      val a = Variable.new ()
-      val b = Variable.new ()
-      val Psi =
-        Telescope.empty
-          >: (a, TRUE A)
-          >: (b, TRUE (xB // ``a))
+      val O.SIGMA $ [_ \ A, (_, [x]) \ B] = out P
+      val a = newMeta "?a"
+      val b = newMeta "?b"
+      val psi1 = T.empty >: (a, TRUE A)
+      val theta1 = teleToMctx psi1
+      val Ba = subst (check theta1 (a $# ([],[]), ()), x) B
+      val psi = psi1 >: (b, TRUE Ba)
+      val theta = teleToMctx psi
+      val vl = (([],[]), ())
     in
-      (O.PAIR $$ #[``a, ``b], Psi)
+      (psi, (fn rho =>
+        let
+          val (a', _) = inferb (T.lookup rho a)
+          val (b', _) = inferb (T.lookup rho b)
+          val pair = check theta (O.PAIR $ [a', b'], ())
+        in
+          checkb theta (([], []) \ pair, vl)
+        end))
     end
 
-  fun ConstIntro (TRUE P) =
+  fun FooIntro (TRUE P) =
     let
-      val O.CONST $ #[A, _] = out P
-      val a = Variable.new ()
-      val Psi = Telescope.empty >: (a, TRUE A)
+      val O.FOO $ [_ \ A, _] = out P
+      val a = newMeta "?a"
+      val psi = T.empty >: (a, TRUE A)
+      val theta = teleToMctx psi
+      val ax = check theta (O.AX $ [], ())
+      val vl = (([],[]), ())
     in
-      (``a, Psi)
+      (psi, (fn rho =>
+        T.lookup rho a))
     end
+
 end
 
 structure Example =
 struct
   open Refiner Kit
-  open Lcf
-  structure Term = AbtUtil (Term)
-  open Term
-  infix 5 $$ $ // THEN ORELSE
-  infixr 4 \\
+  open Lcf Term
+  structure ShowTm = PlainShowAbt (Term)
+  infix 5 $ \ THEN ORELSE
 
   val x = Variable.named "x"
 
   val subgoalsToString =
-    Telescope.toString (fn (TRUE p) => Term.toString p ^ " true")
+    Telescope.toString (fn (TRUE p) => ShowTm.toString p ^ " true")
 
-  fun run goal tac =
+  fun run goal (tac : tactic) =
     let
-      val (e, Psi) = tac goal
+      val state = tac goal
     in
-      print (Term.toString e ^ "\n\n" ^ subgoalsToString Psi ^ "\n\n")
+      print ("\n\n" ^ Lcf.stateToString state ^ "\n\n")
     end
 
-  val mkUnit = O.UNIT $$ #[]
+  val mkUnit = check MC.empty (O.UNIT $ [], ())
+  fun mkSigma x a b = check MC.empty (O.SIGMA $ [([],[]) \ a, ([],[x]) \ b], ())
+  fun mkFoo a b = check MC.empty (O.FOO $ [([],[]) \ a, ([],[]) \ b], ())
+
   val x = Variable.named "x"
   val y = Variable.named "y"
 
   val goal =
-    O.SIGMA $$
-      #[O.SIGMA $$ #[mkUnit, x \\ mkUnit],
-        y \\ O.CONST $$ #[mkUnit, ``y]]
+    mkSigma y
+      (mkSigma x mkUnit mkUnit)
+      (mkFoo mkUnit (check MC.empty (`y, ())))
 
   (* to interact with the refiner, try commenting out some of the following lines *)
   val script =
     SigmaIntro
-    THEN TRY SigmaIntro
-    THEN TRY UnitIntro
-    THEN ConstIntro
-    THEN UnitIntro
+      THEN TRY SigmaIntro
+      THEN TRY UnitIntro
+      THEN FooIntro
+      THEN UnitIntro
 
   val _ = run (TRUE goal) script
 end
 
-*)

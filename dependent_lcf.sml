@@ -3,6 +3,7 @@ sig
   structure Term : ABT
 
   type judgment
+  val judgmentToString : judgment -> string
 
   (* the valence of the evidence of the judgment *)
   val evidenceValence : judgment -> Term.valence
@@ -23,7 +24,9 @@ sig
   type subgoals = judgment Telescope.telescope
   type environment = Term.abs Telescope.telescope
   type validation = environment -> Term.abs
-  type tactic = judgment -> subgoals * validation
+  type state = subgoals * validation
+  type tactic = judgment -> state
+  val stateToString : state -> string
 
   val ID : tactic
   val THEN : tactic * tactic -> tactic
@@ -40,6 +43,7 @@ struct
 
   structure T = Telescope and Tm = Term
   structure Spine = Tm.Operator.Arity.Valence.Spine
+  structure ShowTm = DebugShowAbt (Tm)
 
   structure Meta = Tm.Metavariable
   type subgoals = judgment T.telescope
@@ -51,9 +55,17 @@ struct
   exception RemainingSubgoals of subgoals
   exception UnsolvedMetavariables of Term.metavariable list
 
+  local
+    val i = ref 0
+  in
+    fun newMeta () =
+      (i := !i + 1;
+       Meta.named ("?" ^ Int.toString (!i)))
+  end
+
   fun ID jdg =
     let
-      val v = Meta.named "?"
+      val v = newMeta ()
       val theta = T.snoc T.empty (v, jdg)
     in
       (theta, fn rho =>
@@ -90,6 +102,18 @@ struct
       go (out psi) T.empty
     end
 
+  fun absToString ev =
+    let
+      val (Tm.\ (_, m), _) = Tm.inferb ev
+    in
+      ShowTm.toString m
+    end
+
+  fun stateToString (psi, vld) =
+    T.toString judgmentToString psi
+      ^ "\n----------------------------------------------------\n"
+      ^ absToString (vld T.empty)
+
   fun THEN (t1, t2) jdg =
     let
       open T.ConsView
@@ -101,7 +125,13 @@ struct
                  val (psix, vldx) = t2 jdgx
                  val evx = vldx (openEnv psix)
                  val psi' = T.map psi (substJudgment (x, evx))
-                 fun vld' rho = vld (T.modify rho (x, fn _ => evx))
+                 fun vld' rho =
+                   let
+                     val (Tm.\ (bs, m), vl) = Tm.inferb (vld (T.snoc rho (x, evx)))
+                     val theta = Tm.metacontext m
+                   in
+                     Tm.checkb theta (Tm.\ (bs, Tm.metasubst (evx, x) m), vl)
+                   end
                  val (psi'', vld'') = go (psi', vld')
                in
                  (T.append (psix, psi''), vld'')
