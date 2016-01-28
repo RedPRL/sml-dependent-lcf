@@ -145,28 +145,3 @@ struct
 
   fun TRY t = ORELSE (t, ID)
 end
-
-(*
-  local
-    open Telescope.SnocView
-    fun assertClosed e =
-      case Term.freeVariables e of
-           [] => ()
-         | xs => raise UnsolvedMetavariables xs
-    fun assertEmpty Psi =
-      case out Psi of
-           Empty => ()
-         | _ => raise RemainingSubgoals Psi
-  in
-    fun COMPLETE t J =
-      let
-        val (e, Psi) = t J
-        val _ = assertEmpty Psi
-        val _ = assertClosed e
-      in
-        (e, Telescope.empty)
-      end
-  end
-end
-
-*)
