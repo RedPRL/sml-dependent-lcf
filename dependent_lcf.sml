@@ -117,7 +117,7 @@ struct
   fun stateToString (psi, vld) =
     T.toString judgmentToString psi
       ^ "\n----------------------------------------------------\n"
-      ^ absToString (vld T.empty)
+      ^ absToString (vld (openEnv psi))
 
   fun THEN (t1, t2) jdg =
     let
