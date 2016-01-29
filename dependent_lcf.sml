@@ -131,13 +131,8 @@ struct
                let
                  val (psix, vldx) = t2 jdgx
                  val evx = vldx (openEnv psix)
+                 fun vld' rho = vld (T.snoc rho (x, vldx rho))
                  val psi' = T.map psi (substJudgment (x, evx))
-                 fun vld' rho =
-                   let
-                     val ev = vld (T.snoc rho (x, evx))
-                   in
-                     Tm.mapAbs (Tm.metasubst (evx, x)) ev
-                   end
                  val (psi'', vld'') = go (psi', vld')
                in
                  (T.append (psix, psi''), vld'')
