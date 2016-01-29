@@ -130,9 +130,8 @@ struct
            | Cons (x, jdgx, psi) =>
                let
                  val (psix, vldx) = t2 jdgx
-                 val evx = vldx (openEnv psix)
                  fun vld' rho = vld (T.snoc rho (x, vldx rho))
-                 val psi' = T.map psi (substJudgment (x, evx))
+                 val psi' = T.map psi (substJudgment (x, vldx (openEnv psix)))
                  val (psi'', vld'') = go (psi', vld')
                in
                  (T.append (psix, psi''), vld'')
