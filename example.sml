@@ -137,11 +137,11 @@ struct
     in
       (psi, (fn rho =>
         let
-          val (a', _) = inferb (T.lookup rho a)
-          val (b', _) = inferb (T.lookup rho b)
-          val pair = check theta (O.PAIR $ [a', b'], ())
+          val a' = outb (T.lookup rho a)
+          val b' = outb (T.lookup rho b)
+          val pair = O.PAIR $ [a', b']
         in
-          abtToAbs pair
+          abtToAbs (check theta (pair, ()))
         end))
     end
 
