@@ -56,8 +56,7 @@ struct
   fun prime x = named (toString x ^ "'")
 end
 
-structure MC = Metacontext (structure Metavariable = V and Valence = Valence)
-structure Term = Abt (structure Operator = O and Variable = V and Symbol = V and Metavariable = V and Metacontext = MC)
+structure Term = Abt (structure Operator = O and Variable = V and Symbol = V and Metavariable = V)
 
 structure Kit =
 struct
@@ -89,6 +88,13 @@ struct
   fun >: (T, p) = T.snoc T p
   infix >:
 
+  structure MC =
+  struct
+    open MetaCtx
+    structure Util = ContextUtil (structure Ctx = MetaCtx and Elem = Valence)
+    open Util
+  end
+
   fun teleToMctx (tele : judgment T.telescope) =
     let
       open T.ConsView
@@ -114,10 +120,8 @@ struct
       val psi = T.empty
       val theta = teleToMctx psi
       val ax = check theta (O.AX $ [], ())
-      val vl = (([],[]), ())
     in
-      (psi, (fn rho =>
-         checkb theta (([],[]) \ ax, vl)))
+      (psi, (fn rho => abtToAbs ax))
     end
 
   fun SigmaIntro (TRUE P) =
@@ -130,7 +134,6 @@ struct
       val Ba = subst (check theta1 (a $# ([],[]), ()), x) B
       val psi = psi1 >: (b, TRUE Ba)
       val theta = teleToMctx psi
-      val vl = (([],[]), ())
     in
       (psi, (fn rho =>
         let
@@ -138,7 +141,7 @@ struct
           val (b', _) = inferb (T.lookup rho b)
           val pair = check theta (O.PAIR $ [a', b'], ())
         in
-          checkb theta (([], []) \ pair, vl)
+          abtToAbs pair
         end))
     end
 
@@ -149,7 +152,6 @@ struct
       val psi = T.empty >: (a, TRUE A)
       val theta = teleToMctx psi
       val ax = check theta (O.AX $ [], ())
-      val vl = (([],[]), ())
     in
       (psi, (fn rho =>
         T.lookup rho a))
@@ -176,9 +178,9 @@ struct
       print ("\n\n" ^ Lcf.stateToString state ^ "\n\n")
     end
 
-  val mkUnit = check MC.empty (O.UNIT $ [], ())
-  fun mkSigma x a b = check MC.empty (O.SIGMA $ [([],[]) \ a, ([],[x]) \ b], ())
-  fun mkFoo a b = check MC.empty (O.FOO $ [([],[]) \ a, ([],[]) \ b], ())
+  val mkUnit = check' (O.UNIT $ [], ())
+  fun mkSigma x a b = check' (O.SIGMA $ [([],[]) \ a, ([],[x]) \ b], ())
+  fun mkFoo a b = check' (O.FOO $ [([],[]) \ a, ([],[]) \ b], ())
 
   val x = Variable.named "x"
   val y = Variable.named "y"
@@ -186,7 +188,7 @@ struct
   val goal =
     mkSigma y
       (mkSigma x mkUnit mkUnit)
-      (mkFoo mkUnit (check MC.empty (`y, ())))
+      (mkFoo mkUnit (check' (`y, ())))
 
   (* to interact with the refiner, try commenting out some of the following lines *)
   val script =

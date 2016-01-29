@@ -77,13 +77,15 @@ struct
          T.lookup rho v)
     end
 
+  structure MetaCtxUtil = ContextUtil (structure Ctx = Tm.MetaCtx and Elem = Tm.Operator.Arity.Valence)
+
   fun makeHole (v : Tm.metavariable, vl : Tm.valence) : Tm.abs =
     let
       open Tm infix \ $#
       val ((sigmas, taus), tau) = vl
       val theta =
-        Tm.Metacontext.extend
-          Tm.Metacontext.empty
+        MetaCtxUtil.extend
+          Tm.MetaCtx.empty
           (v, vl)
       val syms = Spine.map (fn _ => Symbol.named "?") sigmas
       val vars = Spine.map (fn _ => Variable.named "?") taus
@@ -132,10 +134,9 @@ struct
                  val psi' = T.map psi (substJudgment (x, evx))
                  fun vld' rho =
                    let
-                     val (Tm.\ (bs, m), vl) = Tm.inferb (vld (T.snoc rho (x, evx)))
-                     val theta = Tm.metacontext m
+                     val ev = vld (T.snoc rho (x, evx))
                    in
-                     Tm.checkb theta (Tm.\ (bs, Tm.metasubst (evx, x) m), vl)
+                     Tm.mapAbs (Tm.metasubst (evx, x)) ev
                    end
                  val (psi'', vld'') = go (psi', vld')
                in
