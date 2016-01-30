@@ -49,28 +49,34 @@ struct
     | toString _ FOO = "Foo"
 end
 
-structure V = Symbol ()
-structure Lbl =
-struct
-  open V
-  fun prime x = named (toString x ^ "'")
-end
+structure Term = SimpleAbt (O)
+structure ShowTm = DebugShowAbt (Term)
 
-structure Term = Abt (structure Operator = O and Variable = V and Symbol = V and Metavariable = V)
-
-structure Kit =
+structure Judgment =
 struct
-  structure Term = Term and Telescope = Telescope (Lbl)
-  structure ShowTm = DebugShowAbt (Term)
+  structure Term = Term
   datatype judgment = TRUE of Term.abt
   fun judgmentToString (TRUE p) =
     ShowTm.toString p ^ " true"
 
-  fun evidenceValence _ = (([], []), ())
+  fun evidenceValence _ =
+    (([], []), ())
+
+  type evidence = Term.abs
+  fun evidenceToString e =
+    let
+      open Term infix \
+      val _ \ m = outb e
+    in
+      ShowTm.toString m
+    end
+
   fun substJudgment (x, e) (TRUE p) =
     TRUE (Term.metasubst (e,x) p)
 end
-structure Lcf = DepLcf (Kit)
+
+structure Lcf = DependentLcf (Judgment)
+structure Tacticals = Tacticals (Lcf)
 
 signature REFINER =
 sig
@@ -81,10 +87,10 @@ end
 
 structure Refiner :> REFINER =
 struct
-  open Kit Term
+  open Judgment Term
   infix $ $# \
 
-  structure T = Telescope
+  structure T = Lcf.T and V = Term.Metavariable
   fun >: (T, p) = T.snoc T p
   infix >:
 
@@ -161,15 +167,15 @@ end
 
 structure Example =
 struct
-  open Refiner Kit
-  open Lcf Term
+  open Refiner Judgment
+  open Lcf Tacticals Term
   structure ShowTm = PlainShowAbt (Term)
   infix 5 $ \ THEN ORELSE
 
   val x = Variable.named "x"
 
   val subgoalsToString =
-    Telescope.toString (fn (TRUE p) => ShowTm.toString p ^ " true")
+    T.toString (fn (TRUE p) => ShowTm.toString p ^ " true")
 
   fun run goal (tac : tactic) =
     let
@@ -200,4 +206,5 @@ struct
 
   val _ = run (TRUE goal) script
 end
+
 
