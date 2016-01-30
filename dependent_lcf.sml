@@ -24,21 +24,23 @@ signature DLCF =
 sig
   include DLCF_KIT
 
-  type subgoals = judgment Telescope.telescope
+  type 'a ctx = 'a Telescope.telescope
   type environment = Term.abs Telescope.telescope
   type validation = environment -> Term.abs
-  type state = subgoals * validation
-  type tactic = judgment -> state
+  type 'a state = 'a ctx * validation
+  type tactic = judgment -> judgment state
 
-  val stateToString : state -> string
+  val stateToString : judgment state -> string
 
   val ID : tactic
   val THEN : tactic * tactic -> tactic
+  val THENX : tactic * tactic ctx -> tactic
+  val THENL : tactic * tactic list -> tactic
   val ORELSE : tactic * tactic -> tactic
   val TRY : tactic -> tactic
 
   (* val COMPLETE : tactic -> tactic *)
-  exception RemainingSubgoals of subgoals
+  exception RemainingSubgoals of judgment ctx
   exception UnsolvedMetavariables of Term.metavariable list
 end
 
@@ -51,13 +53,13 @@ struct
   structure ShowTm = DebugShowAbt (Tm)
 
   structure Meta = Tm.Metavariable
-  type subgoals = judgment T.telescope
+  type 'a ctx = 'a T.telescope
   type environment = Term.abs T.telescope
   type validation = environment -> Term.abs
-  type state = subgoals * validation
-  type tactic = judgment -> state
+  type 'a state = 'a ctx * validation
+  type tactic = judgment -> judgment state
 
-  exception RemainingSubgoals of subgoals
+  exception RemainingSubgoals of judgment ctx
   exception UnsolvedMetavariables of Term.metavariable list
 
   local
@@ -121,7 +123,10 @@ struct
       ^ "\n----------------------------------------------------\n"
       ^ absToString (vld (openEnv psi))
 
-  fun THEN (t1, t2) jdg =
+  datatype hole = hole
+  fun ?hole = raise Match
+
+  fun subst (t : Term.metavariable -> judgment -> judgment state) (st : judgment state) : judgment state =
     let
       open T.ConsView
       fun go (psi, vld) =
@@ -129,7 +134,7 @@ struct
              Empty => (psi, vld)
            | Cons (x, jdgx, psi) =>
                let
-                 val (psix, vldx) = t2 jdgx
+                 val (psix, vldx) = t x jdgx
                  fun vld' rho = vld (T.snoc rho (x, vldx rho))
                  val psi' = T.map psi (substJudgment (x, vldx (openEnv psix)))
                  val (psi'', vld'') = go (psi', vld')
@@ -137,7 +142,28 @@ struct
                  (T.append (psix, psi''), vld'')
                end
     in
-      go (t1 jdg)
+      go st
+    end
+
+  fun uncurry f (x,y) =
+    f x y
+
+  fun THEN (t1, t2) =
+    subst (fn _ => t2) o t1
+
+  fun THENX (t, ts) =
+    subst (T.lookup ts) o t
+
+  fun THENL (t, ts) = fn jdg =>
+    let
+      val st as (psi, _) = t jdg
+      open T.ConsView
+      fun go (Empty, []) r = r
+        | go (Cons (x,a,tel), (t :: ts)) r = go (out tel, ts) (T.snoc r (x, t))
+        | go _ _ = raise Fail "Incorrect length"
+      val ts' = go (out psi, ts) T.empty
+    in
+      THENX (fn _ => st, ts') jdg
     end
 
   fun ORELSE (t1, t2) jdg =
