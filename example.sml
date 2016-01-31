@@ -125,11 +125,9 @@ struct
   fun UnitIntro (TRUE P) =
     let
       val O.UNIT $ [] = out P
-      val psi = T.empty
-      val theta = teleToMctx psi
-      val ax = check theta (O.AX $ [], ())
+      val ax = check' (O.AX $ [], ())
     in
-      (psi, (fn rho => abtToAbs ax))
+      (T.empty, (fn rho => abtToAbs ax))
     end
 
   fun SigmaIntro (TRUE P) =
