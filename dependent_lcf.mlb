@@ -1,0 +1,25 @@
+local
+  $(SML_LIB)/basis/basis.mlb
+  $(LIBS)/sml-telescopes/telescopes.mlb
+  $(LIBS)/sml-typed-abts/abt.mlb
+  src/judgment.sig
+  src/lcf.sig
+  src/hole_util.sig
+  src/hole_util.fun
+  src/dependent_lcf.fun
+  src/tacticals.sig
+  src/tacticals.fun
+in
+  signature JUDGMENT
+  signature ABT_JUDGMENT
+  signature LCF
+  signature DEPENDENT_LCF
+  signature TACTICALS
+
+  signature HOLE_KIT
+  signature HOLE_UTIL
+
+  functor DependentLcf
+  functor Tacticals
+  functor HoleUtil
+end
