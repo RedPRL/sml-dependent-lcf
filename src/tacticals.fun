@@ -1,20 +1,18 @@
 functor Tacticals (Lcf : DEPENDENT_LCF) : TACTICALS =
 struct
-  open Lcf
+  open Lcf Lcf.J
   structure Lcf = Lcf
-  structure Meta = J.Tm.Metavariable
-
-  structure HoleUtil = HoleUtil (structure J = struct open J structure Tm = Tm end and T = T)
+  structure HoleUtil = HoleUtil (structure J = J and T = T)
 
   local
     val i = ref 0
   in
     fun newMeta () =
       (i := !i + 1;
-       Meta.named ("?" ^ Int.toString (!i)))
+       J.Tm.Metavariable.named ("?" ^ Int.toString (!i)))
   end
 
-  fun subst (t : J.Tm.metavariable -> judgment -> judgment state) (st : judgment state) : judgment state =
+  fun subst (t : metavariable -> judgment -> judgment state) (st : judgment state) : judgment state =
     let
       open T.ConsView
       fun go (psi, vld) =
