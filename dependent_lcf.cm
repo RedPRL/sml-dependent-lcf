@@ -1,0 +1,24 @@
+Library
+  signature JUDGMENT
+  signature ABT_JUDGMENT
+  signature LCF
+  signature DEPENDENT_LCF
+  signature TACTICALS
+
+  signature HOLE_KIT
+  signature HOLE_UTIL
+
+  functor DependentLcf
+  functor Tacticals
+  functor HoleUtil
+is
+  $/basis.cm
+  $libs/sml-telescopes/telescopes.cm
+  $libs/sml-typed-abts/abt.cm
+  src/judgment.sig
+  src/lcf.sig
+  src/hole_util.sig
+  src/hole_util.fun
+  src/dependent_lcf.fun
+  src/tacticals.sig
+  src/tacticals.fun
