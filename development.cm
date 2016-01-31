@@ -3,5 +3,11 @@ is
   $/basis.cm
   lib/sml-telescopes/telescopes.cm (bind:(anchor:libs value:lib))
   lib/sml-typed-abts/abt.cm
-  dependent_lcf.sml
+  src/judgment.sig
+  src/lcf.sig
+  src/hole_util.sig
+  src/hole_util.fun
+  src/dependent_lcf.fun
+  src/tacticals.sig
+  src/tacticals.fun
   example.sml

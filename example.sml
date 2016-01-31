@@ -54,7 +54,9 @@ structure ShowTm = DebugShowAbt (Term)
 
 structure Judgment =
 struct
-  structure Term = Term
+  structure Tm = Term
+  open Tm
+
   datatype judgment = TRUE of Term.abt
   fun judgmentToString (TRUE p) =
     ShowTm.toString p ^ " true"
@@ -62,17 +64,17 @@ struct
   fun evidenceValence _ =
     (([], []), ())
 
-  type evidence = Term.abs
+  type evidence = abs
   fun evidenceToString e =
     let
-      open Term infix \
+      infix \
       val _ \ m = outb e
     in
       ShowTm.toString m
     end
 
   fun substJudgment (x, e) (TRUE p) =
-    TRUE (Term.metasubst (e,x) p)
+    TRUE (metasubst (e,x) p)
 end
 
 structure Lcf = DependentLcf (Judgment)
@@ -206,5 +208,4 @@ struct
 
   val _ = run (TRUE goal) script
 end
-
 
