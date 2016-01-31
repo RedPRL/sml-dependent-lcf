@@ -58,6 +58,18 @@ struct
       THENX (fn _ => st, ts') jdg
     end
 
+  fun THENF (t1, i, t2) = fn jdg =>
+    let
+      val st as (psi, _) = t1 jdg
+      open T.ConsView
+      fun go r =
+        fn (Empty, j) => r
+         | (Cons (x,_,tel), j) => go (T.snoc r (x, if i = j then t2 else ID)) (out tel, i + 1)
+      val ts = go T.empty (out psi, 0)
+    in
+      THENX (fn _ => st, ts) jdg
+    end
+
   fun ORELSE (t1, t2) jdg =
     t1 jdg handle _ => t2 jdg
 
