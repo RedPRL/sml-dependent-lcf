@@ -4,12 +4,14 @@ Library
   signature LCF
   signature DEPENDENT_LCF
   signature TACTICALS
+  signature MULTITACTICALS
 
   signature HOLE_KIT
   signature HOLE_UTIL
 
   functor DependentLcf
   functor Tacticals
+  functor Multitacticals
   functor HoleUtil
 is
   $/basis.cm
@@ -22,3 +24,5 @@ is
   src/dependent_lcf.fun
   src/tacticals.sig
   src/tacticals.fun
+  src/multitacticals.sig
+  src/multitacticals.fun

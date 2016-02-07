@@ -7,6 +7,8 @@ local
   src/hole_util.sig
   src/hole_util.fun
   src/dependent_lcf.fun
+  src/multitacticals.sig
+  src/multitacticals.fun
   src/tacticals.sig
   src/tacticals.fun
 in
@@ -15,11 +17,13 @@ in
   signature LCF
   signature DEPENDENT_LCF
   signature TACTICALS
+  signature MULTITACTICALS
 
   signature HOLE_KIT
   signature HOLE_UTIL
 
   functor DependentLcf
+  functor Multitacticals
   functor Tacticals
   functor HoleUtil
 end
