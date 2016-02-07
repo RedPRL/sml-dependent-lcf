@@ -23,6 +23,11 @@ sig
     where type judgment = J.judgment
     where type evidence = J.evidence
     where type 'a ctx = 'a T.telescope
+
+  val subst
+    : (J.metavariable -> judgment -> judgment state)
+    -> judgment state
+    -> judgment state
 end
 
 
