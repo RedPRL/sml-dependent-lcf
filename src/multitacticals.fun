@@ -45,7 +45,7 @@ struct
       open T.ConsView
       fun go r =
         fn (Empty, j) => r
-         | (Cons (x,_,tel), j) => go (T.snoc r (x, if i = j then t else ID)) (out tel, i + 1)
+         | (Cons (x,_,tel), j) => go (T.snoc r (x, if i = j then t else ID)) (out tel, j + 1)
       val ts = go T.empty (out psi, 0)
     in
       EACHX ts (psi, vld)
