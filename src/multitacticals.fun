@@ -45,7 +45,7 @@ struct
       open T.ConsView
       fun go (Empty, _) r = r
         | go (Cons (x,a,tel), ts) r =
-            go (out tel, List.tl ts) (T.snoc r (x, List.hd ts handle _ => ID))
+            go (out tel, List.tl ts handle _ => []) (T.snoc r (x, List.hd ts handle _ => ID))
       val ts' = go (out psi, ts) T.empty
     in
       EACHX ts' (psi, vld)
