@@ -43,9 +43,9 @@ struct
   fun EACH' ts (psi, vld) =
     let
       open T.ConsView
-      fun go (Empty, []) r = r
-        | go (Cons (x,a,tel), (t :: ts)) r = go (out tel, ts) (T.snoc r (x, t))
-        | go _ r = r
+      fun go (Empty, _) r = r
+        | go (Cons (x,a,tel), ts) r =
+            go (out tel, List.tl ts) (T.snoc r (x, List.hd ts handle _ => ID))
       val ts' = go (out psi, ts) T.empty
     in
       EACHX ts' (psi, vld)
