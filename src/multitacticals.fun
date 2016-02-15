@@ -40,6 +40,17 @@ struct
       EACHX ts' (psi, vld)
     end
 
+  fun EACH' ts (psi, vld) =
+    let
+      open T.ConsView
+      fun go (Empty, []) r = r
+        | go (Cons (x,a,tel), (t :: ts)) r = go (out tel, ts) (T.snoc r (x, t))
+        | go _ r = r
+      val ts' = go (out psi, ts) T.empty
+    in
+      EACHX ts' (psi, vld)
+    end
+
   fun FOCUS i t (psi, vld) =
     let
       open T.ConsView

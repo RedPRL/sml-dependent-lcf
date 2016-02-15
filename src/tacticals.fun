@@ -17,6 +17,9 @@ struct
   fun THENL (t, ts) =
     Multi.EACH ts o t
 
+  fun THENL' (t, ts) =
+    Multi.EACH' ts o t
+
   fun THENF (t1, i, t2) =
     Multi.FOCUS i t2 o t1
 
