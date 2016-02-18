@@ -2,5 +2,6 @@ Group
 is
   $/basis.cm
   lib/sml-typed-abts/abt.cm
+  lib/sml-telescopes/telescopes.cm
   dependent_lcf.cm (bind:(anchor:libs value:lib))
   example.sml

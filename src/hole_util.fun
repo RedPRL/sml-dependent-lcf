@@ -26,10 +26,9 @@ struct
   fun openEnv psi =
     let
       open T.ConsView
-      fun go Empty rho = rho
-        | go (Cons (x, jdg, phi)) rho =
-            go (out phi)
-              (T.snoc rho (x, makeHole (x, evidenceValence jdg)))
+      fun go EMPTY rho = rho
+        | go (CONS (x, jdg, phi)) rho =
+            go (out phi) (T.snoc rho x (makeHole (x, evidenceValence jdg)))
     in
       go (out psi) T.empty
     end

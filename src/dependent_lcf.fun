@@ -4,11 +4,7 @@ struct
   structure J = Kit and Spine = Tm.Operator.Arity.Valence.Spine
   structure Metavariable = Tm.Metavariable
 
-  structure Lbl =
-  struct
-    open Tm.Metavariable
-    fun prime x = named (toString x ^ "'")
-  end
+  structure Lbl = Tm.Metavariable
 
   structure T = Telescope (Lbl)
   type 'a ctx = 'a T.telescope
@@ -21,8 +17,10 @@ struct
 
   structure HoleUtil = HoleUtil (structure Tm = Tm and J = J and T = T)
 
+  structure TShow = ShowTelescope (structure T = T val labelToString = Lbl.toString)
+
   fun stateToString (psi, vld) =
-    T.toString judgmentToString psi
+    TShow.toString judgmentToString psi
       ^ "\n----------------------------------------------------\n"
       ^ evidenceToString (vld (HoleUtil.openEnv psi))
 
@@ -31,12 +29,12 @@ struct
       open T.ConsView
       fun go (psi, vld) =
         case out psi of
-             Empty => (psi, vld)
-           | Cons (x, jdgx, psi) =>
+             EMPTY => (psi, vld)
+           | CONS (x, jdgx, psi) =>
                let
                  val (psix, vldx) = t x jdgx
-                 fun vld' rho = vld (T.snoc rho (x, vldx rho))
-                 val psi' = T.map psi (J.substJudgment (x, vldx (HoleUtil.openEnv psix)))
+                 fun vld' rho = vld (T.snoc rho x (vldx rho))
+                 val psi' = T.map (J.substJudgment (x, vldx (HoleUtil.openEnv psix))) psi
                  val (psi'', vld'') = go (psi', vld')
                in
                  (T.append (psix, psi''), vld'')

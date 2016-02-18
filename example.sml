@@ -93,8 +93,13 @@ struct
   infix $ $# \
 
   structure T = Lcf.T and V = Term.Metavariable
-  fun >: (T, p) = T.snoc T p
-  infix >:
+
+  local
+    structure Notation = TelescopeNotation (T)
+  in
+    open Notation
+    infix >:
+  end
 
   structure MC =
   struct
@@ -106,8 +111,8 @@ struct
   fun teleToMctx (tele : judgment T.telescope) =
     let
       open T.ConsView
-      fun go Empty theta = theta
-        | go (Cons (l, jdg, psi)) theta =
+      fun go EMPTY theta = theta
+        | go (CONS (l, jdg, psi)) theta =
             go (out psi) (MC.extend theta (l, evidenceValence jdg))
     in
       go (out tele) MC.empty
@@ -170,12 +175,13 @@ struct
   open Refiner Judgment
   open Lcf Tacticals Term
   structure ShowTm = PlainShowAbt (Term)
+  structure ShowTel = ShowTelescope (structure T = T val labelToString = Term.Metavariable.toString)
   infix 5 $ \ THEN ORELSE
 
   val x = Variable.named "x"
 
   val subgoalsToString =
-    T.toString (fn (TRUE p) => ShowTm.toString p ^ " true")
+    ShowTel.toString (fn (TRUE p) => ShowTm.toString p ^ " true")
 
   fun run goal (tac : tactic) =
     let
