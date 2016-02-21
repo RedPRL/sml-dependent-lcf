@@ -34,30 +34,30 @@ Ctx : Set → Set
 Ctx 𝒮 = List 𝒮
 
 infixr 2 _⊢_
-record Sequent (𝒮 : Set) : Set where
+record Valence (𝒮 : Set) : Set where
   constructor _⊢_
   no-eta-equality
   field
     ctx : Ctx 𝒮
     sort : 𝒮
 
-open Sequent public
+open Valence public
 
-map-ctx : {𝒮 : Set} → (Ctx 𝒮 → Ctx 𝒮) → Sequent 𝒮 → Sequent 𝒮
+map-ctx : {𝒮 : Set} → (Ctx 𝒮 → Ctx 𝒮) → Valence 𝒮 → Valence 𝒮
 map-ctx f (Γ ⊢ τ) = f Γ ⊢ τ
 
 MCtx : Set → Set
-MCtx 𝒮 = List (Sequent 𝒮)
+MCtx 𝒮 = List (Valence 𝒮)
 
 open List using (_++_ ; ◇ ; □)
 open Π using (_∘_)
 
 infixr 1 _∣_▹_
 
--- An abt signature [Σ] is a container [Sequent 𝒮 ▹ 𝒮]; we can form the free Σ-model
+-- An abt signature [Σ] is a container [Valence 𝒮 ▹ 𝒮]; we can form the free Σ-model
 -- as follows:
 
-data Pattern {𝒮 : Set} (Σ : Sequent 𝒮 ▹ 𝒮) (Ψ : MCtx 𝒮) (F : Sequent 𝒮 → Set) : Sequent 𝒮 → Set where
+data Pattern {𝒮 : Set} (Σ : Valence 𝒮 ▹ 𝒮) (Ψ : MCtx 𝒮) (F : Valence 𝒮 → Set) : Valence 𝒮 → Set where
   -- metavariables
   #_[_]
     : ∀ {Γ Δ τ}
@@ -77,7 +77,7 @@ data Pattern {𝒮 : Set} (Σ : Sequent 𝒮 ▹ 𝒮) (Ψ : MCtx 𝒮) (F : Seq
     → 𝔉[ Σ ] (F ∘ map-ctx (Γ ++_)) τ
     → Pattern Σ Ψ F (Γ ⊢ τ)
 
-data _∣_▹_ {𝒮 : Set} (Σ : Sequent 𝒮 ▹ 𝒮) (Ψ : MCtx 𝒮) (𝓈 : Sequent 𝒮) : Set where
+data _∣_▹_ {𝒮 : Set} (Σ : Valence 𝒮 ▹ 𝒮) (Ψ : MCtx 𝒮) (𝓈 : Valence 𝒮) : Set where
   ⟨_⟩ : Pattern Σ Ψ (Σ ∣ Ψ ▹_) 𝓈 → Σ ∣ Ψ ▹ 𝓈
 
 module LambdaCalculus where
@@ -91,17 +91,17 @@ module LambdaCalculus where
     num : Nat → 𝒪[Λ] val
     thunk : 𝒪[Λ] exp
 
-  Λ : Sequent 𝒮 ▹ 𝒮
+  Λ : Valence 𝒮 ▹ 𝒮
   𝒪 Λ = 𝒪[Λ]
   𝒜 Λ lam = 𝟙
   𝒜 Λ ap = 𝟚
   𝒜 Λ (num x) = 𝟘
   𝒜 Λ thunk = 𝟙
-  𝓋 Λ lam 𝟙↑.* = (val ∷ []) ⊢ exp
-  𝓋 Λ ap 𝟚↑.ff = [] ⊢ exp
-  𝓋 Λ ap 𝟚↑.tt = [] ⊢ exp
+  𝓋 Λ lam * = (val ∷ []) ⊢ exp
+  𝓋 Λ ap ff = [] ⊢ exp
+  𝓋 Λ ap tt = [] ⊢ exp
   𝓋 Λ (num x) ()
-  𝓋 Λ thunk 𝟙↑.* = [] ⊢ val
+  𝓋 Λ thunk * = [] ⊢ val
 
   example : Λ ∣ [] ▹ [] ⊢ val
   example = ⟨ [ lam ▸ (λ {* → ⟨ [ thunk ▸ (λ {* → ⟨ ` ◇.stop refl ⟩}) ] ⟩}) ] ⟩
