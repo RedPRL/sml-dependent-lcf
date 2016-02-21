@@ -18,8 +18,8 @@ sig
   val evidenceValence : judgment -> valence
 
   (* Substitute evidence for a metavariable in a judgment *)
-  val substJudgment
-    : metavariable * evidence
+  val substEvidence
+    : evidence * metavariable
     -> judgment
     -> judgment
 end

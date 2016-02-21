@@ -73,8 +73,8 @@ struct
       ShowTm.toString m
     end
 
-  fun substJudgment (x, e) (TRUE p) =
-    TRUE (metasubst (e,x) p)
+  fun substEvidence rho (TRUE p) =
+    TRUE (metasubst rho p)
 end
 
 structure Lcf = DependentLcf (Judgment)

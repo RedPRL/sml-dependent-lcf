@@ -24,7 +24,10 @@ struct
       ^ "\n----------------------------------------------------\n"
       ^ evidenceToString (vld (HoleUtil.openEnv psi))
 
-  fun subst (t : metavariable -> judgment -> judgment state) (st : judgment state) : judgment state =
+  exception hole
+  fun ?e = raise e
+
+  fun subst (t : metavariable -> judgment -> judgment state) =
     let
       open T.ConsView
       fun go (psi, vld) =
@@ -34,13 +37,13 @@ struct
                let
                  val (psix, vldx) = t x jdgx
                  fun vld' rho = vld (T.snoc rho x (vldx rho))
-                 val psi' = T.map (J.substJudgment (x, vldx (HoleUtil.openEnv psix))) psi
+                 val psi' = T.map (J.substEvidence (vldx (HoleUtil.openEnv psix), x)) psi
                  val (psi'', vld'') = go (psi', vld')
                in
                  (T.append (psix, psi''), vld'')
                end
     in
-      go st
+      go
     end
 
 end
