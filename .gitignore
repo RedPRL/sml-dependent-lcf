@@ -2,4 +2,5 @@
 *.aux
 *.log
 *.out
+*.agdai
 dependent_lcf
