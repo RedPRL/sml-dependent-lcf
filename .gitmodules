@@ -9,4 +9,4 @@
 	url = https://github.com/JonPRL/sml-typed-abts
 [submodule "models/modules/agda-prelude"]
 	path = models/modules/agda-prelude
-	url = git@github.com:freebroccolo/agda-prelude.git
+	url = https://github.com/freebroccolo/agda-prelude.git
