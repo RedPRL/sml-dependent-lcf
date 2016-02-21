@@ -100,7 +100,7 @@ mutual
       : Telescope L
     _⌢_
       : (T : Telescope L)
-      → (𝒥 : Sig.sig L ∣ ∣ T ∣ ▹ [] ⊢ Sig.jdg L)
+      → Sig.judgment L ∣ T ∣
       → Telescope L
 
   ∣_∣ : {L : Sig} → Telescope L → MCtx (Sig.𝒮 L)
