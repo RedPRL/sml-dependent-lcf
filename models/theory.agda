@@ -22,11 +22,11 @@ record _▹_ {i} (I J : Set i) : Set (lsuc i) where
     𝒜 : {τ : J} → 𝒪 τ → Set i
 
     -- the «valence» of an argument to an operator
-    ∂ : {τ : J} (ϑ : 𝒪 τ) → 𝒜 ϑ → I
+    𝓋 : {τ : J} (ϑ : 𝒪 τ) → 𝒜 ϑ → I
 
   -- the extension of an indexed container; this is analogous to the signature endofunctor
   𝔉[_] : (I → Set i) → (J → Set i)
-  𝔉[_] X τ = Σ[ 𝒪 τ ∋ ϑ ] Π[ 𝒜 ϑ ∋ 𝒶 ] X (∂ ϑ 𝒶)
+  𝔉[_] X τ = Σ[ 𝒪 τ ∋ ϑ ] Π[ 𝒜 ϑ ∋ 𝒶 ] X (𝓋 ϑ 𝒶)
 
 open _▹_ public
 
@@ -97,11 +97,11 @@ module LambdaCalculus where
   𝒜 Λ ap = 𝟚
   𝒜 Λ (num x) = 𝟘
   𝒜 Λ thunk = 𝟙
-  ∂ Λ lam 𝟙↑.* = (val ∷ []) ⊢ exp
-  ∂ Λ ap 𝟚↑.ff = [] ⊢ exp
-  ∂ Λ ap 𝟚↑.tt = [] ⊢ exp
-  ∂ Λ (num x) ()
-  ∂ Λ thunk 𝟙↑.* = [] ⊢ val
+  𝓋 Λ lam 𝟙↑.* = (val ∷ []) ⊢ exp
+  𝓋 Λ ap 𝟚↑.ff = [] ⊢ exp
+  𝓋 Λ ap 𝟚↑.tt = [] ⊢ exp
+  𝓋 Λ (num x) ()
+  𝓋 Λ thunk 𝟙↑.* = [] ⊢ val
 
   example : Λ ∣ [] ▹ [] ⊢ val
   example = ⟨ [ lam ▸ (λ {* → ⟨ [ thunk ▸ (λ {* → ⟨ ` ◇.stop refl ⟩}) ] ⟩}) ] ⟩
