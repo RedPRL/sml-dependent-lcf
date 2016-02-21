@@ -88,6 +88,11 @@ record Sig : Set₁ where
     sig : Valence 𝒮 ▹ 𝒮
     evd : ∀ {Ψ} → sig ∣ Ψ ▹ [] ⊢ jdg → Valence 𝒮
 
+  judgment : MCtx 𝒮 → Set
+  judgment Ψ = sig ∣ Ψ ▹ [] ⊢ jdg
+
+  evidence : {Ψ : MCtx 𝒮} → judgment Ψ → Set
+  evidence {Ψ} 𝒿 = sig ∣ Ψ ▹ evd 𝒿
 
 mutual
   data Telescope (L : Sig) : Set where
@@ -95,14 +100,28 @@ mutual
       : Telescope L
     _⌢_
       : (T : Telescope L)
-      → (𝒥 : Sig.sig L ∣ telescope-mctx T ▹ [] ⊢ Sig.jdg L)
+      → (𝒥 : Sig.sig L ∣ ∣ T ∣ ▹ [] ⊢ Sig.jdg L)
       → Telescope L
 
-  -- TODO: not that it really matters, but this puts the metacontext in reverse.
-  -- Probably, we would do better with snoc-lists all around.
-  telescope-mctx : {L : Sig} → Telescope L → MCtx (Sig.𝒮 L)
-  telescope-mctx [] = []
-  telescope-mctx {L} (T ⌢ 𝒥) = Sig.evd L 𝒥 ∷ telescope-mctx T
+  ∣_∣ : {L : Sig} → Telescope L → MCtx (Sig.𝒮 L)
+  ∣ [] ∣ = []
+  ∣_∣ {L} (T ⌢ 𝒥) = Sig.evd L 𝒥 ∷ ∣ T ∣
+
+data _⊨_ {𝒮 : Set} (Σ : Valence 𝒮 ▹ 𝒮) : MCtx 𝒮 → Set where
+  [] : Σ ⊨ []
+  _⌢_ : ∀ {Ψ v} → Σ ⊨ Ψ → Σ ∣ Ψ ▹ v → Σ ⊨ (v ∷ Ψ)
+
+record State (L : Sig) (Ψ : MCtx (Sig.𝒮 L)) : Set where
+  no-eta-equality
+  open Sig L
+  field
+    goal
+      : judgment Ψ
+    subgoals
+      : Telescope L
+    validation
+      : sig ⊨ ∣ subgoals ∣
+      → evidence goal
 
 module LambdaCalculus where
 
