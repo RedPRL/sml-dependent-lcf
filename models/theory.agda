@@ -80,6 +80,9 @@ data Pattern {𝒮 : Set} (Σ : Valence 𝒮 ▹ 𝒮) (Ψ : MCtx 𝒮) (F : Val
 data _∣_▹_ {𝒮 : Set} (Σ : Valence 𝒮 ▹ 𝒮) (Ψ : MCtx 𝒮) (𝓈 : Valence 𝒮) : Set where
   ⟨_⟩ : Pattern Σ Ψ (Σ ∣ Ψ ▹_) 𝓈 → Σ ∣ Ψ ▹ 𝓈
 
+-- the signature of a logical theory is a binding theory with a distinguished
+-- sort of «judgments», along with an assignment of valences to the evidence
+-- for these judgments.
 record Sig : Set₁ where
   no-eta-equality
   field
@@ -95,21 +98,21 @@ record Sig : Set₁ where
   evidence {Ψ} 𝒿 = sig ∣ Ψ ▹ evd 𝒿
 
 mutual
-  data Telescope (L : Sig) : Set where
+  data Telescope (L : Sig) (Ψ : MCtx (Sig.𝒮 L)) : Set where
     []
-      : Telescope L
+      : Telescope L Ψ
     _⌢_
-      : (T : Telescope L)
-      → Sig.judgment L ∣ T ∣
-      → Telescope L
+      : (T : Telescope L Ψ)
+      → Sig.judgment L (Ψ ++ ∣ T ∣)
+      → Telescope L Ψ
 
-  ∣_∣ : {L : Sig} → Telescope L → MCtx (Sig.𝒮 L)
+  ∣_∣ : {L : Sig} {Ψ : _} → Telescope L Ψ → MCtx (Sig.𝒮 L)
   ∣ [] ∣ = []
-  ∣_∣ {L} (T ⌢ 𝒥) = Sig.evd L 𝒥 ∷ ∣ T ∣
+  ∣_∣ {L} (T ⌢ 𝒿) = Sig.evd L 𝒿 ∷ ∣ T ∣
 
-data _⊨_ {𝒮 : Set} (Σ : Valence 𝒮 ▹ 𝒮) : MCtx 𝒮 → Set where
-  [] : Σ ⊨ []
-  _⌢_ : ∀ {Ψ v} → Σ ⊨ Ψ → Σ ∣ Ψ ▹ v → Σ ⊨ (v ∷ Ψ)
+data _∣_⊨_ {𝒮 : Set} (Σ : Valence 𝒮 ▹ 𝒮) (Ψ : MCtx 𝒮) : MCtx 𝒮 → Set where
+  [] : Σ ∣ Ψ ⊨ []
+  _⌢_ : ∀ {Ψ′ v} → Σ ∣ Ψ ⊨ Ψ′ → Σ ∣ (Ψ ++ Ψ′) ▹ v → Σ ∣ Ψ ⊨ (v ∷ Ψ′)
 
 record State (L : Sig) (Ψ : MCtx (Sig.𝒮 L)) : Set where
   no-eta-equality
@@ -118,10 +121,25 @@ record State (L : Sig) (Ψ : MCtx (Sig.𝒮 L)) : Set where
     goal
       : judgment Ψ
     subgoals
-      : Telescope L
+      : Telescope L Ψ
     validation
-      : sig ⊨ ∣ subgoals ∣
+      : sig ∣ Ψ ⊨ ∣ subgoals ∣
       → evidence goal
+
+open State public
+
+η : {L : Sig} {Ψ : _} → Sig.judgment L Ψ → State L Ψ
+goal (η 𝒿) = 𝒿
+subgoals (η {L = L} {Ψ = Ψ} 𝒿) = [] ⌢ ≡.coe* (Sig.judgment L) (List.⊢.ρ⇐ Ψ) 𝒿
+validation (η {L = L} {Ψ = Ψ} 𝒿) (ρ ⌢ e) = ≡.coe* (λ A → A) lemma e
+  where
+    open Sig L
+    lemma : (sig ∣ Ψ ++ [] ▹ evd (≡.coe* (Sig.judgment L) (List.⊢.ρ⇐ Ψ) 𝒿)) ≡ Sig.evidence L 𝒿
+    lemma = ≡.ap² (λ { (Ψ′ , 𝒿′) → sig ∣ Ψ′ ▹ 𝒿′ }) (List.⊢.ρ⇒ Ψ , ain't-nobody-got-time-for-this)
+      where
+        postulate ain't-nobody-got-time-for-this : _
+        -- !!! TODO
+
 
 module LambdaCalculus where
 
