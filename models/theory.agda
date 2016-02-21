@@ -33,6 +33,7 @@ open _▹_ public
 Ctx : Set → Set
 Ctx 𝒮 = List 𝒮
 
+infixr 2 _⊢_
 record Sequent (𝒮 : Set) : Set where
   constructor _⊢_
   no-eta-equality
@@ -42,33 +43,42 @@ record Sequent (𝒮 : Set) : Set where
 
 open Sequent public
 
+map-ctx : {𝒮 : Set} → (Ctx 𝒮 → Ctx 𝒮) → Sequent 𝒮 → Sequent 𝒮
+map-ctx f (Γ ⊢ τ) = f Γ ⊢ τ
+
 MCtx : Set → Set
 MCtx 𝒮 = List (Sequent 𝒮)
 
 open List using (_++_ ; ◇ ; □)
+open Π using (_∘_)
 
 infixr 1 _∣_▹_
-infixr 2 _⊢_
 
 -- An abt signature [Σ] is a container [Sequent 𝒮 ▹ 𝒮]; we can form the free Σ-model
 -- as follows:
-data _∣_▹_ {𝒮 : Set} (Σ : Sequent 𝒮 ▹ 𝒮) (Ψ : MCtx 𝒮) : Sequent 𝒮 → Set where
+
+data Pattern {𝒮 : Set} (Σ : Sequent 𝒮 ▹ 𝒮) (Ψ : MCtx 𝒮) (F : Sequent 𝒮 → Set) : Sequent 𝒮 → Set where
   -- metavariables
   #_[_]
     : ∀ {Γ Δ τ}
-    → ◇ (_≡ Δ ⊢ τ) Ψ             -- metavariable
-    → □ (λ σ → Σ ∣ Ψ ▹ Γ ⊢ σ) Δ  -- arguments
-    → Σ ∣ Ψ ▹ Γ ⊢ τ
+    → ◇ (_≡ Δ ⊢ τ) Ψ  -- metavariable in metacontext
+    → □ (F ∘ Γ ⊢_) Δ  -- arguments
+    → Pattern Σ Ψ F (Γ ⊢ τ)
 
-  -- variable
-  `_ : ∀ {Γ τ} → ◇ (_≡ τ) Γ → Σ ∣ Ψ ▹ Γ ⊢ τ
+  -- variables
+  `_
+    : ∀ {Γ τ}
+    → ◇ (_≡ τ) Γ      -- variable in context
+    → Pattern Σ Ψ F (Γ ⊢ τ)
 
-  -- operator application
+  -- operators
   [_]
     : ∀ {Γ τ}
-    → 𝔉[ Σ ] (λ { (Δ ⊢ σ) → Σ ∣ Ψ ▹ (Γ ++ Δ) ⊢ σ}) τ
-    → Σ ∣ Ψ ▹ Γ ⊢ τ
+    → 𝔉[ Σ ] (F ∘ map-ctx (Γ ++_)) τ
+    → Pattern Σ Ψ F (Γ ⊢ τ)
 
+data _∣_▹_ {𝒮 : Set} (Σ : Sequent 𝒮 ▹ 𝒮) (Ψ : MCtx 𝒮) (𝓈 : Sequent 𝒮) : Set where
+  ⟨_⟩ : Pattern Σ Ψ (Σ ∣ Ψ ▹_) 𝓈 → Σ ∣ Ψ ▹ 𝓈
 
 module LambdaCalculus where
 
@@ -94,4 +104,4 @@ module LambdaCalculus where
   ∂ Λ thunk 𝟙↑.* = [] ⊢ val
 
   example : Λ ∣ [] ▹ [] ⊢ val
-  example = [ lam ▸ (λ {* → [ thunk ▸ (λ {* → ` ◇.stop refl}) ]}) ]
+  example = ⟨ [ lam ▸ (λ {* → ⟨ [ thunk ▸ (λ {* → ⟨ ` ◇.stop refl ⟩}) ] ⟩}) ] ⟩
