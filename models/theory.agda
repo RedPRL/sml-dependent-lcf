@@ -80,6 +80,30 @@ data Pattern {𝒮 : Set} (Σ : Valence 𝒮 ▹ 𝒮) (Ψ : MCtx 𝒮) (F : Val
 data _∣_▹_ {𝒮 : Set} (Σ : Valence 𝒮 ▹ 𝒮) (Ψ : MCtx 𝒮) (𝓈 : Valence 𝒮) : Set where
   ⟨_⟩ : Pattern Σ Ψ (Σ ∣ Ψ ▹_) 𝓈 → Σ ∣ Ψ ▹ 𝓈
 
+record Sig : Set₁ where
+  no-eta-equality
+  field
+    𝒮 : Set
+    jdg : 𝒮
+    sig : Valence 𝒮 ▹ 𝒮
+    evd : ∀ {Ψ} → sig ∣ Ψ ▹ [] ⊢ jdg → Valence 𝒮
+
+
+mutual
+  data Telescope (L : Sig) : Set where
+    []
+      : Telescope L
+    _⌢_
+      : (T : Telescope L)
+      → (𝒥 : Sig.sig L ∣ telescope-mctx T ▹ [] ⊢ Sig.jdg L)
+      → Telescope L
+
+  -- TODO: not that it really matters, but this puts the metacontext in reverse.
+  -- Probably, we would do better with snoc-lists all around.
+  telescope-mctx : {L : Sig} → Telescope L → MCtx (Sig.𝒮 L)
+  telescope-mctx [] = []
+  telescope-mctx {L} (T ⌢ 𝒥) = Sig.evd L 𝒥 ∷ telescope-mctx T
+
 module LambdaCalculus where
 
   data 𝒮 : Set where
