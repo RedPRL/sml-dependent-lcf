@@ -74,7 +74,7 @@ data Pattern {𝒮 : Set} (Σ : Valence 𝒮 ▹ 𝒮) (Ψ : MCtx 𝒮) (F : Val
   -- operators
   [_]
     : ∀ {Γ τ}
-    → 𝔉[ Σ ] (F ∘ map-ctx (Γ ++_)) τ
+    → 𝔉[ Σ ] (F ∘ map-ctx (_++ Γ)) τ
     → Pattern Σ Ψ F (Γ ⊢ τ)
 
 data _∣_▹_ {𝒮 : Set} (Σ : Valence 𝒮 ▹ 𝒮) (Ψ : MCtx 𝒮) (𝓈 : Valence 𝒮) : Set where
@@ -103,7 +103,7 @@ mutual
       : Telescope L Ψ
     _⌢_
       : (T : Telescope L Ψ)
-      → Sig.judgment L (Ψ ++ ∣ T ∣)
+      → Sig.judgment L (∣ T ∣ ++ Ψ)
       → Telescope L Ψ
 
   ∣_∣ : {L : Sig} {Ψ : _} → Telescope L Ψ → MCtx (Sig.𝒮 L)
@@ -112,7 +112,7 @@ mutual
 
 data _∣_⊨_ {𝒮 : Set} (Σ : Valence 𝒮 ▹ 𝒮) (Ψ : MCtx 𝒮) : MCtx 𝒮 → Set where
   [] : Σ ∣ Ψ ⊨ []
-  _⌢_ : ∀ {Ψ′ v} → Σ ∣ Ψ ⊨ Ψ′ → Σ ∣ (Ψ ++ Ψ′) ▹ v → Σ ∣ Ψ ⊨ (v ∷ Ψ′)
+  _⌢_ : ∀ {Ψ′ v} → Σ ∣ Ψ ⊨ Ψ′ → Σ ∣ Ψ ▹ v → Σ ∣ Ψ ⊨ (v ∷ Ψ′)
 
 record State (L : Sig) (Ψ : MCtx (Sig.𝒮 L)) : Set where
   no-eta-equality
@@ -130,16 +130,8 @@ open State public
 
 η : {L : Sig} {Ψ : _} → Sig.judgment L Ψ → State L Ψ
 goal (η 𝒿) = 𝒿
-subgoals (η {L = L} {Ψ = Ψ} 𝒿) = [] ⌢ ≡.coe* (Sig.judgment L) (List.⊢.ρ⇐ Ψ) 𝒿
-validation (η {L = L} {Ψ = Ψ} 𝒿) (ρ ⌢ e) = ≡.coe* (λ A → A) lemma e
-  where
-    open Sig L
-    lemma : (sig ∣ Ψ ++ [] ▹ evd (≡.coe* (Sig.judgment L) (List.⊢.ρ⇐ Ψ) 𝒿)) ≡ Sig.evidence L 𝒿
-    lemma = ≡.ap² (λ { (Ψ′ , 𝒿′) → sig ∣ Ψ′ ▹ 𝒿′ }) (List.⊢.ρ⇒ Ψ , ain't-nobody-got-time-for-this)
-      where
-        postulate ain't-nobody-got-time-for-this : _
-        -- !!! TODO
-
+subgoals (η {L = L} {Ψ = Ψ} 𝒿) = [] ⌢ 𝒿
+validation (η {L = L} {Ψ = Ψ} 𝒿) (ρ ⌢ e) = e
 
 module LambdaCalculus where
 
