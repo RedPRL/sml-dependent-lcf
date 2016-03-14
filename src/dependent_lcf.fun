@@ -24,9 +24,6 @@ struct
       ^ "\n----------------------------------------------------\n"
       ^ evidenceToString (vld (HoleUtil.openEnv psi))
 
-  exception hole
-  fun ?e = raise e
-
   fun subst (t : metavariable -> judgment -> judgment state) =
     let
       open T.ConsView
