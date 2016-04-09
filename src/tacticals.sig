@@ -9,5 +9,7 @@ sig
   val THENL' : Lcf.tactic * Lcf.tactic list -> Lcf.tactic
   val THENF : Lcf.tactic * int * Lcf.tactic -> Lcf.tactic
   val ORELSE : Lcf.tactic * Lcf.tactic -> Lcf.tactic
+
   val TRY : Lcf.tactic -> Lcf.tactic
+  val PROGRESS : Lcf.tactic -> Lcf.tactic
 end

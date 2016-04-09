@@ -31,5 +31,9 @@ sig
     where type evidence = Tm.abs
     where type valence = Tm.valence
     where type metavariable = Tm.Metavariable.t
+
+  val judgmentMetactx : judgment -> Tm.metactx
+  val substEvidenceEnv : evidence Tm.MetaCtx.dict -> judgment -> judgment
+  val unifyJudgment : judgment * judgment -> Tm.Unify.renaming option
 end
 

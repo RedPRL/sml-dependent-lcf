@@ -75,6 +75,15 @@ struct
 
   fun substEvidence rho (TRUE p) =
     TRUE (metasubst rho p)
+
+  fun substEvidenceEnv rho (TRUE p) =
+    TRUE (metasubstEnv rho p)
+
+  fun judgmentMetactx (TRUE p) =
+    metactx p
+
+  fun unifyJudgment (TRUE p, TRUE q) =
+    Unify.unifyOpt (p, q)
 end
 
 structure Lcf = DependentLcf (Judgment)

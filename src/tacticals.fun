@@ -27,5 +27,55 @@ struct
     t1 jdg handle _ => t2 jdg
 
   fun TRY t = ORELSE (t, ID)
+
+  structure UnificationKit =
+  struct
+    structure T = T and Ren = Tm.MetaCtx
+    type term = judgment
+
+    fun variableRenamingIsVacuous rho =
+      Tm.VarCtx.foldl
+        (fn (k, v, b) => b andalso Tm.Variable.eq (k, v))
+        true
+        rho
+
+    fun symbolRenamingIsVacuous rho =
+      Tm.SymCtx.foldl
+        (fn (k, v, b) => b andalso Tm.Symbol.eq (k, v))
+        true
+        rho
+
+    fun >>= (SOME x, f) = f x
+      | >>= (NONE, f) = NONE
+    infix >>=
+
+    fun unifyTerm (m, n) : Tm.metavariable Ren.dict option =
+      unifyJudgment (m, n) >>= (fn (mrho, srho, vrho) =>
+        if symbolRenamingIsVacuous srho andalso variableRenamingIsVacuous vrho then
+          SOME mrho
+        else
+          NONE)
+
+    fun rename rho jdg : term =
+      let
+        val psi = judgmentMetactx jdg
+        fun makeHole x = HoleUtil.makeHole (x, Tm.MetaCtx.lookup psi x)
+        val env = Tm.MetaCtx.map makeHole rho
+      in
+        substEvidenceEnv env jdg
+      end
+  end
+
+  structure UnifyTelescope = UnifyTelescope (UnificationKit)
+
+  fun PROGRESS t jdg =
+    let
+      val st as (psi, _) = t jdg
+      val x = Tm.Metavariable.named "x"
+    in
+      case UnifyTelescope.unifySubOpt (T.snoc T.empty x jdg, psi) of
+           NONE => st
+         | SOME _ => raise Fail "Failed to make progress"
+    end
 end
 
