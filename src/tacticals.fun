@@ -59,8 +59,14 @@ struct
     fun rename rho jdg : term =
       let
         val psi = judgmentMetactx jdg
-        fun makeHole x = HoleUtil.makeHole (x, Tm.MetaCtx.lookup psi x)
-        val env = Tm.MetaCtx.map makeHole rho
+        val env =
+          Tm.MetaCtx.foldl
+            (fn (k, x, acc) =>
+              case Tm.MetaCtx.find psi x of
+                  NONE => acc
+                | SOME vl => Tm.MetaCtx.insert acc x (HoleUtil.makeHole (x, vl)))
+            Tm.MetaCtx.empty
+            rho
       in
         substEvidenceEnv env jdg
       end
@@ -71,11 +77,10 @@ struct
   fun PROGRESS t jdg =
     let
       val st as (psi, _) = t jdg
-      val x = Tm.Metavariable.named "x"
+      val x = Tm.Metavariable.named "%PROGRESS-probe-var"
     in
       case UnifyTelescope.unifySubOpt (T.snoc T.empty x jdg, psi) of
            NONE => st
          | SOME _ => raise Fail "Failed to make progress"
     end
 end
-
