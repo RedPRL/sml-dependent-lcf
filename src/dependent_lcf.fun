@@ -14,6 +14,7 @@ struct
 
   type 'a state = 'a ctx * validation
   type tactic = judgment -> judgment state
+  type multitactic = judgment state -> judgment state
 
   structure HoleUtil = HoleUtil (structure Tm = Tm and J = J and T = T)
 

@@ -17,6 +17,7 @@ sig
 
   type 'a state = 'a ctx * validation
   type tactic = judgment -> judgment state
+  type multitactic = judgment state -> judgment state
 
   val stateToString : judgment state -> string
 end
