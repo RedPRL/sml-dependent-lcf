@@ -1,0 +1,20 @@
+local
+  $(LIBS)/cmlib/cmlib.mlb
+  dependent_lcf.mlb
+
+  src/nominal_lcf/spread.sig
+  src/nominal_lcf/spread.sml
+
+  src/nominal_lcf/syntax.sig
+  src/nominal_lcf/model.sig
+  src/nominal_lcf/semantics.sig
+  src/nominal_lcf/semantics.fun
+in
+  signature SPREAD
+  structure UniversalSpread
+
+  signature NOMINAL_LCF_SYNTAX
+  signature NOMINAL_LCF_MODEL
+  signature NOMINAL_LCF_SEMANTICS
+  functor NominalLcfSemantics
+end

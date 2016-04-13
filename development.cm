@@ -1,7 +1,12 @@
-Group
+Library
+  signature NOMINAL_LCF_SYNTAX
+  signature NOMINAL_LCF_MODEL
+  signature NOMINAL_LCF_SEMANTICS
+  functor NominalLcfSemantics
 is
   $/basis.cm
   lib/sml-typed-abts/abt.cm
   lib/sml-telescopes/telescopes.cm
+  nominal_lcf.cm (bind:(anchor:libs value:lib))
   dependent_lcf.cm (bind:(anchor:libs value:lib))
   example.sml
