@@ -1,6 +1,6 @@
 signature NOMINAL_LCF_SYNTAX =
 sig
-  type symbol
+  type atom
   type variable
   type sort
 
@@ -25,7 +25,7 @@ sig
 
   structure Stmt :
   sig
-    type 'a binding = symbol list * 'a
+    type 'a binding = atom list * 'a
 
     datatype view =
         SEQ of multitactic binding list

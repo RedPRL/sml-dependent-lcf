@@ -15,42 +15,15 @@ struct
         mtac alpha (psi, fn rho => Lcf.T.lookup rho x)
       end
 
-  structure Seq =
-  struct
-    fun prepend us =
-      let
-        val n = List.length us
-      in
-        fn alpha => fn i =>
-          if i < n then
-            List.nth (us, i)
-          else
-            alpha (i + n)
-      end
-
-    fun bite n alpha =
-      fn i =>
-        alpha (i + n)
-
-    fun probe (alpha : 'a seq) : 'a seq * int ref =
-      let
-        val mref = ref 0
-        fun updateModulus i = if !mref < i then mref := i else ()
-        fun beta i = (updateModulus (i + 1); alpha i)
-      in
-        (beta, mref)
-      end
-  end
-
   fun composeMultitactics mtacs =
     List.foldr
-      (fn ((us : Syn.symbol list, mtac : multitactic), rest) => fn alpha => fn st =>
+      (fn ((us : Syn.atom Spr.neigh, mtac : multitactic), rest) => fn alpha => fn st =>
         let
-          val beta = Seq.prepend us alpha
-          val (beta', modulus) = Seq.probe (Seq.prepend us beta)
+          val beta = Spr.prepend us alpha
+          val (beta', modulus) = Spr.probe (Spr.prepend us beta)
           val st' = mtac beta' st
         in
-          rest (Seq.bite (!modulus) beta) st'
+          rest (Spr.bite (!modulus) beta) st'
         end)
       (fn _ => fn st => st)
       mtacs

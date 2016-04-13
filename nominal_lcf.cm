@@ -1,4 +1,6 @@
 Library
+  signature SPREAD
+  structure UniversalSpread
   signature NOMINAL_LCF_SYNTAX
   signature NOMINAL_LCF_MODEL
   signature NOMINAL_LCF_SEMANTICS
@@ -7,6 +9,10 @@ is
   $libs/cmlib/cmlib.cm
   dependent_lcf.cm
 
+  src/nominal_lcf/spread.sig
+  src/nominal_lcf/spread.sml
+
   src/nominal_lcf/syntax.sig
+  src/nominal_lcf/model.sig
   src/nominal_lcf/semantics.sig
   src/nominal_lcf/semantics.fun
