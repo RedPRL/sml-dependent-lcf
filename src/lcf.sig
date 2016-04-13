@@ -12,6 +12,9 @@ sig
   (* An [environment] is a substitution of evidence for subgoals. *)
   type environment = evidence ctx
 
+  (* A [metavariable] is an index into the contxt. *)
+  type metavariable
+
   (* [validation]s are hypothetical evidence. *)
   type validation = environment -> evidence
 
@@ -20,6 +23,18 @@ sig
   type multitactic = judgment state -> judgment state
 
   val stateToString : judgment state -> string
+
+  val return
+    : 'a
+    -> 'a state
+
+  (* Substitute new trees for the leaves of a proof tree; morally, this
+   * operation arises from the fact that ['a state] is a monad on the
+   * category of types that classify judgments. *)
+  val subst
+    : (metavariable -> judgment -> judgment state)
+    -> judgment state
+    -> judgment state
 end
 
 signature DEPENDENT_LCF =
@@ -29,16 +44,9 @@ sig
     where type Label.t = J.metavariable
 
   include LCF
+    where type metavariable = J.metavariable
     where type judgment = J.judgment
     where type evidence = J.evidence
     where type 'a ctx = 'a T.telescope
-
-  (* Substitute new trees for the leaves of a proof tree; morally, this
-   * operation arises from the fact that ['a state] is a monad on the
-   * category of types that classify judgments. *)
-  val subst
-    : (J.metavariable -> judgment -> judgment state)
-    -> judgment state
-    -> judgment state
 end
 

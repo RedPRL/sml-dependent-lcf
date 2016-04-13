@@ -25,6 +25,23 @@ struct
       ^ "\n----------------------------------------------------\n"
       ^ evidenceToString (vld (HoleUtil.openEnv psi))
 
+  local
+    val i = ref 0
+  in
+    fun newMeta () =
+      (i := !i + 1;
+       J.Tm.Metavariable.named ("?" ^ Int.toString (!i)))
+  end
+
+  fun return jdg =
+    let
+      val v = newMeta ()
+      val theta = T.snoc T.empty v jdg
+    in
+      (theta, fn rho =>
+         T.lookup rho v)
+    end
+
   fun subst (t : metavariable -> judgment -> judgment state) =
     let
       open T.ConsView

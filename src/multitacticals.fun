@@ -5,23 +5,8 @@ struct
 
   type multitactic = judgment state -> judgment state
 
-  local
-    val i = ref 0
-  in
-    fun newMeta () =
-      (i := !i + 1;
-       J.Tm.Metavariable.named ("?" ^ Int.toString (!i)))
-  end
-
   fun ID jdg =
-    let
-      val v = newMeta ()
-      val theta = T.snoc T.empty v jdg
-    in
-      (theta, fn rho =>
-         T.lookup rho v)
-    end
-
+    return jdg
 
   fun ALL t =
     subst (fn _ => t)

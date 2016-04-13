@@ -1,6 +1,6 @@
 signature MULTITACTICALS =
 sig
-  structure Lcf : DEPENDENT_LCF
+  structure Lcf : LCF
 
   type multitactic = Lcf.judgment Lcf.state -> Lcf.judgment Lcf.state
 
