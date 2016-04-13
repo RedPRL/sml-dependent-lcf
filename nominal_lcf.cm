@@ -1,0 +1,12 @@
+Library
+  signature NOMINAL_LCF_SYNTAX
+  signature NOMINAL_LCF_MODEL
+  signature NOMINAL_LCF_SEMANTICS
+  functor NominalLcfSemantics
+is
+  $libs/cmlib/cmlib.cm
+  dependent_lcf.cm
+
+  src/nominal_lcf/syntax.sig
+  src/nominal_lcf/semantics.sig
+  src/nominal_lcf/semantics.fun

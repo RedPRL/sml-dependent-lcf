@@ -2,15 +2,15 @@ local
   $(SML_LIB)/basis/basis.mlb
   $(LIBS)/sml-telescopes/telescopes.mlb
   $(LIBS)/sml-typed-abts/abt.mlb
-  src/judgment.sig
-  src/lcf.sig
-  src/hole_util.sig
-  src/hole_util.fun
-  src/dependent_lcf.fun
-  src/multitacticals.sig
-  src/multitacticals.fun
-  src/tacticals.sig
-  src/tacticals.fun
+  src/dependent_lcf/judgment.sig
+  src/dependent_lcf/lcf.sig
+  src/dependent_lcf/hole_util.sig
+  src/dependent_lcf/hole_util.fun
+  src/dependent_lcf/dependent_lcf.fun
+  src/dependent_lcf/multitacticals.sig
+  src/dependent_lcf/multitacticals.fun
+  src/dependent_lcf/tacticals.sig
+  src/dependent_lcf/tacticals.fun
 in
   signature JUDGMENT
   signature ABT_JUDGMENT
