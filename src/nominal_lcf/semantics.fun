@@ -1,20 +1,14 @@
 functor NominalLcfSemantics (M : NOMINAL_LCF_MODEL) : NOMINAL_LCF_SEMANTICS =
 struct
   open M
-  structure T = Tacticals (Lcf)
-  structure MT = Multitacticals (Lcf)
+  structure Lcf = MT.Lcf
 
   fun extendTactic (tac : tactic) : multitactic =
     MT.ALL o tac
 
   fun contractMultitactic (mtac : multitactic) : tactic =
-    fn alpha => fn jdg =>
-      let
-        val x = Lcf.J.Tm.Metavariable.named "?x"
-        val psi = Lcf.T.snoc Lcf.T.empty x jdg
-      in
-        mtac alpha (psi, fn rho => Lcf.T.lookup rho x)
-      end
+    fn alpha =>
+      mtac alpha o Lcf.return
 
   fun composeMultitactics mtacs =
     List.foldr

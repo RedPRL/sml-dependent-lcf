@@ -6,7 +6,8 @@ struct
 
   structure Multi = Multitacticals (Lcf)
 
-  val ID = Multi.ID
+  fun ID jdg =
+    return jdg
 
   fun THEN (t1, t2) =
     Multi.ALL t2 o t1
