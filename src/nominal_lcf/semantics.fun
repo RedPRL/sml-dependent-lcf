@@ -1,6 +1,7 @@
 functor NominalLcfSemantics (M : NOMINAL_LCF_MODEL) : NOMINAL_LCF_SEMANTICS =
 struct
   open M
+  structure T = Tacticals (Lcf)
   structure MT = Multitacticals (Lcf)
 
   fun extendTactic (tac : tactic) : multitactic =
@@ -55,6 +56,8 @@ struct
              end
          | Tactic.REC (x, tac) =>
              Rec (fn t => tactic (sign, Syn.VarCtx.insert rho x t) tac)
+         | Tactic.PROGRESS tac =>
+             T.PROGRESS o tactic (sign, rho) tac
          | Tactic.RULE rl => rule (sign, rho) rl
          | Tactic.VAR x => Syn.VarCtx.lookup rho x
 

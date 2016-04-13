@@ -28,6 +28,7 @@ sig
         SEQ of multitactic binding list
       | ORELSE of tactic * tactic
       | REC of variable * tactic
+      | PROGRESS of tactic
       | RULE of rule
       | VAR of variable
 
