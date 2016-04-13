@@ -31,35 +31,45 @@ struct
   local
     open Syn
   in
-    fun statement (sign, rho) stmt =
-      case Stmt.out sign stmt of
-           Stmt.SEQ bindings =>
+
+    fun Rec f alpha jdg =
+      f (Rec f) alpha jdg
+
+    fun tactic (sign, rho) tac =
+      case Tactic.out sign tac of
+           Tactic.SEQ bindings =>
              let
                fun multitacBinding (us, mtac) =
                  (us, multitactic (sign, rho) mtac)
              in
                contractMultitactic (composeMultitactics (List.map multitacBinding bindings))
              end
-         | Stmt.TAC tac =>
-             tactic (sign, rho) tac
-         | Stmt.VAR x =>
-             Syn.VarCtx.lookup rho x
-
-    and tactic (sign, rho) =
-      tacticR statement (sign, rho)
+         | Tactic.ORELSE (tac1, tac2) =>
+             let
+               val t1 = tactic (sign, rho) tac1
+               val t2 = tactic (sign, rho) tac2
+             in
+               fn alpha => fn jdg =>
+                 t1 alpha jdg
+                   handle _ => t2 alpha jdg
+             end
+         | Tactic.REC (x, tac) =>
+             Rec (fn t => tactic (sign, Syn.VarCtx.insert rho x t) tac)
+         | Tactic.RULE rl => rule (sign, rho) rl
+         | Tactic.VAR x => Syn.VarCtx.lookup rho x
 
     and multitactic (sign, rho) mtac =
-      case Multi.out sign mtac of
-           Multi.ALL stmt =>
-             MT.ALL o statement (sign, rho) stmt
-         | Multi.EACH stmts =>
+      case Multitactic.out sign mtac of
+           Multitactic.ALL tac =>
+             MT.ALL o tactic (sign, rho) tac
+         | Multitactic.EACH tacs =>
              let
-               val ts = List.map (statement (sign, rho)) stmts
+               val ts = List.map (tactic (sign, rho)) tacs
              in
                fn alpha =>
                  MT.EACH' (List.map (fn t => t alpha) ts)
              end
-         | Multi.FOCUS (i, stmt) =>
-             MT.FOCUS i o statement (sign, rho) stmt
+         | Multitactic.FOCUS (i, tac) =>
+             MT.FOCUS i o tactic (sign, rho) tac
   end
 end

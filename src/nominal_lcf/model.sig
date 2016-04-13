@@ -1,6 +1,6 @@
 (* A model of Nominal LCF consists in a tactic metalanguage, a spread of
- * sequences of atoms, and an interpretation of primitive tactics into the
- * metalanguage language. *)
+ * sequences of atoms, and an interpretation of the primitive rules of inference
+ * into the metalanguage. *)
 signature NOMINAL_LCF_MODEL =
 sig
   (* We will construct a model for a Nominal LCF theory [Syn]. *)
@@ -25,15 +25,9 @@ sig
   (* An environment assigns a tactic to each variable. *)
   type env = tactic Syn.VarCtx.dict
 
-  (* An interpretation takes a signature and an environment, and
-   * translates syntax into semantics. *)
-  type ('syn, 'sem) interp
-    = Syn.sign * env
-    -> 'syn
-    -> 'sem
-
-  val tacticR
-    : (Syn.statement, tactic) interp
-    -> (Syn.tactic, tactic) interp
+  (* A model provides an interpretation of a refinement theory's primitive
+   * rules of inference as nominal tactics, relative to a signature and
+   * an environment. *)
+  val rule : Syn.sign * env -> Syn.rule -> tactic
 end
 

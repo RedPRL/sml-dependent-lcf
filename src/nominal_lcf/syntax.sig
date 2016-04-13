@@ -2,37 +2,46 @@ signature NOMINAL_LCF_SYNTAX =
 sig
   type atom
   type variable
-  type sort
 
-  type statement
-  type multitactic
+  (* A [rule] is an atomic tactic, a leaf node of a proof. *)
+  type rule
+
+  (* A [tactic] operates on a single judgment. *)
   type tactic
 
+  (* A [multitactic] operates on a full proof-state. *)
+  type multitactic
+
+  (* The notion of a signature may differ depending on the refinement theory.
+   * Signatures might contain declarations, definitional extensions, etc.; the
+   * Nominal LCF theory is completely agnostic on this count. *)
   type sign
 
   structure VarCtx : DICT
     where type key = variable
 
-  structure Multi :
-  sig
-    datatype view =
-        ALL of statement
-      | EACH of statement list
-      | FOCUS of int * statement
-
-    val out : sign -> multitactic -> view
-  end
-
-  structure Stmt :
+  structure Tactic :
   sig
     type 'a binding = atom list * 'a
 
     datatype view =
         SEQ of multitactic binding list
-      | TAC of tactic
+      | ORELSE of tactic * tactic
+      | REC of variable * tactic
+      | RULE of rule
       | VAR of variable
 
-    val out : sign -> statement -> view
+    val out : sign -> tactic -> view
+  end
+
+  structure Multitactic :
+  sig
+    datatype view =
+        ALL of tactic
+      | EACH of tactic list
+      | FOCUS of int * tactic
+
+    val out : sign -> multitactic -> view
   end
 end
 
