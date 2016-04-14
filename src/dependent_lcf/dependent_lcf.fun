@@ -93,13 +93,13 @@ struct
 
   structure Monad =
   struct
-    type 'x j = 'x Judgable.t
-    type 'x t = 'x j State.t
+    structure J = Judgable
+    type 'x t = 'x J.t State.t
 
     val unit =
       unit
 
-    fun openEnv (psi : 'a j ctx) : environment =
+    fun openEnv (psi : 'a J.t ctx) : environment =
       let
         open T.ConsView
         fun go rho =
@@ -115,7 +115,7 @@ struct
 
     infix //
 
-    fun extend (f : 'a j -> 'b t) : 'a t -> 'b t =
+    fun extend (f : 'a J.t -> 'b t) : 'a t -> 'b t =
       let
         open T.ConsView
         fun go env (psi, vld) =

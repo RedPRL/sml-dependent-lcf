@@ -1,23 +1,3 @@
-signature FUNCTOR =
-sig
-  type 'a t
-  val map : ('a -> 'b) -> 'a t -> 'b t
-end
-
-(* Monads Need Not Be Endofunctors: http://www.cs.nott.ac.uk/~psztxa/publ/Relative_Monads.pdf *)
-signature RELATIVE_MONAD =
-sig
-  type 'x j (* leaves *)
-  type 'x t (* trees *)
-
-  (* the unit of the relative monad creates a leaf node *)
-  val unit : 'x j -> 'x t
-
-  (* the Kleisli extension of the relative monad substitutes
-   * new subtrees for each leaf node. *)
-  val extend : ('x j -> 'y t) -> 'x t -> 'y t
-end
-
 signature LCF_CONTEXT =
 sig
   type 'a ctx
@@ -69,7 +49,7 @@ sig
    * leaf nodes in a proof tree, and also the substitution of
    * a new subtree for a leaf node. *)
   structure Monad : RELATIVE_MONAD
-    where type 'a j = 'a Judgable.t
+    where type 'a J.t = 'a Judgable.t
     where type 'a t = 'a Judgable.t State.t
 
 end

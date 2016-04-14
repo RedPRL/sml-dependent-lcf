@@ -2,6 +2,7 @@ local
   $(SML_LIB)/basis/basis.mlb
   $(LIBS)/sml-telescopes/telescopes.mlb
   $(LIBS)/sml-typed-abts/abt.mlb
+  src/basis/basis.mlb
   src/dependent_lcf/judgment.sig
   src/dependent_lcf/lcf.sig
   src/dependent_lcf/hole_util.sig

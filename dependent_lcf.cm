@@ -20,6 +20,7 @@ is
   $/basis.cm
   $libs/sml-telescopes/telescopes.cm
   $libs/sml-typed-abts/abt.cm
+  src/basis/basis.cm
   src/dependent_lcf/judgment.sig
   src/dependent_lcf/lcf.sig
   src/dependent_lcf/hole_util.sig
