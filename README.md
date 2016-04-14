@@ -101,9 +101,9 @@ built up as rules in an individual refiner with no loss of expressivity.
 
 The limitation and strictures imposed here are necessary because, rather than
 building a refiner for a particular logic, we intend to build a refinement
-which can be used for defining arbitrary logics. As such, our constraints are
-very different from those that led to the current design of Coq's refiner, and
-so we have arrived at a different approach.
+framework which can be used for defining arbitrary logics. As such, our
+constraints are very different from those that led to the current design of
+Coq's refiner, and so we have arrived at a different approach.
 
 ### Nominal LCF
 
