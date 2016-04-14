@@ -6,6 +6,8 @@ local
   src/lcf/lcf.sig
   src/lcf/lcf_util.sig
   src/lcf/lcf_util.fun
+  src/lcf/tacticals.sig
+  src/lcf/multitacticals.sig
 in
   signature JUDGMENT
   signature LCF_CONTEXT
@@ -13,4 +15,7 @@ in
   signature CLASSIC_LCF
   signature LCF_UTIL
   functor LcfUtil
+
+  signature MULTITACTICALS
+  signature TACTICALS
 end

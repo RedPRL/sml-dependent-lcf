@@ -5,6 +5,9 @@ Library
   signature CLASSIC_LCF
   signature LCF_UTIL
   functor LcfUtil
+
+  signature MULTITACTICALS
+  signature TACTICALS
 is
   src/basis/basis.cm
   src/lcf/judgment.sig
@@ -12,3 +15,5 @@ is
   src/lcf/lcf.sig
   src/lcf/lcf_util.sig
   src/lcf/lcf_util.fun
+  src/lcf/tacticals.sig
+  src/lcf/multitacticals.sig
