@@ -78,7 +78,7 @@ LCF library; that is, we provide machinery for dependent refinement that is
 valid regardless of the logic it is deployed at, and this comes crucially from
 the following facts:
 
-1. Metavariables corresponds one-to-one with goals. There is no difference
+1. Metavariables correspond one-to-one with goals. There is no difference
    between a hole and a goal.
 
 2. A metavariable can be solved *only* by applying a refinement rule to the
@@ -104,7 +104,7 @@ consuming a free choice sequence of atoms/symbols. A free choice sequence is
 like an infinite stream, except its elements are got by interaction with a
 subject (i.e. a user) rather than by means of a computable function.
 
-The continuity of nominal tactics allows us to calculate how much of a the name
+The continuity of nominal tactics allows us to calculate how much of the name
 sequence a particular tactic has consumed (i.e. compute the modulus of
 continuity of the stream processor), and use this in order to split the
 sequence between tactics in order to ensure that names are consumed in the
