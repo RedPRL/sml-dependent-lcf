@@ -1,0 +1,8 @@
+Library
+  signature FUNCTOR
+  signature RELATIVE_MONAD
+  functor RelativeMonadFunctor
+is
+  functor.sig
+  relative_monad.sig
+  relative_monad.fun

@@ -32,7 +32,9 @@ sig
 
   (* A model provides an interpretation of a refinement theory's primitive
    * rules of inference as nominal tactics, relative to a signature and
-   * an environment. *)
+   * an environment.
+   *
+   * [Σ |=[ρ] rule ==> T] *)
   val rule : Syn.sign * env -> Syn.rule -> tactic
 end
 

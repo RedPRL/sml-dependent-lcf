@@ -7,7 +7,7 @@ Library
   functor NominalLcfSemantics
 is
   $libs/cmlib/cmlib.cm
-  dependent_lcf.cm
+  lcf.cm
 
   src/nominal_lcf/spread.sig
   src/nominal_lcf/spread.sml

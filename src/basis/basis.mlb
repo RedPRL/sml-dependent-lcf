@@ -1,0 +1,10 @@
+local
+  $(SML_LIB)/basis/basis.mlb
+  functor.sig
+  relative_monad.sig
+  relative_monad.fun
+in
+  signature FUNCTOR
+  signature RELATIVE_MONAD
+  functor RelativeMonadFunctor
+end

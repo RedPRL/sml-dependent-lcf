@@ -9,6 +9,23 @@ struct
   structure T = Telescope (Lbl)
   type 'a ctx = 'a T.telescope
 
+  structure Ctx =
+  struct
+    type 'a ctx = 'a ctx
+    type metavariable = metavariable
+
+    fun mapWithKeys f =
+      let
+        open T.ConsView
+        val rec go =
+          fn EMPTY => T.empty
+           | CONS (x, a, psi) =>
+               T.cons x (f (x, a)) (go (out psi))
+      in
+        go o out
+      end
+  end
+
   type environment = evidence ctx
   type validation = environment -> evidence
 
@@ -17,7 +34,6 @@ struct
   type multitactic = judgment state -> judgment state
 
   structure HoleUtil = HoleUtil (structure Tm = Tm and J = J and T = T)
-
   structure TShow = ShowTelescope (structure T = T val labelToString = Lbl.toString)
 
   fun stateToString (psi, vld) =
@@ -33,7 +49,7 @@ struct
        J.Tm.Metavariable.named ("?" ^ Int.toString (!i)))
   end
 
-  fun return jdg =
+  fun unit jdg =
     let
       val v = newMeta ()
       val theta = T.snoc T.empty v jdg
@@ -42,24 +58,80 @@ struct
          T.lookup rho v)
     end
 
-  fun subst (t : metavariable -> judgment -> judgment state) =
-    let
-      open T.ConsView
-      fun go (psi, vld) =
-        case out psi of
-             EMPTY => (psi, vld)
-           | CONS (x, jdgx, psi) =>
-               let
-                 val (psix, vldx) = t x jdgx
-                 fun vld' rho = vld (T.snoc rho x (vldx rho))
-                 val psi' = T.map (J.substEvidence (vldx (HoleUtil.openEnv psix), x)) psi
-                 val (psi'', vld'') = go (psi', vld')
-               in
-                 (T.append (psix, psi''), vld'')
-               end
-    in
-      go
-    end
+  datatype 'a judgable =
+    JUDGABLE of
+      {judgment : 'a,
+       evidenceValence : valence,
+       subst : evidence Tm.MetaCtx.dict -> 'a judgable}
 
+  structure Judgable =
+  struct
+    type 'a t = 'a judgable
+
+    fun map (f : 'a -> 'b) (JUDGABLE {judgment, evidenceValence, subst}) =
+      JUDGABLE
+        {judgment = f judgment,
+         evidenceValence = evidenceValence,
+         subst = map f o subst}
+
+    fun into jdg =
+      JUDGABLE
+        {judgment = jdg,
+         evidenceValence = evidenceValence jdg,
+         subst = fn rho => into (substEvidenceEnv rho jdg)}
+
+    fun out (JUDGABLE {judgment,...}) =
+      judgment
+  end
+
+  structure State =
+  struct
+    type 'a t = 'a state
+    fun map f (psi, vld) =
+      (T.map f psi, vld)
+  end
+
+  structure Monad =
+  struct
+    structure J = Judgable
+    type 'x t = 'x J.t State.t
+
+    val unit =
+      unit
+
+    fun openEnv (psi : 'a J.t ctx) : environment =
+      let
+        open T.ConsView
+        fun go rho =
+          fn EMPTY => rho
+           | CONS (x, JUDGABLE {evidenceValence,...}, phi) =>
+               go (T.snoc rho x (HoleUtil.makeHole (x, evidenceValence))) (out phi)
+      in
+        go T.empty (out psi)
+      end
+
+    fun // (JUDGABLE {subst,...}, rho) =
+      subst rho
+
+    infix //
+
+    fun extend (f : 'a J.t -> 'b t) : 'a t -> 'b t =
+      let
+        open T.ConsView
+        fun go env (psi, vld) =
+          case out psi of
+               EMPTY => (T.empty, vld)
+             | CONS (x, jdg, psi) =>
+                 let
+                   val (psix, vldx) = f (jdg // env)
+                   val vld' = vld o (fn rho => T.snoc rho x (vldx rho))
+                   val env' = Tm.MetaCtx.insert env x (vldx (openEnv psix))
+                   val (psi', vld'') = go env' (psi, vld')
+                 in
+                   (T.append (psix, psi'), vld'')
+                 end
+      in
+        go Tm.MetaCtx.empty
+      end
+  end
 end
-

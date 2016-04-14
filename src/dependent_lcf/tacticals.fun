@@ -5,9 +5,10 @@ struct
   structure HoleUtil = HoleUtil (structure J = J and T = T)
 
   structure Multi = Multitacticals (Lcf)
+  structure LcfUtil = LcfUtil (Lcf)
 
   fun ID jdg =
-    return jdg
+    LcfUtil.unit jdg
 
   fun THEN (t1, t2) =
     Multi.ALL t2 o t1

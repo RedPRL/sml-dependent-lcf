@@ -1,6 +1,6 @@
 signature TACTICALS =
 sig
-  structure Lcf : DEPENDENT_LCF
+  structure Lcf : LCF
 
   val ID : Lcf.tactic
   val THEN : Lcf.tactic * Lcf.tactic -> Lcf.tactic

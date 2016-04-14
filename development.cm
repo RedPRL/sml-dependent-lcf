@@ -1,8 +1,4 @@
-Library
-  signature NOMINAL_LCF_SYNTAX
-  signature NOMINAL_LCF_MODEL
-  signature NOMINAL_LCF_SEMANTICS
-  functor NominalLcfSemantics
+Group
 is
   $/basis.cm
   lib/sml-typed-abts/abt.cm

@@ -5,14 +5,16 @@ struct
 
   type multitactic = judgment state -> judgment state
 
+  structure LcfUtil = LcfUtil (Lcf)
+
   fun ID jdg =
-    return jdg
+    LcfUtil.unit jdg
 
   fun ALL t =
-    subst (fn _ => t)
+    LcfUtil.extend t
 
   fun EACHX ts =
-    subst (T.lookup ts)
+    LcfUtil.labeledExtend (T.lookup ts)
 
   fun EACH ts (psi, vld) =
     let
