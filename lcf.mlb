@@ -1,0 +1,16 @@
+local
+  $(SML_LIB)/basis/basis.mlb
+  src/basis/basis.mlb
+  src/lcf/judgment.sig
+  src/lcf/lcf_context.sig
+  src/lcf/lcf.sig
+  src/lcf/lcf_util.sig
+  src/lcf/lcf_util.fun
+in
+  signature JUDGMENT
+  signature LCF_CONTEXT
+  signature LCF
+  signature CLASSIC_LCF
+  signature LCF_UTIL
+  functor LcfUtil
+end
