@@ -73,10 +73,10 @@ goal plays a part in the *statement* of another goal. Subgoals are collected,
 then, into *telescopes* rather than lists.
 
 Unlike standard approaches, including that used by Coq's refiner, the
-correctness conditions of the dependent refinement are local to the Dependent
-LCF library; that is, we provide machinery for dependent refinement that is
-valid regardless of the logic it is deployed at, and this comes crucially from
-the following facts:
+correctness conditions of the dependent refinement are completely local to the
+Dependent LCF library; that is, we provide machinery for dependent refinement
+that is valid regardless of the logic it is deployed at, and this comes
+crucially from the following facts:
 
 1. Metavariables correspond one-to-one with goals. There is no difference
    between a hole and a goal.
@@ -86,10 +86,24 @@ the following facts:
    metavariables by unification, and there is no non-local solution of
    metavariables.
 
-Contrast this with standard approaches which, whilst very convenient, turn out
-to be invalid for logics that have either subtyping or non-discrete judgmental
-equality. We believe that whatever machinery that is necessary beyond pure
-dependent refinement can be built up as part of an individual refiner.
+In contrast, standard approaches to dependent refinement often involve
+existential variables which are not intrinsically linked to a single goal, and
+which can be solved by unification and by non-local action. This is very
+convenient for proof automation, but it cannot be built into a *general-purpose*
+refinement framework.
+
+Consider the case of a logic with subtyping or polymorphism: such extensions
+would allow invalid refinement steps, meaning that the synthesis of refinement
+cannot be trusted and must be verified separately, which is manifestly what we
+intend to avoid in *defining* a logic by its refiner.  We believe that whatever
+affordances for metavariables are needed (e.g. non-local solution, etc.) can be
+built up as rules in an individual refiner with no loss of expressivity.
+
+The limitation and strictures imposed here are necessary because, rather than
+building a refiner for a particular logic, we intend to build a refinement
+which can be used for defining arbitrary logics. As such, our constraints are
+very different from those that led to the current design of Coq's refiner, and
+so we have arrived at a different approach.
 
 ### Nominal LCF
 
