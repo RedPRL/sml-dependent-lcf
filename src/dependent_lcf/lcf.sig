@@ -1,11 +1,3 @@
-signature LCF_CONTEXT =
-sig
-  type 'a ctx
-  type metavariable
-
-  val mapWithKeys : (metavariable * 'a -> 'b) -> 'a ctx -> 'b ctx
-end
-
 signature LCF =
 sig
   structure Ctx : LCF_CONTEXT
@@ -54,44 +46,10 @@ sig
 
 end
 
-signature LCF_UTIL =
-sig
-  include LCF
-
-  val unit : judgment -> judgment state
-
-  val extend : tactic -> multitactic
-  val labeledExtend : (metavariable -> tactic) -> multitactic
-
-  val contract : multitactic -> tactic
-end
-
 (* Classic LCF arises from letting [Judgable] be the identity functor;
  * in this case, the relative monad is just a standard monad. *)
 signature CLASSIC_LCF = LCF
   where type 'a Judgable.t = 'a
   where type 'a Ctx.ctx = 'a list
   where type Ctx.metavariable = int
-
-(* Dependent LCF arises from endowing the evidence of judgments with
- * a valence and a substitution action. *)
-signature DEPENDENT_LCF =
-sig
-  structure J : ABT_JUDGMENT
-  structure T : TELESCOPE
-    where type Label.t = J.metavariable
-
-  datatype 'a judgable =
-    JUDGABLE of
-      {judgment : 'a,
-       evidenceValence : J.valence,
-       subst : J.evidence J.Tm.MetaCtx.dict -> 'a judgable}
-
-  include LCF
-    where type judgment = J.judgment
-    where type evidence = J.evidence
-    where type 'a Ctx.ctx = 'a T.telescope
-    where type Ctx.metavariable = J.metavariable
-    where type 'a Judgable.t = 'a judgable
-end
 

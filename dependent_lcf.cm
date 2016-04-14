@@ -22,9 +22,13 @@ is
   $libs/sml-typed-abts/abt.cm
   src/basis/basis.cm
   src/dependent_lcf/judgment.sig
+  src/dependent_lcf/lcf_context.sig
   src/dependent_lcf/lcf.sig
+  src/dependent_lcf/lcf_util.sig
+  src/dependent_lcf/lcf_util.fun
   src/dependent_lcf/hole_util.sig
   src/dependent_lcf/hole_util.fun
+  src/dependent_lcf/dependent_lcf.sig
   src/dependent_lcf/dependent_lcf.fun
   src/dependent_lcf/tacticals.sig
   src/dependent_lcf/tacticals.fun
