@@ -30,7 +30,7 @@ We have decomposed the LCF `tactic` type by means of an auxiliary type `'a
 state` of proof states with judgments in `'a`. Then, the standard tree
 operations for LCF tactic proofs (such as the classic `THEN*` tacticals) are
 captured by the Kleisli extension operation of a relative monad on the functor
-`'a Judgment.t`.
+`'a Judgable.t`.
 
 #### correctness conditions
 
