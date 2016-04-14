@@ -15,6 +15,8 @@ in
   signature JUDGMENT
   signature ABT_JUDGMENT
   signature LCF
+  signature LCF_UTIL
+  signature CLASSIC_LCF
   signature DEPENDENT_LCF
   signature TACTICALS
   signature MULTITACTICALS
@@ -22,6 +24,7 @@ in
   signature HOLE_KIT
   signature HOLE_UTIL
 
+  functor LcfUtil
   functor DependentLcf
   functor Multitacticals
   functor Tacticals

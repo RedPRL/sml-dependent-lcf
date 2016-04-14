@@ -1,14 +1,10 @@
 functor NominalLcfSemantics (M : NOMINAL_LCF_MODEL) : NOMINAL_LCF_SEMANTICS =
 struct
   open M
-  structure Lcf = MT.Lcf
-
-  fun extendTactic (tac : tactic) : multitactic =
-    MT.ALL o tac
+  structure Lcf = LcfUtil (MT.Lcf)
 
   fun contractMultitactic (mtac : multitactic) : tactic =
-    fn alpha =>
-      mtac alpha o Lcf.return
+    Lcf.contract o mtac
 
   fun composeMultitactics mtacs =
     List.foldr
@@ -30,6 +26,7 @@ struct
     fun Rec f alpha jdg =
       f (Rec f) alpha jdg
 
+    (* [Σ |=[ρ] tac ==> T] *)
     fun tactic (sign, rho) tac =
       case Tactic.out sign tac of
            Tactic.SEQ bindings =>
@@ -55,6 +52,7 @@ struct
          | Tactic.RULE rl => rule (sign, rho) rl
          | Tactic.VAR x => Syn.VarCtx.lookup rho x
 
+    (* [Σ |=[ρ] mtac ==> M] *)
     and multitactic (sign, rho) mtac =
       case Multitactic.out sign mtac of
            Multitactic.ALL tac =>
