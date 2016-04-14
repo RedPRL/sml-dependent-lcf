@@ -72,6 +72,25 @@ Dependent LCF is an implementation of the LCF interface which provides a
 goal plays a part on the *statement* of another goal. Subgoals are collected,
 then, into *telescopes* rather than lists.
 
+Unlike standard approaches, including that used by Coq's refiner, the
+correctness conditions of the dependent refinement are local to the Dependent
+LCF library; that is, we provide machinery for dependent refinement that is
+valid regardless of the logic it is deployed at, and this comes crucially from
+the following facts:
+
+1. Metavariables corresponds one-to-one with goals. There is no difference
+   between a hole and a goal.
+
+2. A metavariable can be solved *only* by applying a refinement rule to the
+   judgment with which it is labeled. Dependent LCF does not solve
+   metavariables by unification, and there is no non-local solution of
+   metavariables.
+
+Contrast this with standard approaches which, whilst very convenient, turn out
+to be invalid for logics that have either subtyping or non-discrete judgmental
+equality. We believe that whatever machinery that is necessary beyond pure
+dependent refinement can be built up as part of an individual refiner.
+
 ### Nominal LCF
 
 Nominal LCF is a concrete language for refinement proof with well-scoped
