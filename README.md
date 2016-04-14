@@ -1,4 +1,4 @@
-This repository contains a collection of modular libraries for building
+This repository contains a collection of very modular libraries for building
 tactic-based refiners in the LCF tradition.
 
 ### LCF: modernized refinement proof
@@ -69,7 +69,7 @@ trusted), both in respect of correctness and in respect of real-world performanc
 
 Dependent LCF is an implementation of the LCF interface which provides a
 *principled* way to deal with dependent refinement, where *evidence* of one
-goal plays a part on the *statement* of another goal. Subgoals are collected,
+goal plays a part in the *statement* of another goal. Subgoals are collected,
 then, into *telescopes* rather than lists.
 
 Unlike standard approaches, including that used by Coq's refiner, the
