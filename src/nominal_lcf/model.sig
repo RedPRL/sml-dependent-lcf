@@ -9,10 +9,10 @@ sig
   (* A model begins with a tactic metalanguage. *)
   structure T : TACTICALS
   structure MT : MULTITACTICALS
-    where type 'a Lcf.ctx = 'a T.Lcf.ctx
+    where type 'a Lcf.Ctx.ctx = 'a T.Lcf.ctx
+    where type Lcf.Ctx.metavariable = T.Lcf.metavariable
     where type Lcf.judgment = T.Lcf.judgment
     where type Lcf.evidence = T.Lcf.evidence
-    where type Lcf.metavariable = T.Lcf.metavariable
 
   (* The nominal character of the semantics is dealt with using a Brouwerian
    * spread, a space whose points are free choice sequences. A free choice
