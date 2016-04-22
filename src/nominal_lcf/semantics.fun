@@ -13,8 +13,9 @@ struct
           val beta = Spr.prepend us alpha
           val (beta', modulus) = Spr.probe (Spr.prepend us beta)
           val st' = mtac beta' st
+          val l = Int.max (0, !modulus - List.length us)
         in
-          rest (Spr.bite (!modulus) beta) st'
+          rest (Spr.bite l alpha) st'
         end)
       (fn _ => fn st => st)
       mtacs
