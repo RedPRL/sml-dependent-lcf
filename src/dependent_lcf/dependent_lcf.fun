@@ -62,7 +62,7 @@ struct
     JUDGABLE of
       {judgment : 'a,
        evidenceValence : valence,
-       subst : evidence Tm.MetaCtx.dict -> 'a judgable}
+       subst : Tm.metaenv -> 'a judgable}
 
   structure Judgable =
   struct
@@ -125,13 +125,13 @@ struct
                  let
                    val (psix, vldx) = f (jdg // env)
                    val vld' = vld o (fn rho => T.snoc rho x (vldx rho))
-                   val env' = Tm.MetaCtx.insert env x (vldx (openEnv psix))
+                   val env' = Tm.Metavariable.Ctx.insert env x (vldx (openEnv psix))
                    val (psi', vld'') = go env' (psi, vld')
                  in
                    (T.append (psix, psi'), vld'')
                  end
       in
-        go Tm.MetaCtx.empty
+        go Tm.Metavariable.Ctx.empty
       end
   end
 end
