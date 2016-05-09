@@ -32,17 +32,19 @@ struct
 
   structure UnificationKit =
   struct
-    structure T = T and Ren = Tm.MetaCtx
+    structure MetaCtx = Tm.Metavariable.Ctx and VarCtx = Tm.Variable.Ctx and SymCtx = Tm.Symbol.Ctx
+
+    structure T = T and Ren = MetaCtx
     type term = judgment
 
     fun variableRenamingIsVacuous rho =
-      Tm.VarCtx.foldl
+      VarCtx.foldl
         (fn (k, v, b) => b andalso Tm.Variable.eq (k, v))
         true
         rho
 
     fun symbolRenamingIsVacuous rho =
-      Tm.SymCtx.foldl
+      SymCtx.foldl
         (fn (k, v, b) => b andalso Tm.Symbol.eq (k, v))
         true
         rho
@@ -62,12 +64,12 @@ struct
       let
         val psi = judgmentMetactx jdg
         val env =
-          Tm.MetaCtx.foldl
+          MetaCtx.foldl
             (fn (k, x, acc) =>
-              case Tm.MetaCtx.find psi x of
+              case MetaCtx.find psi x of
                   NONE => acc
-                | SOME vl => Tm.MetaCtx.insert acc x (HoleUtil.makeHole (x, vl)))
-            Tm.MetaCtx.empty
+                | SOME vl => MetaCtx.insert acc x (HoleUtil.makeHole (x, vl)))
+            MetaCtx.empty
             rho
       in
         substEvidenceEnv env jdg

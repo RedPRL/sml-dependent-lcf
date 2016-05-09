@@ -13,7 +13,7 @@ sig
   val evidenceValence : judgment -> valence
 
   val judgmentMetactx : judgment -> Tm.metactx
-  val substEvidenceEnv : evidence Tm.MetaCtx.dict -> judgment -> judgment
+  val substEvidenceEnv : Tm.metaenv -> judgment -> judgment
   val unifyJudgment : judgment * judgment -> Tm.Unify.renaming option
 end
 

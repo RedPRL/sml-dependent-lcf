@@ -10,7 +10,7 @@ sig
     JUDGABLE of
       {judgment : 'a,
        evidenceValence : J.valence,
-       subst : J.evidence J.Tm.MetaCtx.dict -> 'a judgable}
+       subst : J.Tm.metaenv -> 'a judgable}
 
   include LCF
     where type judgment = J.judgment
