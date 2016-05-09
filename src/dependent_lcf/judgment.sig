@@ -1,6 +1,6 @@
 signature ABT_JUDGMENT =
 sig
-  structure Tm : ABT
+  structure Tm : ABT where type 'a Operator.Arity.Valence.Spine.t = 'a list
   type valence = Tm.valence
 
   include JUDGMENT

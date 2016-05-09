@@ -1,3 +1,20 @@
+functor FreshSymbols (S : SYMBOL) =
+struct
+  fun freshSyms ss =
+    let
+      fun go ctx [] = []
+        | go ctx (s :: ss) =
+            let
+              val u = S.fresh ctx "?"
+            in
+              (u, s) :: go (S.Ctx.insert ctx u ()) ss
+            end
+    in
+      go S.Ctx.empty ss
+    end
+
+end
+
 functor HoleUtil (Kit : HOLE_KIT) : HOLE_UTIL =
 struct
   open Kit Kit.J
@@ -5,21 +22,18 @@ struct
 
   structure VarCtx = Tm.Variable.Ctx and SymCtx = Tm.Symbol.Ctx
   structure MetaCtxUtil = ContextUtil (structure Ctx = Tm.Metavariable.Ctx and Elem = Tm.Operator.Arity.Valence)
+  structure FreshSyms = FreshSymbols (Tm.Symbol) and FreshVars = FreshSymbols (Tm.Variable)
 
-  (* TODO: use Variable.fresh *)
   fun makeHole (v : J.metavariable, vl : J.valence) : Tm.abs =
     let
       open Tm infix \ $#
       val ((sigmas, taus), tau) = vl
-      val syms = Spine.map (fn sigma => (Symbol.named "?", sigma)) sigmas
-      val vars = Spine.map (fn _ => Variable.named "?") taus
-      val varTerms =
-        Spine.Pair.mapEq
-          (fn (x,tau) => check (`x, tau))
-          (vars, taus)
+      val syms = FreshSyms.freshSyms sigmas
+      val vars = FreshVars.freshSyms taus
+      val varTerms = List.map (fn (x,tau) => check (`x, tau)) vars
       val tm = check (v $# (syms, varTerms), tau)
     in
-      checkb ((Spine.map #1 syms, vars) \ tm, vl)
+      checkb ((List.map #1 syms, List.map #1 vars) \ tm, vl)
     end
 
   fun openEnv psi =
