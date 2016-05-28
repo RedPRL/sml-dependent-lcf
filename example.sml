@@ -1,12 +1,12 @@
-structure Sort : SORT =
+structure Sort : ABT_SORT =
 struct
   type t = unit
   val eq = op=
   fun toString () = "exp"
 end
 
-structure Valence = Valence (structure Sort = Sort and Spine = ListSpine)
-structure Arity = Arity (Valence)
+structure Valence = AbtValence (structure Sort = Sort and Spine = ListSpine)
+structure Arity = AbtArity (Valence)
 
 structure O =
 struct
@@ -207,4 +207,3 @@ struct
 
   val _ = run (TRUE goal) script
 end
-

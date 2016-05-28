@@ -1,4 +1,4 @@
-functor FreshSymbols (S : SYMBOL) =
+functor FreshSymbols (S : ABT_SYMBOL) =
 struct
   fun freshSyms ss =
     let
@@ -46,5 +46,3 @@ struct
       go (out psi) T.empty
     end
 end
-
-
