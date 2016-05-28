@@ -18,11 +18,11 @@ end
 functor HoleUtil (Kit : HOLE_KIT) : HOLE_UTIL =
 struct
   open Kit Kit.J
-  structure Spine = Tm.Operator.Arity.Valence.Spine
+  structure Spine = Tm.O.Ar.Vl.Sp
 
-  structure VarCtx = Tm.Variable.Ctx and SymCtx = Tm.Symbol.Ctx
-  structure MetaCtxUtil = ContextUtil (structure Ctx = Tm.Metavariable.Ctx and Elem = Tm.Operator.Arity.Valence)
-  structure FreshSyms = FreshSymbols (Tm.Symbol) and FreshVars = FreshSymbols (Tm.Variable)
+  structure VarCtx = Tm.Var.Ctx and SymCtx = Tm.Sym.Ctx
+  structure MetaCtxUtil = ContextUtil (structure Ctx = Tm.Metavar.Ctx and Elem = Tm.O.Ar.Vl)
+  structure FreshSyms = FreshSymbols (Tm.Sym) and FreshVars = FreshSymbols (Tm.Var)
 
   fun makeHole (v : J.metavariable, vl : J.valence) : Tm.abs =
     let
