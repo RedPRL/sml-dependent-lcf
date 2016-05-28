@@ -1,10 +1,8 @@
 functor DependentLcf (Kit : ABT_JUDGMENT) : DEPENDENT_LCF =
 struct
   open Kit
-  structure J = Kit and Spine = Tm.Operator.Arity.Valence.Spine
-  structure Metavariable = Tm.Metavariable
-
-  structure Lbl = Tm.Metavariable
+  structure J = Kit and Spine = Tm.O.Ar.Vl.Sp
+  structure Lbl = Tm.Metavar
 
   structure T = Telescope (Lbl)
   type 'a ctx = 'a T.telescope
@@ -46,7 +44,7 @@ struct
   in
     fun newMeta () =
       (i := !i + 1;
-       J.Tm.Metavariable.named ("?" ^ Int.toString (!i)))
+       Lbl.named ("?" ^ Int.toString (!i)))
   end
 
   fun unit jdg =
@@ -125,13 +123,13 @@ struct
                  let
                    val (psix, vldx) = f (jdg // env)
                    val vld' = vld o (fn rho => T.snoc rho x (vldx rho))
-                   val env' = Tm.Metavariable.Ctx.insert env x (vldx (openEnv psix))
+                   val env' = Lbl.Ctx.insert env x (vldx (openEnv psix))
                    val (psi', vld'') = go env' (psi, vld')
                  in
                    (T.append (psix, psi'), vld'')
                  end
       in
-        go Tm.Metavariable.Ctx.empty
+        go Tm.Metavar.Ctx.empty
       end
   end
 end

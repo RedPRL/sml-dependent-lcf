@@ -32,20 +32,20 @@ struct
 
   structure UnificationKit =
   struct
-    structure MetaCtx = Tm.Metavariable.Ctx and VarCtx = Tm.Variable.Ctx and SymCtx = Tm.Symbol.Ctx
+    structure MetaCtx = Tm.Metavar.Ctx and VarCtx = Tm.Var.Ctx and SymCtx = Tm.Sym.Ctx
 
     structure T = T and Ren = MetaCtx
     type term = judgment
 
     fun variableRenamingIsVacuous rho =
       VarCtx.foldl
-        (fn (k, v, b) => b andalso Tm.Variable.eq (k, v))
+        (fn (k, v, b) => b andalso Tm.Var.eq (k, v))
         true
         rho
 
     fun symbolRenamingIsVacuous rho =
       SymCtx.foldl
-        (fn (k, v, b) => b andalso Tm.Symbol.eq (k, v))
+        (fn (k, v, b) => b andalso Tm.Sym.eq (k, v))
         true
         rho
 
@@ -81,7 +81,7 @@ struct
   fun PROGRESS t jdg =
     let
       val st as (psi, _) = t jdg
-      val x = Tm.Metavariable.named "%PROGRESS-probe-var"
+      val x = Tm.Metavar.named "%PROGRESS-probe-var"
     in
       case UnifyTelescope.unifySubOpt (T.snoc T.empty x jdg, psi) of
            NONE => st

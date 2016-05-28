@@ -5,12 +5,12 @@ struct
   fun toString () = "exp"
 end
 
-structure Valence = AbtValence (structure Sort = Sort and Spine = ListSpine)
-structure Arity = AbtArity (Valence)
+structure Vl = AbtValence (structure S = Sort and Sp = ListSpine)
+structure Ar = AbtArity (Vl)
 
-structure O =
+structure L =
 struct
-  structure Arity = Arity
+  structure Ar = Ar
 
   datatype 'i t =
       UNIT
@@ -49,7 +49,7 @@ struct
     | toString _ FOO = "Foo"
 end
 
-structure Term = SimpleAbt (O)
+structure Term = SimpleAbt (L)
 structure ShowTm = DebugShowAbt (Term)
 
 structure Judgment =
@@ -101,7 +101,7 @@ struct
   open Judgment Term
   infix $ $# \
 
-  structure T = Lcf.T and V = Term.Metavariable
+  structure T = Lcf.T and V = Term.Metavar
 
   local
     structure Notation = TelescopeNotation (T)
@@ -112,8 +112,8 @@ struct
 
   structure MC =
   struct
-    open Metavariable.Ctx
-    structure Util = ContextUtil (structure Ctx = Metavariable.Ctx and Elem = Valence)
+    open Metavar.Ctx
+    structure Util = ContextUtil (structure Ctx = Metavar.Ctx and Elem = Vl)
     open Util
   end
 
@@ -127,15 +127,15 @@ struct
 
   fun UnitIntro (TRUE P) =
     let
-      val O.UNIT $ [] = out P
-      val ax = check (O.AX $ [], ())
+      val L.UNIT $ [] = out P
+      val ax = check (L.AX $ [], ())
     in
       (T.empty, (fn rho => abtToAbs ax))
     end
 
   fun SigmaIntro (TRUE P) =
     let
-      val O.SIGMA $ [_ \ A, (_, [x]) \ B] = out P
+      val L.SIGMA $ [_ \ A, (_, [x]) \ B] = out P
       val a = newMeta "?a"
       val b = newMeta "?b"
       val psi1 = T.empty >: (a, TRUE A)
@@ -146,7 +146,7 @@ struct
         let
           val a' = outb (T.lookup rho a)
           val b' = outb (T.lookup rho b)
-          val pair = O.PAIR $ [a', b']
+          val pair = L.PAIR $ [a', b']
         in
           abtToAbs (check (pair, ()))
         end))
@@ -154,10 +154,10 @@ struct
 
   fun FooIntro (TRUE P) =
     let
-      val O.FOO $ [_ \ A, _] = out P
+      val L.FOO $ [_ \ A, _] = out P
       val a = newMeta "?a"
       val psi = T.empty >: (a, TRUE A)
-      val ax = check (O.AX $ [], ())
+      val ax = check (L.AX $ [], ())
     in
       (psi, (fn rho =>
         T.lookup rho a))
@@ -170,10 +170,10 @@ struct
   open Refiner Judgment
   open Lcf Tacticals Term
   structure ShowTm = PlainShowAbt (Term)
-  structure ShowTel = ShowTelescope (structure T = T val labelToString = Term.Metavariable.toString)
+  structure ShowTel = ShowTelescope (structure T = T val labelToString = Term.Metavar.toString)
   infix 5 $ \ THEN ORELSE
 
-  val x = Variable.named "x"
+  val x = Var.named "x"
 
   val subgoalsToString =
     ShowTel.toString (fn (TRUE p) => ShowTm.toString p ^ " true")
@@ -185,12 +185,12 @@ struct
       print ("\n\n" ^ Lcf.stateToString state ^ "\n\n")
     end
 
-  val mkUnit = check (O.UNIT $ [], ())
-  fun mkSigma x a b = check (O.SIGMA $ [([],[]) \ a, ([],[x]) \ b], ())
-  fun mkFoo a b = check (O.FOO $ [([],[]) \ a, ([],[]) \ b], ())
+  val mkUnit = check (L.UNIT $ [], ())
+  fun mkSigma x a b = check (L.SIGMA $ [([],[]) \ a, ([],[x]) \ b], ())
+  fun mkFoo a b = check (L.FOO $ [([],[]) \ a, ([],[]) \ b], ())
 
-  val x = Variable.named "x"
-  val y = Variable.named "y"
+  val x = Var.named "x"
+  val y = Var.named "y"
 
   val goal =
     mkSigma y
