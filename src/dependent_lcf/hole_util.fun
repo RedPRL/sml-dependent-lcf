@@ -29,7 +29,7 @@ struct
       open Tm infix \ $#
       val ((sigmas, taus), tau) = vl
       val syms = FreshSyms.freshSyms sigmas
-      val params = List.map (fn (a, sigma) => (O.P.pure a, sigma)) syms
+      val params = List.map (fn (a, sigma) => (O.P.ret a, sigma)) syms
       val vars = FreshVars.freshSyms taus
       val varTerms = List.map (fn (x,tau) => check (`x, tau)) vars
       val tm = check (v $# (params, varTerms), tau)
