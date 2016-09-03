@@ -1,3 +1,19 @@
+structure NominalLcfView =
+struct
+  datatype ('mtac, 'tac, 'rule, 'var, 'atom) tactic_view =
+      SEQ of ('atom list * 'mtac) list
+    | ORELSE of 'tac * 'tac
+    | REC of 'var * 'tac
+    | PROGRESS of 'tac
+    | RULE of 'rule
+    | VAR of 'var
+
+  datatype 'tac multitactic_view =
+      ALL of 'tac
+    | EACH of 'tac list
+    | FOCUS of int * 'tac
+end
+
 signature NOMINAL_LCF_SYNTAX =
 sig
   type atom
@@ -20,29 +36,7 @@ sig
   structure VarCtx : DICT
     where type key = variable
 
-  structure Tactic :
-  sig
-    type 'a binding = atom list * 'a
-
-    datatype view =
-        SEQ of multitactic binding list
-      | ORELSE of tactic * tactic
-      | REC of variable * tactic
-      | PROGRESS of tactic
-      | RULE of rule
-      | VAR of variable
-
-    val out : sign -> tactic -> view
-  end
-
-  structure Multitactic :
-  sig
-    datatype view =
-        ALL of tactic
-      | EACH of tactic list
-      | FOCUS of int * tactic
-
-    val out : sign -> multitactic -> view
-  end
+  val tactic : sign -> tactic -> (multitactic, tactic, rule, variable, atom) NominalLcfView.tactic_view
+  val multitactic : sign -> multitactic -> tactic NominalLcfView.multitactic_view
 end
 

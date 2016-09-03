@@ -21,7 +21,7 @@ struct
       mtacs
 
   local
-    open Syn
+    open NominalLcfView
   in
 
     fun Rec f alpha jdg =
@@ -29,15 +29,15 @@ struct
 
     (* [Σ |=[ρ] tac ==> T] *)
     fun tactic (sign, rho) tac =
-      case Tactic.out sign tac of
-           Tactic.SEQ bindings =>
+      case Syn.tactic sign tac of
+           SEQ bindings =>
              let
                fun multitacBinding (us, mtac) =
                  (us, multitactic (sign, rho) mtac)
              in
                contractMultitactic (composeMultitactics (List.map multitacBinding bindings))
              end
-         | Tactic.ORELSE (tac1, tac2) =>
+         | ORELSE (tac1, tac2) =>
              let
                val t1 = tactic (sign, rho) tac1
                val t2 = tactic (sign, rho) tac2
@@ -46,26 +46,26 @@ struct
                  t1 alpha jdg
                    handle _ => t2 alpha jdg
              end
-         | Tactic.REC (x, tac) =>
+         | REC (x, tac) =>
              Rec (fn t => tactic (sign, Syn.VarCtx.insert rho x t) tac)
-         | Tactic.PROGRESS tac =>
+         | PROGRESS tac =>
              T.PROGRESS o tactic (sign, rho) tac
-         | Tactic.RULE rl => rule (sign, rho) rl
-         | Tactic.VAR x => Syn.VarCtx.lookup rho x
+         | RULE rl => rule (sign, rho) rl
+         | VAR x => Syn.VarCtx.lookup rho x
 
     (* [Σ |=[ρ] mtac ==> M] *)
     and multitactic (sign, rho) mtac =
-      case Multitactic.out sign mtac of
-           Multitactic.ALL tac =>
+      case Syn.multitactic sign mtac of
+           ALL tac =>
              MT.ALL o tactic (sign, rho) tac
-         | Multitactic.EACH tacs =>
+         | EACH tacs =>
              let
                val ts = List.map (tactic (sign, rho)) tacs
              in
                fn alpha =>
                  MT.EACH' (List.map (fn t => t alpha) ts)
              end
-         | Multitactic.FOCUS (i, tac) =>
+         | FOCUS (i, tac) =>
              MT.FOCUS i o tactic (sign, rho) tac
   end
 end

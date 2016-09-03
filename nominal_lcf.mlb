@@ -13,6 +13,7 @@ in
   signature SPREAD
   structure UniversalSpread
 
+  structure NominalLcfView
   signature NOMINAL_LCF_SYNTAX
   signature NOMINAL_LCF_MODEL
   signature NOMINAL_LCF_SEMANTICS
