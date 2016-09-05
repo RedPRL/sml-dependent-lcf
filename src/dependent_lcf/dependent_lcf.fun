@@ -126,7 +126,7 @@ struct
                    val env' = Lbl.Ctx.insert env x (vldx (openEnv psix))
                    val (psi', vld'') = go env' (psi, vld')
                  in
-                   (T.append (psix, psi'), vld'')
+                   (T.append psix psi', vld'')
                  end
       in
         go Tm.Metavar.Ctx.empty

@@ -1,7 +1,7 @@
 Group
 is
   $/basis.cm
-  lib/sml-typed-abts/abt.cm
+  lib/sml-typed-abts/abt.cm (bind:(anchor:libs value:lib))
   lib/sml-telescopes/telescopes.cm
   nominal_lcf.cm (bind:(anchor:libs value:lib))
   dependent_lcf.cm (bind:(anchor:libs value:lib))

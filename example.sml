@@ -5,12 +5,13 @@ struct
   fun toString () = "exp"
 end
 
-structure Vl = AbtValence (structure S = Sort and Sp = ListSpine)
+structure Vl = AbtValence (structure S = Sort and PS = AbtEmptySort and Sp = ListSpine)
 structure Ar = AbtArity (Vl)
 
 structure L =
 struct
   structure Ar = Ar
+  structure P = AbtParameterTerm (AbtEmptyParameter (AbtEmptySort))
 
   datatype 'i t =
       UNIT
@@ -74,10 +75,10 @@ struct
     end
 
   fun substEvidence rho (TRUE p) =
-    TRUE (metasubst rho p)
+    TRUE (substMetavar rho p)
 
   fun substEvidenceEnv rho (TRUE p) =
-    TRUE (metasubstEnv rho p)
+    TRUE (substMetaenv rho p)
 
   fun judgmentMetactx (TRUE p) =
     metactx p
@@ -139,7 +140,7 @@ struct
       val a = newMeta "?a"
       val b = newMeta "?b"
       val psi1 = T.empty >: (a, TRUE A)
-      val Ba = subst (check (a $# ([],[]), ()), x) B
+      val Ba = substVar (check (a $# ([],[]), ()), x) B
       val psi = psi1 >: (b, TRUE Ba)
     in
       (psi, (fn rho =>

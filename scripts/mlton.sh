@@ -1,2 +1,6 @@
 #!/bin/bash
-mlton -mlb-path-map mlb-path-map nominal_lcf.mlb
+
+LIBS=$(pwd)/lib
+
+mlton -mlb-path-var "LIBS $LIBS" dependent_lcf.mlb
+mlton -mlb-path-var "LIBS $LIBS" nominal_lcf.mlb
