@@ -32,7 +32,7 @@ struct
   type multitactic = judgment state -> judgment state
 
   structure HoleUtil = HoleUtil (structure Tm = Tm and J = J and T = T)
-  structure TShow = ShowTelescope (structure T = T val labelToString = Lbl.toString)
+  structure TShow = ShowTelescope (T)
 
   fun stateToString (psi, vld) =
     TShow.toString judgmentToString psi
