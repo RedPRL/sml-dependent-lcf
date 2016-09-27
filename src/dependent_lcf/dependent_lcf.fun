@@ -113,20 +113,26 @@ struct
 
     infix //
 
-    fun extend (f : 'a J.t -> 'b t) : 'a t -> 'b t =
+    fun extend (k : 'a J.t -> 'b t) : 'a t -> 'b t =
       let
         open T.ConsView
+
+        (* At each stage, [env] contains a substitution for all the metavariables in the *original*
+         * proof state which have been processed so far. Each [x] is substituted by the result of applying
+         * [k] to the judgment [jdgx]. *)
         fun go env (psi, vld) =
           case out psi of
                EMPTY => (T.empty, vld)
-             | CONS (x, jdg, psi) =>
+             | CONS (x, jdgx, psi) =>
                  let
-                   val (psix, vldx) = f (jdg // env)
-                   val vld' = vld o (fn rho => T.snoc rho x (vldx rho))
+                   (* 1. Rewrite the focused judgment [jdgx] under the ambient environment, and apply [k] to it to get the subgoals and validation for [jdgx].
+                    * 2. Extend the ambient environment by replacing the metavariable [x] with the validation [vldx].
+                    * 3. Recurse along the tail of our proof state with the new environment. *)
+                   val (psix, vldx) = k (jdgx // env)
                    val env' = Lbl.Ctx.insert env x (vldx (openEnv psix))
-                   val (psi', vld'') = go env' (psi, vld')
+                   val (psi', vld') = go env' (psi, vld)
                  in
-                   (T.append psix psi', vld'')
+                   (T.append psix psi', vld' o (fn rho => T.snoc rho x (vldx rho)))
                  end
       in
         go Tm.Metavar.Ctx.empty
