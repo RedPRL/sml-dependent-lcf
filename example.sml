@@ -145,8 +145,8 @@ struct
     in
       (psi, (fn rho =>
         let
-          val a' = outb (T.lookup rho a)
-          val b' = outb (T.lookup rho b)
+          val a' = outb (MC.lookup rho a)
+          val b' = outb (MC.lookup rho b)
           val pair = L.PAIR $ [a', b']
         in
           abtToAbs (check (pair, ()))
@@ -161,7 +161,7 @@ struct
       val ax = check (L.AX $ [], ())
     in
       (psi, (fn rho =>
-        T.lookup rho a))
+        MC.lookup rho a))
     end
 
 end
@@ -171,7 +171,7 @@ struct
   open Refiner Judgment
   open Lcf Tacticals Term
   structure ShowTm = PlainShowAbt (Term)
-  structure ShowTel = ShowTelescope (structure T = T val labelToString = Term.Metavar.toString)
+  structure ShowTel = ShowTelescope (T)
   infix 5 $ \ THEN ORELSE
 
   val x = Var.named "x"

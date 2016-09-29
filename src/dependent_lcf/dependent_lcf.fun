@@ -1,3 +1,29 @@
+functor TelescopeCtx (T : TELESCOPE) : LCF_CONTEXT =
+struct
+  type 'a ctx = 'a T.telescope
+  type metavariable = T.label
+
+  fun mapWithKeys f =
+    let
+      open T.ConsView
+      val rec go =
+        fn EMPTY => T.empty
+         | CONS (x, a, psi) =>
+             T.cons x (f (x, a)) (go (out psi))
+    in
+      go o out
+    end
+end
+
+functor DictCtx (D : DICT) : LCF_CONTEXT =
+struct
+  type 'a ctx = 'a D.dict
+  type metavariable = D.key
+
+  fun mapWithKeys f =
+    D.foldl (fn (k, v, d) => D.insert d k (f (k, v))) D.empty
+end
+
 functor DependentLcf (Kit : ABT_JUDGMENT) : DEPENDENT_LCF =
 struct
   open Kit
@@ -5,26 +31,20 @@ struct
   structure Lbl = Tm.Metavar
 
   structure T = Telescope (Lbl)
-  type 'a ctx = 'a T.telescope
-
-  structure Ctx =
+  structure Ctx = TelescopeCtx (T)
+  structure Env =
   struct
-    type 'a ctx = 'a ctx
-    type metavariable = metavariable
-
-    fun mapWithKeys f =
-      let
-        open T.ConsView
-        val rec go =
-          fn EMPTY => T.empty
-           | CONS (x, a, psi) =>
-               T.cons x (f (x, a)) (go (out psi))
-      in
-        go o out
-      end
+    local
+      structure C = DictCtx (Tm.Metavar.Ctx)
+    in
+      open Tm.Metavar.Ctx C
+    end
   end
 
-  type environment = evidence ctx
+  type 'a ctx = 'a Ctx.ctx
+  type 'a env = 'a Env.ctx
+
+  type environment = evidence env
   type validation = environment -> evidence
 
   type 'a state = 'a ctx * validation
@@ -53,7 +73,7 @@ struct
       val theta = T.snoc T.empty v jdg
     in
       (theta, fn rho =>
-         T.lookup rho v)
+         Env.lookup rho v)
     end
 
   datatype 'a judgable =
@@ -103,9 +123,9 @@ struct
         fun go rho =
           fn EMPTY => rho
            | CONS (x, JUDGABLE {evidenceValence,...}, phi) =>
-               go (T.snoc rho x (HoleUtil.makeHole (x, evidenceValence))) (out phi)
+               go (Env.insert rho x (HoleUtil.makeHole (x, evidenceValence))) (out phi)
       in
-        go T.empty (out psi)
+        go Env.empty (out psi)
       end
 
     fun // (JUDGABLE {subst,...}, rho) =
@@ -130,9 +150,9 @@ struct
                     * 3. Recurse along the tail of our proof state with the new environment. *)
                    val (psix, vldx) = k (jdgx // env)
                    val env' = Lbl.Ctx.insert env x (vldx (openEnv psix))
-                   val (psi', vld') = go env' (psi, vld)
+                   val (psi', vld') = go env' (psi, vld o (fn rho => Env.insert rho x (vldx rho)))
                  in
-                   (T.append psix psi', vld' o (fn rho => T.snoc rho x (vldx rho)))
+                   (T.append psix psi', vld')
                  end
       in
         go Tm.Metavar.Ctx.empty

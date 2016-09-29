@@ -1,7 +1,11 @@
 signature LCF =
 sig
   structure Ctx : LCF_CONTEXT
+  structure Env : LCF_CONTEXT
+  sharing type Ctx.metavariable = Env.metavariable
+
   type 'a ctx = 'a Ctx.ctx
+  type 'a env = 'a Env.ctx
   type metavariable = Ctx.metavariable
 
   (* A logical theory is defined by specifying a collection of [judgment]s,
@@ -12,7 +16,7 @@ sig
   type evidence
 
   (* An [environment] is a substitution of evidence for subgoals. *)
-  type environment = evidence ctx
+  type environment = evidence env
 
   (* [validation]s are hypothetical evidence. *)
   type validation = environment -> evidence
@@ -43,7 +47,6 @@ sig
   structure Monad : RELATIVE_MONAD
     where type 'a J.t = 'a Judgable.t
     where type 'a t = 'a Judgable.t State.t
-
 end
 
 (* Classic LCF arises from letting [Judgable] be the identity functor;

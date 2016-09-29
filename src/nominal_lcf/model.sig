@@ -10,6 +10,7 @@ sig
   structure T : TACTICALS
   structure MT : MULTITACTICALS
     where type 'a Lcf.Ctx.ctx = 'a T.Lcf.ctx
+    where type 'a Lcf.Env.ctx = 'a T.Lcf.Env.ctx
     where type Lcf.Ctx.metavariable = T.Lcf.metavariable
     where type Lcf.judgment = T.Lcf.judgment
     where type Lcf.evidence = T.Lcf.evidence
