@@ -20,8 +20,7 @@ struct
   open Kit Kit.J
   structure Spine = Tm.O.Ar.Vl.Sp
 
-  structure VarCtx = Tm.Var.Ctx and SymCtx = Tm.Sym.Ctx
-  structure MetaCtxUtil = ContextUtil (structure Ctx = Tm.Metavar.Ctx and Elem = Tm.O.Ar.Vl)
+  structure VarCtx = Tm.Var.Ctx and SymCtx = Tm.Sym.Ctx and MetaCtx = Tm.Metavar.Ctx
   structure FreshSyms = FreshSymbols (Tm.Sym) and FreshVars = FreshSymbols (Tm.Var)
 
   fun makeHole (v : J.metavariable, vl : J.valence) : Tm.abs =
@@ -42,8 +41,8 @@ struct
       open T.ConsView
       fun go EMPTY rho = rho
         | go (CONS (x, jdg, phi)) rho =
-            go (out phi) (T.snoc rho x (makeHole (x, evidenceValence jdg)))
+            go (out phi) (MetaCtx.insert rho x (makeHole (x, evidenceValence jdg)))
     in
-      go (out psi) T.empty
+      go (out psi) MetaCtx.empty
     end
 end

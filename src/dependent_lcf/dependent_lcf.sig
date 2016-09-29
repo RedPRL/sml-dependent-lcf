@@ -17,6 +17,7 @@ sig
     where type evidence = J.evidence
     where type 'a Ctx.ctx = 'a T.telescope
     where type Ctx.metavariable = J.metavariable
+    where type 'a Env.ctx = 'a J.Tm.Metavar.Ctx.dict
     where type 'a Judgable.t = 'a judgable
 end
 

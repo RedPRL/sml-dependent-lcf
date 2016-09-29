@@ -1,5 +1,5 @@
 local
-  $(SML_LIB)/basis/basis.mlb
+  $(LIBS)/cmlib/cmlib.mlb
   $(LIBS)/sml-telescopes/telescopes.mlb
   $(LIBS)/sml-typed-abts/abt.mlb
   src/basis/basis.mlb

@@ -10,7 +10,7 @@ Library
   functor Tacticals
   functor HoleUtil
 is
-  $/basis.cm
+  $libs/cmlib/cmlib.cm
   $libs/sml-telescopes/telescopes.cm
   $libs/sml-typed-abts/abt.cm
   src/basis/basis.cm
