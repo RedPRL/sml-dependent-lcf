@@ -1,4 +1,11 @@
-Library
+Group
+(*
+  signature LCF_LANGUAGE
+  signature LCF
+  functor Lcf
+
+
+
   signature ABT_JUDGMENT
   signature DEPENDENT_LCF
 
@@ -9,11 +16,16 @@ Library
   functor Multitacticals
   functor Tacticals
   functor HoleUtil
+*)
 is
-  $libs/cmlib/cmlib.cm
   $libs/sml-telescopes/telescopes.cm
   $libs/sml-typed-abts/abt.cm
+  $libs/cmlib/cmlib.cm
   src/basis/basis.cm
+  src/dependent_lcf/language.sig
+  src/dependent_lcf/lcf.sig
+  src/dependent_lcf/lcf.fun
+(*
   lcf.cm
 
   src/dependent_lcf/judgment.sig
@@ -23,3 +35,4 @@ is
   src/dependent_lcf/dependent_lcf.fun
   src/dependent_lcf/multitacticals.fun
   src/dependent_lcf/tacticals.fun
+*)
