@@ -115,7 +115,7 @@ struct
     fun unifySubtelescopeAux (env1, env2) (psi1, psi2) =
       case (out psi1, out psi2) of
          (EMPTY, _) => SOME (env1, env2)
-       | (CONS (x1, jdg1, psi1), CONS (x2, jdg2, psi2)) =>
+       | (CONS (x1, jdg1, psi1'), CONS (x2, jdg2, psi2')) =>
             if J.eq (J.subst env1 jdg1, J.subst env2 jdg2) then
               let
                 val y = L.fresh ()
@@ -123,10 +123,10 @@ struct
                 val env1y = L.Ctx.insert env1 x1 ytm
                 val env2y = L.Ctx.insert env2 x2 ytm
               in
-                unifySubtelescopeAux (env1y, env2y) (psi1, psi2)
+                unifySubtelescopeAux (env1y, env2y) (psi1', psi2')
               end
             else
-              NONE
+              unifySubtelescopeAux (env1, env2) (psi1, psi2')
        | _ => NONE
   in
     val unifySubtelescope = unifySubtelescopeAux (L.Ctx.empty, L.Ctx.empty)
