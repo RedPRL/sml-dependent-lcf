@@ -23,6 +23,7 @@ sig
   val sort : jdg -> sort
   val subst : env -> jdg -> jdg
   val eq : jdg * jdg -> bool
+  val toString : jdg -> string
 end
 
 signature LCF_UTIL =

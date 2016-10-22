@@ -52,7 +52,7 @@ sig
     where type env = Lcf.L.term Lcf.L.Ctx.dict
 end
 
-functor LCF_UTIL (Kit : LCF_UTIL_KIT) : LCF_UTIL =
+functor LcfUtil (Kit : LCF_UTIL_KIT) : LCF_UTIL =
 struct
   open Kit Kit.Lcf
 

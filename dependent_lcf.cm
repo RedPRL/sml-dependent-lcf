@@ -1,38 +1,18 @@
-Group
-(*
+Library
+  signature LCF_VAR
   signature LCF_LANGUAGE
+
   signature LCF
+  signature LCF_JUDGMENT
+  signature LCF_UTIL
+
   functor Lcf
-
-
-
-  signature ABT_JUDGMENT
-  signature DEPENDENT_LCF
-
-  signature HOLE_KIT
-  signature HOLE_UTIL
-
-  functor DependentLcf
-  functor Multitacticals
-  functor Tacticals
-  functor HoleUtil
-*)
+  signature LCF_UTIL_KIT
+  functor LcfUtil
 is
   $libs/sml-telescopes/telescopes.cm
-  $libs/sml-typed-abts/abt.cm
   $libs/cmlib/cmlib.cm
   src/basis/basis.cm
   src/dependent_lcf/language.sig
   src/dependent_lcf/lcf.sig
   src/dependent_lcf/lcf.fun
-(*
-  lcf.cm
-
-  src/dependent_lcf/judgment.sig
-  src/dependent_lcf/hole_util.sig
-  src/dependent_lcf/hole_util.fun
-  src/dependent_lcf/dependent_lcf.sig
-  src/dependent_lcf/dependent_lcf.fun
-  src/dependent_lcf/multitacticals.fun
-  src/dependent_lcf/tacticals.fun
-*)
