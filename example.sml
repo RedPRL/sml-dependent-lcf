@@ -92,19 +92,20 @@ struct
   val |> = Lcf.|>
   infix |>
 
-  local
-    structure Notation = TelescopeNotation (Tl)
-  in
-    open Notation
-    infix >:
-  end
+  local structure Notation = TelescopeNotation (Tl) in open Notation infix >: end
 
   local
     val i = ref 0
-  in
-    fun newMeta str =
+    fun newMeta () =
       (i := !i + 1;
-       V.named (str ^ Int.toString (!i)))
+       V.named (Int.toString (!i)))
+  in
+    fun makeGoal jdg =
+      let
+        val x = newMeta ()
+      in
+        ((x, jdg), fn ps => fn ms => check (x $# (ps, ms), ()))
+      end
   end
 
   fun UnitIntro (TRUE P) =
@@ -118,15 +119,10 @@ struct
   fun SigmaIntro (TRUE P) =
     let
       val L.SIGMA $ [_ \ A, (_, [x]) \ B] = out P
-      val a = newMeta "?a"
-      val b = newMeta "?b"
-      val atm = check (a $# ([],[]), ())
-      val btm = check (b $# ([],[]), ())
-
-      val psi1 = Tl.empty >: (a, TRUE A)
-      val Ba = substVar (atm, x) B
-      val psi = psi1 >: (b, TRUE Ba)
-      val pair = L.PAIR $$ [([],[]) \ atm, ([],[]) \ btm]
+      val (goalA, holeA) = makeGoal (TRUE A)
+      val (goalB, holeB) = makeGoal (TRUE (substVar (holeA [] [], x) B))
+      val psi = Tl.empty >: goalA >: goalB
+      val pair = L.PAIR $$ [([],[]) \ holeA [] [], ([],[]) \ holeB [] []]
     in
       psi |> abtToAbs pair
     end
@@ -134,12 +130,9 @@ struct
   fun FooIntro (TRUE P) =
     let
       val L.FOO $ [_ \ A, _] = out P
-      val a = newMeta "?a"
-      val psi = Tl.empty >: (a, TRUE A)
-      val ax = check (L.AX $ [], ())
-      val atm = check (a $# ([],[]), ())
+      val (goalA, holeA) = makeGoal (TRUE A)
     in
-      psi |> abtToAbs atm
+      Tl.empty >: goalA |> abtToAbs (holeA [] [])
     end
 end
 
