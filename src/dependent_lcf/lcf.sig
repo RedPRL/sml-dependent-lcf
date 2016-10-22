@@ -32,6 +32,8 @@ sig
 
   structure J : LCF_JUDGMENT where type sort = L.sort and type env = L.term L.Ctx.dict
 
+  val isjdg : J.jdg isjdg
+
   type 'a tactic = 'a -> 'a state
   type 'a multitactic = 'a state tactic
 

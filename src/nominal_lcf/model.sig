@@ -7,13 +7,7 @@ sig
   structure Syn : NOMINAL_LCF_SYNTAX
 
   (* A model begins with a tactic metalanguage. *)
-  structure T : TACTICALS
-  structure MT : MULTITACTICALS
-    where type 'a Lcf.Ctx.ctx = 'a T.Lcf.ctx
-    where type 'a Lcf.Env.ctx = 'a T.Lcf.Env.ctx
-    where type Lcf.Ctx.metavariable = T.Lcf.metavariable
-    where type Lcf.judgment = T.Lcf.judgment
-    where type Lcf.evidence = T.Lcf.evidence
+  structure Lcf : LCF_UTIL
 
   (* The nominal character of the semantics is dealt with using a Brouwerian
    * spread, a space whose points are free choice sequences. A free choice
@@ -25,8 +19,8 @@ sig
    * choice sequence into a result. *)
   type 'a nominal = Syn.atom Spr.point -> 'a
 
-  type tactic = MT.Lcf.tactic nominal
-  type multitactic = MT.Lcf.multitactic nominal
+  type tactic = Lcf.J.jdg Lcf.tactic nominal
+  type multitactic = Lcf.J.jdg Lcf.multitactic nominal
 
   (* An environment assigns a tactic to each variable. *)
   type env = tactic Syn.VarCtx.dict
