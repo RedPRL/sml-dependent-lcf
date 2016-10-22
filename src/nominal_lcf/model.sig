@@ -19,8 +19,8 @@ sig
    * choice sequence into a result. *)
   type 'a nominal = Syn.atom Spr.point -> 'a
 
-  type tactic = Lcf.J.jdg Lcf.tactic nominal
-  type multitactic = Lcf.J.jdg Lcf.multitactic nominal
+  type tactic = Lcf.jdg Lcf.tactic nominal
+  type multitactic = Lcf.jdg Lcf.multitactic nominal
 
   (* An environment assigns a tactic to each variable. *)
   type env = tactic Syn.VarCtx.dict

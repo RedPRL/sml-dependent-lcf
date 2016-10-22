@@ -32,27 +32,28 @@ sig
 
   structure J : LCF_JUDGMENT where type sort = L.sort and type env = L.term L.Ctx.dict
 
-  val isjdg : J.jdg isjdg
+  type jdg = J.jdg
+  val isjdg : jdg isjdg
 
   type 'a tactic = 'a -> 'a state
   type 'a multitactic = 'a state tactic
 
-  val all : J.jdg tactic -> J.jdg multitactic
-  val each : J.jdg tactic list -> J.jdg multitactic
-  val only : int * J.jdg tactic -> J.jdg multitactic
+  val all : jdg tactic -> jdg multitactic
+  val each : jdg tactic list -> jdg multitactic
+  val only : int * jdg tactic -> jdg multitactic
 
-  val seq : J.jdg tactic * J.jdg multitactic -> J.jdg tactic
-  val then_ : J.jdg tactic * J.jdg tactic -> J.jdg tactic
-  val thenl : J.jdg tactic * J.jdg tactic list -> J.jdg tactic
-  val thenf : J.jdg tactic * (int * J.jdg tactic) -> J.jdg tactic
+  val seq : jdg tactic * jdg multitactic -> jdg tactic
+  val then_ : jdg tactic * jdg tactic -> jdg tactic
+  val thenl : jdg tactic * jdg tactic list -> jdg tactic
+  val thenf : jdg tactic * (int * jdg tactic) -> jdg tactic
 
-  val idn : J.jdg tactic
-  val orelse_ : J.jdg tactic * J.jdg tactic -> J.jdg tactic
-  val try : J.jdg tactic -> J.jdg tactic
+  val idn : jdg tactic
+  val orelse_ : jdg tactic * jdg tactic -> jdg tactic
+  val try : jdg tactic -> jdg tactic
 
   exception Progress
-  val progress : J.jdg tactic -> J.jdg tactic
+  val progress : jdg tactic -> jdg tactic
 
   exception Complete
-  val complete : J.jdg tactic -> J.jdg tactic
+  val complete : jdg tactic -> jdg tactic
 end

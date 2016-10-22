@@ -58,10 +58,11 @@ struct
 
   infix |>
 
+  type jdg = J.jdg
   type 'a tactic = 'a -> 'a state
   type 'a multitactic = 'a state tactic
 
-  val isjdg : J.jdg isjdg =
+  val isjdg : jdg isjdg =
     {sort = J.sort,
      subst = J.subst}
 
