@@ -18,12 +18,11 @@ validations in Classic LCF is a design which does not generalize cleanly.
 #### correctness conditions
 
 The correctness conditions of LCF refiners are usually said to be based on
-having an abstract type of proofs ("evidence") that are synthesized, but this
-is not part of the essence of LCF; indeed, in a system like Nuprl it is crucial
-that this type not be abstract, since the synthesis of truth judgments is
-simply another Nuprl term, which can be constructed by hand from anywhere.
-Therefore, we may not in general view an LCF refiner as being in the business
-of synthesizing proof: *proof is an act, not an object*.
+having an abstract type of evidence that are synthesized. However, these piece
+of "evidence" may or may not have a proof-theoretic character: they may be
+codes in some programming language, for instance.  Therefore, we may not in
+general view an LCF refiner as being in the business of synthesizing proof:
+*proof is an act, not an object*.
 
 [Randy Pollack](http://citeseer.ist.psu.edu/viewdoc/summary?doi=10.1.1.29.9573)
 includes the following in his list of ways a refiner may go wrong:
