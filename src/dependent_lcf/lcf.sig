@@ -22,6 +22,7 @@ sig
 
   val sort : jdg -> sort
   val subst : env -> jdg -> jdg
+  val eq : jdg * jdg -> bool
 end
 
 signature LCF_UTIL =
@@ -38,7 +39,17 @@ sig
   val only : int * J.jdg tactic -> J.jdg multitactic
 
   val seq : J.jdg tactic * J.jdg multitactic -> J.jdg tactic
-  val then' : J.jdg tactic * J.jdg tactic -> J.jdg tactic
+  val then_ : J.jdg tactic * J.jdg tactic -> J.jdg tactic
   val thenl : J.jdg tactic * J.jdg tactic list -> J.jdg tactic
   val thenf : J.jdg tactic * (int * J.jdg tactic) -> J.jdg tactic
+
+  val idn : J.jdg tactic
+  val orelse_ : J.jdg tactic * J.jdg tactic -> J.jdg tactic
+  val try : J.jdg tactic -> J.jdg tactic
+
+  exception Progress
+  val progress : J.jdg tactic -> J.jdg tactic
+
+  exception Complete
+  val complete : J.jdg tactic -> J.jdg tactic
 end

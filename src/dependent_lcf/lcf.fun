@@ -65,6 +65,9 @@ struct
     {sort = J.sort,
      subst = J.subst}
 
+  val idn =
+    ret isjdg
+
   fun all t (psi |> vl) =
     Tl.map t psi |> vl
 
@@ -76,14 +79,14 @@ struct
          | (t :: ts, CONS (x, jdg, psi)) =>
              go (Tl.snoc r x (t jdg)) (ts, out psi)
          | ([], CONS (x, jdg, psi)) =>
-             go (Tl.snoc r x (ret isjdg jdg)) ([], out psi)
+             go (Tl.snoc r x (idn jdg)) ([], out psi)
     in
       go Tl.empty (ts, out psi) |> vl
     end
 
   fun only (i, t) =
     let
-      val ts = List.tabulate (i + 1, fn j => if i = j then t else ret isjdg)
+      val ts = List.tabulate (i + 1, fn j => if i = j then t else idn)
     in
       each ts
     end
@@ -91,7 +94,7 @@ struct
   fun seq (t, m) =
     mul isjdg o m o t
 
-  fun then' (t1, t2) =
+  fun then_ (t1, t2) =
     seq (t1, all t2)
 
   fun thenl (t, ts) =
@@ -99,4 +102,57 @@ struct
 
   fun thenf (t, (i, t')) =
     seq (t, only (i, t'))
+
+
+  fun orelse_ (t1, t2) jdg =
+    t1 jdg handle _ => t2 jdg
+
+  fun try t =
+    orelse_ (t, idn)
+
+  local
+    open Tl.ConsView
+    fun unifySubtelescopeAux (env1, env2) (psi1, psi2) =
+      case (out psi1, out psi2) of
+         (EMPTY, _) => SOME (env1, env2)
+       | (CONS (x1, jdg1, psi1), CONS (x2, jdg2, psi2)) =>
+            if J.eq (J.subst env1 jdg1, J.subst env2 jdg2) then
+              let
+                val y = L.fresh ()
+                val ytm = L.var y (J.sort jdg1)
+                val env1y = L.Ctx.insert env1 x1 ytm
+                val env2y = L.Ctx.insert env2 x2 ytm
+              in
+                unifySubtelescopeAux (env1y, env2y) (psi1, psi2)
+              end
+            else
+              NONE
+       | _ => NONE
+  in
+    val unifySubtelescope = unifySubtelescopeAux (L.Ctx.empty, L.Ctx.empty)
+  end
+
+  exception Progress
+  exception Complete
+
+  fun progress t jdg =
+    let
+      val st as (psi |> vl) = t jdg
+      val psi' = Tl.singleton (L.fresh ()) jdg
+    in
+      case unifySubtelescope (psi', psi) of
+         SOME _ => raise Progress
+       | NONE => st
+    end
+
+  fun complete t jdg =
+    let
+      val st as (psi |> _) = t jdg
+    in
+      if Tl.isEmpty psi then
+        st
+      else
+        raise Complete
+    end
+
 end

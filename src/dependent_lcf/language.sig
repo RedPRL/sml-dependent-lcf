@@ -19,4 +19,5 @@ sig
   val fresh : unit -> var
   val var : var -> sort -> term
   val subst : env -> term -> term
+  val eq : term * term -> bool
 end
