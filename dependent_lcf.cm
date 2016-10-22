@@ -12,7 +12,6 @@ Library
 is
   $libs/sml-telescopes/telescopes.cm
   $libs/cmlib/cmlib.cm
-  src/basis/basis.cm
   src/dependent_lcf/language.sig
   src/dependent_lcf/lcf.sig
   src/dependent_lcf/lcf.fun
