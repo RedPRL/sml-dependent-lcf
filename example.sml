@@ -121,10 +121,10 @@ struct
       val L.SIGMA $ [_ \ A, (_, [x]) \ B] = out P
       val (goalA, holeA) = makeGoal (TRUE A)
       val (goalB, holeB) = makeGoal (TRUE (substVar (holeA [] [], x) B))
-      val psi = Tl.empty >: goalA >: goalB
       val pair = L.PAIR $$ [([],[]) \ holeA [] [], ([],[]) \ holeB [] []]
     in
-      psi |> abtToAbs pair
+      Tl.empty >: goalA >: goalB
+        |> abtToAbs pair
     end
 
   fun FooIntro (TRUE P) =
