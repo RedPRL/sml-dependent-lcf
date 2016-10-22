@@ -68,6 +68,11 @@ right places when the script is run.
 
 Nominal LCF may be elaborated into Dependent LCF using functors provided here.
 
+Note: the semantics of Nominal LCF are still unclear; it seems like we should
+be able to explain what it does by appealing to a continuity principle, but the
+matter is quite subtle. Currently, we may simply say that this is something
+that you can implement in a sequential programming language like ML.
+
 -----------------------------------------------------------------------------------
 
 ### Instructions
