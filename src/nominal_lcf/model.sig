@@ -22,9 +22,8 @@ sig
   type tactic = Lcf.jdg Lcf.tactic nominal
   type multitactic = Lcf.jdg Lcf.multitactic nominal
 
-  (* An environment assigns a tactic to each variable. *)
-  type env = tactic Syn.VarCtx.dict
-  type menv = multitactic Syn.VarCtx.dict
+  (* An environment assigns a multitactic to each variable. *)
+  type env = multitactic Syn.VarCtx.dict
 
   (* A model provides an interpretation of a refinement theory's primitive
    * rules of inference as nominal tactics, relative to a signature and

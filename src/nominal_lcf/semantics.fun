@@ -2,21 +2,16 @@ functor NominalLcfSemantics (M : NOMINAL_LCF_MODEL) : NOMINAL_LCF_SEMANTICS =
 struct
   open M
 
-  exception MultitacProgress
+  fun seq (mt1, us, mt2) alpha st =
+    let
+      val beta = Spr.prepend us alpha
+      val (beta', modulus) = Spr.probe (Spr.prepend us beta)
+      val st' = mt1 beta' st
+      val l = Int.max (0, !modulus - List.length us)
+    in
+      mt2 (Spr.bite l alpha) (Lcf.mul Lcf.isjdg st')
+    end
 
-  fun composeMultitactics mtacs =
-    List.foldr
-      (fn ((us : Syn.atom Spr.neigh, mtac : multitactic), rest) => fn alpha => fn st =>
-        let
-          val beta = Spr.prepend us alpha
-          val (beta', modulus) = Spr.probe (Spr.prepend us beta)
-          val st' = mtac beta' st
-          val l = Int.max (0, !modulus - List.length us)
-        in
-          rest (Spr.bite l alpha) (Lcf.mul Lcf.isjdg st')
-        end)
-      (fn _ => fn st => st)
-      mtacs
 
   local
     open NominalLcfView
@@ -28,30 +23,8 @@ struct
     (* [Σ |=[ρ] tac ==> T] *)
     fun tactic (sign, rho) tac =
       case Syn.tactic sign tac of
-           SEQ bindings =>
-             let
-               fun multitacBinding (us, mtac) =
-                 (us, multitactic (sign, rho) mtac)
-             in
-               fn alpha =>
-                 composeMultitactics (List.map multitacBinding bindings) alpha
-                   o Lcf.idn
-             end
-         | ORELSE (tac1, tac2) =>
-             let
-               val t1 = tactic (sign, rho) tac1
-               val t2 = tactic (sign, rho) tac2
-             in
-               fn alpha => fn jdg =>
-                 t1 alpha jdg
-                   handle _ => t2 alpha jdg
-             end
-         | REC (x, tac) =>
-             Rec (fn t => tactic (sign, Syn.VarCtx.insert rho x t) tac)
-         | PROGRESS tac =>
-             Lcf.progress o tactic (sign, rho) tac
-         | RULE rl => rule (sign, rho) rl
-         | VAR x => Syn.VarCtx.lookup rho x
+           RULE rl => rule (sign, rho) rl
+         | MTAC mtac => (fn alpha => Lcf.mul Lcf.isjdg o multitactic (sign, rho) mtac alpha o Lcf.idn)
 
     (* [Σ |=[ρ] mtac ==> M] *)
     and multitactic (sign, rho) mtac =
@@ -67,16 +40,20 @@ struct
              end
          | FOCUS (i, tac) =>
              (fn t => Lcf.only (i, t)) o tactic (sign, rho) tac
-         | MULTI_REPEAT mtac' =>
-             (fn alpha => fn state =>
-                let
-                  val mt = Lcf.mprogress o multitactic (sign, rho) mtac'
-                  val mt' = (fn alpha => fn state => multitactic (sign, rho) mtac alpha state)
-                  val mts = [([], mt), ([], mt')]
-                in
-                  Lcf.map Lcf.idn (composeMultitactics mts alpha state handle _ => state)
-                end)
-         | MULTI_PROGRESS mtac' =>
+         | REC (x, mtac) =>
+             Rec (fn mt => multitactic (sign, Syn.VarCtx.insert rho x mt) mtac)
+         | PROGRESS mtac' =>
              Lcf.mprogress o multitactic (sign, rho) mtac'
+         | VAR x => Syn.VarCtx.lookup rho x
+         | SEQ (us, mt1, mt2) =>
+            seq (multitactic (sign, rho) mt1, us, multitactic (sign, rho) mt2)
+         | ORELSE (mt1, mt2) =>
+             let
+               val mt1 = multitactic (sign, rho) mt1
+               val mt2 = multitactic (sign, rho) mt2
+             in
+               fn alpha =>
+                 Lcf.morelse (mt1 alpha, mt2 alpha)
+             end
   end
 end
