@@ -40,15 +40,6 @@ struct
              end
          | FOCUS (i, tac) =>
              (fn t => Lcf.only (i, t)) o tactic (sign, rho) tac
-         | REPEAT mtac' =>
-             (fn alpha => fn state =>
-                let
-                  val mt = Lcf.mprogress o multitactic (sign, rho) mtac'
-                  val mt' = (fn alpha => fn state => multitactic (sign, rho) mtac alpha state)
-                  val mts = [([], mt), ([], mt')]
-                in
-                  (seq (mt, [], mt') alpha state handle _ => Lcf.map Lcf.idn state)
-                end)
          | REC (x, mtac) =>
              Rec (fn mt => multitactic (sign, Syn.VarCtx.insert rho x mt) mtac)
          | PROGRESS mtac' =>

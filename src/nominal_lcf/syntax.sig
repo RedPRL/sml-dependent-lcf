@@ -8,7 +8,6 @@ struct
       ALL of 'tac
     | EACH of 'tac list
     | FOCUS of int * 'tac
-    | REPEAT of 'mtac
     | PROGRESS of 'mtac
     | ORELSE of 'mtac * 'mtac
     | REC of 'var * 'mtac
