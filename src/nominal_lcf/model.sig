@@ -24,6 +24,7 @@ sig
 
   (* An environment assigns a tactic to each variable. *)
   type env = tactic Syn.VarCtx.dict
+  type menv = multitactic Syn.VarCtx.dict
 
   (* A model provides an interpretation of a refinement theory's primitive
    * rules of inference as nominal tactics, relative to a signature and

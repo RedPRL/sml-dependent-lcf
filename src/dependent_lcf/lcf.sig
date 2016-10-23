@@ -51,6 +51,8 @@ sig
   val orelse_ : jdg tactic * jdg tactic -> jdg tactic
   val try : jdg tactic -> jdg tactic
 
+  val isSubtelescope : jdg Tl.telescope * jdg Tl.telescope -> bool
+
   exception Progress
   val progress : jdg tactic -> jdg tactic
 

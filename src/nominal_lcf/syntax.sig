@@ -8,10 +8,12 @@ struct
     | RULE of 'rule
     | VAR of 'var
 
-  datatype 'tac multitactic_view =
+  datatype ('mtac, 'tac) multitactic_view =
       ALL of 'tac
     | EACH of 'tac list
     | FOCUS of int * 'tac
+    | MULTI_REPEAT of 'mtac
+    | MULTI_PROGRESS of 'mtac
 end
 
 signature NOMINAL_LCF_SYNTAX =
@@ -37,6 +39,6 @@ sig
     where type key = variable
 
   val tactic : sign -> tactic -> (multitactic, tactic, rule, variable, atom) NominalLcfView.tactic_view
-  val multitactic : sign -> multitactic -> tactic NominalLcfView.multitactic_view
+  val multitactic : sign -> multitactic -> (multitactic, tactic) NominalLcfView.multitactic_view
 end
 

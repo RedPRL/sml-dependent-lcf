@@ -2,6 +2,8 @@ functor NominalLcfSemantics (M : NOMINAL_LCF_MODEL) : NOMINAL_LCF_SEMANTICS =
 struct
   open M
 
+  exception MultitacProgress
+
   fun composeMultitactics mtacs =
     List.foldr
       (fn ((us : Syn.atom Spr.neigh, mtac : multitactic), rest) => fn alpha => fn st =>
@@ -20,8 +22,8 @@ struct
     open NominalLcfView
   in
 
-    fun Rec f alpha jdg =
-      f (Rec f) alpha jdg
+    fun Rec f alpha =
+      f (Rec f) alpha
 
     (* [Σ |=[ρ] tac ==> T] *)
     fun tactic (sign, rho) tac =
@@ -65,5 +67,26 @@ struct
              end
          | FOCUS (i, tac) =>
              (fn t => Lcf.only (i, t)) o tactic (sign, rho) tac
+         | MULTI_REPEAT mtac' =>
+             (fn alpha => fn state =>
+                let
+                  val mt = multitactic (sign, rho) mtac'
+                  val mt' = (fn alpha => fn state => multitactic (sign, rho) mtac alpha state)
+                  val mts = [([], mt), ([], mt')]
+                in
+                  Lcf.map Lcf.idn (composeMultitactics mts alpha state handle _ => state)
+                end)
+         | MULTI_PROGRESS mtac' =>
+             (fn alpha => fn state =>
+                let
+                  val Lcf.|> (psi, _) = state
+                  val sstate = multitactic (sign, rho) mtac' alpha state
+                  val Lcf.|> (psi', _) = Lcf.mul Lcf.isjdg sstate
+                in
+                  if Lcf.isSubtelescope (psi, psi') then
+                    raise MultitacProgress
+                  else
+                    sstate
+                end)
   end
 end

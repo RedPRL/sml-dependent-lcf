@@ -133,6 +133,9 @@ struct
     val unifySubtelescope = unifySubtelescopeAux (L.Ctx.empty, L.Ctx.empty)
   end
 
+  val isSubtelescope =
+    Option.isSome o unifySubtelescope
+
   exception Progress
   exception Complete
 
