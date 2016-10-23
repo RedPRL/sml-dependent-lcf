@@ -149,6 +149,16 @@ struct
        | NONE => st
     end
 
+  fun mprogress mt (st as (psi |> _)) =
+    let
+      val sst = mt st
+      val psi' |> _ = mul isjdg sst
+    in
+      case unifySubtelescope (psi, psi') of
+         SOME _ => raise Progress
+       | NONE => sst
+    end
+
   fun complete t jdg =
     let
       val st as (psi |> _) = t jdg

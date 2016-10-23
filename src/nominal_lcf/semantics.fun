@@ -70,23 +70,13 @@ struct
          | MULTI_REPEAT mtac' =>
              (fn alpha => fn state =>
                 let
-                  val mt = multitactic (sign, rho) mtac'
+                  val mt = Lcf.mprogress o multitactic (sign, rho) mtac'
                   val mt' = (fn alpha => fn state => multitactic (sign, rho) mtac alpha state)
                   val mts = [([], mt), ([], mt')]
                 in
                   Lcf.map Lcf.idn (composeMultitactics mts alpha state handle _ => state)
                 end)
          | MULTI_PROGRESS mtac' =>
-             (fn alpha => fn state =>
-                let
-                  val Lcf.|> (psi, _) = state
-                  val sstate = multitactic (sign, rho) mtac' alpha state
-                  val Lcf.|> (psi', _) = Lcf.mul Lcf.isjdg sstate
-                in
-                  if Lcf.isSubtelescope (psi, psi') then
-                    raise MultitacProgress
-                  else
-                    sstate
-                end)
+             Lcf.mprogress o multitactic (sign, rho) mtac'
   end
 end
