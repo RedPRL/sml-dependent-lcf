@@ -1,26 +1,18 @@
 local
   $(LIBS)/cmlib/cmlib.mlb
   $(LIBS)/sml-telescopes/telescopes.mlb
-  $(LIBS)/sml-typed-abts/abt.mlb
-  src/basis/basis.mlb
-  lcf.mlb
-
-  src/dependent_lcf/judgment.sig
-  src/dependent_lcf/hole_util.sig
-  src/dependent_lcf/hole_util.fun
-  src/dependent_lcf/dependent_lcf.sig
-  src/dependent_lcf/dependent_lcf.fun
-  src/dependent_lcf/multitacticals.fun
-  src/dependent_lcf/tacticals.fun
+  src/dependent_lcf/language.sig
+  src/dependent_lcf/lcf.sig
+  src/dependent_lcf/lcf.fun
 in
-  signature ABT_JUDGMENT
-  signature DEPENDENT_LCF
+  signature LCF_VAR
+  signature LCF_LANGUAGE
 
-  signature HOLE_KIT
-  signature HOLE_UTIL
+  signature LCF
+  signature LCF_JUDGMENT
+  signature LCF_UTIL
 
-  functor DependentLcf
-  functor Multitacticals
-  functor Tacticals
-  functor HoleUtil
+  functor Lcf
+  signature LCF_UTIL_KIT
+  functor LcfUtil
 end

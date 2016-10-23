@@ -1,0 +1,7 @@
+Library
+  functor LcfAbtLanguage
+is
+  $libs/cmlib/cmlib.cm
+  $libs/sml-typed-abts/abt.cm
+  dependent_lcf.cm
+  src/abt/language.fun

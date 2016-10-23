@@ -1,10 +1,6 @@
 functor NominalLcfSemantics (M : NOMINAL_LCF_MODEL) : NOMINAL_LCF_SEMANTICS =
 struct
   open M
-  structure Lcf = LcfUtil (MT.Lcf)
-
-  fun contractMultitactic (mtac : multitactic) : tactic =
-    Lcf.contract o mtac
 
   fun composeMultitactics mtacs =
     List.foldr
@@ -15,7 +11,7 @@ struct
           val st' = mtac beta' st
           val l = Int.max (0, !modulus - List.length us)
         in
-          rest (Spr.bite l alpha) st'
+          rest (Spr.bite l alpha) (Lcf.mul Lcf.isjdg st')
         end)
       (fn _ => fn st => st)
       mtacs
@@ -35,7 +31,9 @@ struct
                fun multitacBinding (us, mtac) =
                  (us, multitactic (sign, rho) mtac)
              in
-               contractMultitactic (composeMultitactics (List.map multitacBinding bindings))
+               fn alpha =>
+                 composeMultitactics (List.map multitacBinding bindings) alpha
+                   o Lcf.idn
              end
          | ORELSE (tac1, tac2) =>
              let
@@ -49,7 +47,7 @@ struct
          | REC (x, tac) =>
              Rec (fn t => tactic (sign, Syn.VarCtx.insert rho x t) tac)
          | PROGRESS tac =>
-             T.PROGRESS o tactic (sign, rho) tac
+             Lcf.progress o tactic (sign, rho) tac
          | RULE rl => rule (sign, rho) rl
          | VAR x => Syn.VarCtx.lookup rho x
 
@@ -57,15 +55,15 @@ struct
     and multitactic (sign, rho) mtac =
       case Syn.multitactic sign mtac of
            ALL tac =>
-             MT.ALL o tactic (sign, rho) tac
+             Lcf.all o tactic (sign, rho) tac
          | EACH tacs =>
              let
                val ts = List.map (tactic (sign, rho)) tacs
              in
                fn alpha =>
-                 MT.EACH' (List.map (fn t => t alpha) ts)
+                 Lcf.each (List.map (fn t => t alpha) ts)
              end
          | FOCUS (i, tac) =>
-             MT.FOCUS i o tactic (sign, rho) tac
+             (fn t => Lcf.only (i, t)) o tactic (sign, rho) tac
   end
 end

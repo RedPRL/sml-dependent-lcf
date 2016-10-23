@@ -1,7 +1,7 @@
 structure Sort : ABT_SORT =
 struct
   type t = unit
-  val eq = op=
+  val eq : t * t -> bool = op=
   fun toString () = "exp"
 end
 
@@ -53,142 +53,117 @@ end
 structure Term = SimpleAbt (L)
 structure ShowTm = DebugShowAbt (Term)
 
+structure Language = LcfAbtLanguage (Term)
+
 structure Judgment =
 struct
   structure Tm = Term
-  open Tm
 
-  datatype judgment = TRUE of Term.abt
-  fun judgmentToString (TRUE p) =
+  type sort = Language.sort
+  type env = Language.env
+
+  datatype jdg = TRUE of Tm.abt
+
+  fun toString (TRUE p) =
     ShowTm.toString p ^ " true"
 
-  fun evidenceValence _ =
+  fun sort _ =
     (([], []), ())
 
-  type evidence = abs
-  fun evidenceToString e =
-    let
-      infix \
-      val _ \ m = outb e
-    in
-      ShowTm.toString m
-    end
-
-  fun substEvidence rho (TRUE p) =
-    TRUE (substMetavar rho p)
-
-  fun substEvidenceEnv rho (TRUE p) =
-    TRUE (substMetaenv rho p)
-
-  fun judgmentMetactx (TRUE p) =
-    metactx p
-
-  fun unifyJudgment (TRUE p, TRUE q) =
-    Unify.unifyOpt (p, q)
+  fun eq (TRUE m, TRUE n) = Tm.eq (m, n)
+  fun subst env (TRUE m) = TRUE (Tm.substMetaenv env m)
 end
 
-structure Lcf = DependentLcf (Judgment)
-structure Tacticals = Tacticals (Lcf)
+structure Lcf = LcfUtil (structure Lcf = Lcf (Language) and J = Judgment)
 
 signature REFINER =
 sig
-  val UnitIntro : Lcf.tactic
-  val SigmaIntro : Lcf.tactic
-  val FooIntro : Lcf.tactic
+  val UnitIntro : Lcf.jdg Lcf.tactic
+  val SigmaIntro : Lcf.jdg Lcf.tactic
+  val FooIntro : Lcf.jdg Lcf.tactic
 end
 
 structure Refiner :> REFINER =
 struct
   open Judgment Term
-  infix $ $# \
+  infix $ $$ $# \
+  structure Tl = Lcf.Tl and V = Term.Metavar
 
-  structure T = Lcf.T and V = Term.Metavar
+  val |> = Lcf.|>
+  infix |>
 
-  local
-    structure Notation = TelescopeNotation (T)
-  in
-    open Notation
-    infix >:
-  end
-
-  structure MC =
-  struct
-    open Metavar.Ctx
-    structure Util = ContextUtil (structure Ctx = Metavar.Ctx and Elem = Vl)
-    open Util
-  end
+  local structure Notation = TelescopeNotation (Tl) in open Notation infix >: end
 
   local
     val i = ref 0
-  in
-    fun newMeta str =
+    fun newMeta () =
       (i := !i + 1;
-       V.named (str ^ Int.toString (!i)))
+       V.named (Int.toString (!i)))
+  in
+    fun makeGoal jdg =
+      let
+        val x = newMeta ()
+      in
+        ((x, jdg), fn ps => fn ms => check (x $# (ps, ms), ()))
+      end
   end
 
   fun UnitIntro (TRUE P) =
     let
       val L.UNIT $ [] = out P
-      val ax = check (L.AX $ [], ())
+      val ax = L.AX $$ []
     in
-      (T.empty, (fn rho => abtToAbs ax))
+      Tl.empty |> abtToAbs ax
     end
 
   fun SigmaIntro (TRUE P) =
     let
       val L.SIGMA $ [_ \ A, (_, [x]) \ B] = out P
-      val a = newMeta "?a"
-      val b = newMeta "?b"
-      val psi1 = T.empty >: (a, TRUE A)
-      val Ba = substVar (check (a $# ([],[]), ()), x) B
-      val psi = psi1 >: (b, TRUE Ba)
+      val (goalA, holeA) = makeGoal (TRUE A)
+      val (goalB, holeB) = makeGoal (TRUE (substVar (holeA [] [], x) B))
+      val pair = L.PAIR $$ [([],[]) \ holeA [] [], ([],[]) \ holeB [] []]
     in
-      (psi, (fn rho =>
-        let
-          val a' = outb (MC.lookup rho a)
-          val b' = outb (MC.lookup rho b)
-          val pair = L.PAIR $ [a', b']
-        in
-          abtToAbs (check (pair, ()))
-        end))
+      Tl.empty >: goalA >: goalB
+        |> abtToAbs pair
     end
 
   fun FooIntro (TRUE P) =
     let
       val L.FOO $ [_ \ A, _] = out P
-      val a = newMeta "?a"
-      val psi = T.empty >: (a, TRUE A)
-      val ax = check (L.AX $ [], ())
+      val (goalA, holeA) = makeGoal (TRUE A)
     in
-      (psi, (fn rho =>
-        MC.lookup rho a))
+      Tl.empty >: goalA |> abtToAbs (holeA [] [])
     end
-
 end
 
 structure Example =
 struct
-  open Refiner Judgment
-  open Lcf Tacticals Term
+  open L Refiner Judgment
+  open Lcf Term
   structure ShowTm = PlainShowAbt (Term)
-  structure ShowTel = ShowTelescope (T)
-  infix 5 $ \ THEN ORELSE
+  structure ShowTel = ShowTelescope (Tl)
+  infix 5 $ \ then_ orelse_
 
   val x = Var.named "x"
 
   val subgoalsToString =
     ShowTel.toString (fn (TRUE p) => ShowTm.toString p ^ " true")
 
-  fun run goal (tac : tactic) =
+  fun run goal (tac : jdg tactic) =
     let
-      val state = tac goal
+      val Lcf.|> (psi, vld) = tac goal
+      val (us, xs) \ m = outb vld
     in
-      print ("\n\n" ^ Lcf.stateToString state ^ "\n\n")
+      print "\n\n";
+      print (ShowTel.toString Judgment.toString psi);
+      print "\n--------------------------------\n";
+      print (ShowTm.toString m);
+      print "\n\n"
     end
 
-  val mkUnit = check (L.UNIT $ [], ())
-  fun mkSigma x a b = check (L.SIGMA $ [([],[]) \ a, ([],[x]) \ b], ())
-  fun mkFoo a b = check (L.FOO $ [([],[]) \ a, ([],[]) \ b], ())
+  val mkUnit = check (UNIT $ [], ())
+  fun mkSigma x a b = check (SIGMA $ [([],[]) \ a, ([],[x]) \ b], ())
+  fun mkFoo a b = check (FOO $ [([],[]) \ a, ([],[]) \ b], ())
 
   val x = Var.named "x"
   val y = Var.named "y"
@@ -201,10 +176,10 @@ struct
   (* to interact with the refiner, try commenting out some of the following lines *)
   val script =
     SigmaIntro
-      THEN TRY SigmaIntro
-      THEN TRY UnitIntro
-      THEN FooIntro
-      THEN UnitIntro
+      then_ try SigmaIntro
+      then_ try UnitIntro
+      then_ FooIntro
+      then_ UnitIntro
 
   val _ = run (TRUE goal) script
 end
