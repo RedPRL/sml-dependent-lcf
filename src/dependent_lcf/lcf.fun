@@ -108,6 +108,9 @@ struct
   fun orelse_ (t1, t2) jdg =
     t1 jdg handle _ => t2 jdg
 
+  fun morelse (mt1, mt2) st =
+    mt1 st handle _ => mt2 st
+
   fun try t =
     orelse_ (t, idn)
 

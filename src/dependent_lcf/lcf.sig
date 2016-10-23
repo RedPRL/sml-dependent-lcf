@@ -51,6 +51,8 @@ sig
   val orelse_ : jdg tactic * jdg tactic -> jdg tactic
   val try : jdg tactic -> jdg tactic
 
+  val morelse : jdg multitactic * jdg multitactic -> jdg multitactic
+
   exception Progress
   val progress : jdg tactic -> jdg tactic
   val mprogress : jdg multitactic -> jdg multitactic

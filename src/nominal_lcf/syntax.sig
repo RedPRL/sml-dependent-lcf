@@ -1,19 +1,19 @@
 structure NominalLcfView =
 struct
-  datatype ('mtac, 'tac, 'rule, 'var, 'atom) tactic_view =
-      SEQ of ('atom list * 'mtac) list
-    | ORELSE of 'tac * 'tac
-    | REC of 'var * 'tac
-    | PROGRESS of 'tac
-    | RULE of 'rule
-    | VAR of 'var
+  datatype ('mtac, 'tac, 'rule) tactic_view =
+      RULE of 'rule
+    | MTAC of 'mtac
 
-  datatype ('mtac, 'tac) multitactic_view =
+  datatype ('mtac, 'tac, 'var, 'atom) multitactic_view =
       ALL of 'tac
     | EACH of 'tac list
     | FOCUS of int * 'tac
-    | MULTI_REPEAT of 'mtac
-    | MULTI_PROGRESS of 'mtac
+    | REPEAT of 'mtac
+    | PROGRESS of 'mtac
+    | ORELSE of 'mtac * 'mtac
+    | REC of 'var * 'mtac
+    | VAR of 'var
+    | SEQ of 'atom list * 'mtac * 'mtac
 end
 
 signature NOMINAL_LCF_SYNTAX =
@@ -38,7 +38,7 @@ sig
   structure VarCtx : DICT
     where type key = variable
 
-  val tactic : sign -> tactic -> (multitactic, tactic, rule, variable, atom) NominalLcfView.tactic_view
-  val multitactic : sign -> multitactic -> (multitactic, tactic) NominalLcfView.multitactic_view
+  val tactic : sign -> tactic -> (multitactic, tactic, rule) NominalLcfView.tactic_view
+  val multitactic : sign -> multitactic -> (multitactic, tactic, variable, atom) NominalLcfView.multitactic_view
 end
 
