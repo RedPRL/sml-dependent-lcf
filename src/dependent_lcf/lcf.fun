@@ -39,7 +39,4 @@ struct
       fn (psi |> m) =>
         go (Tl.empty, m, L.Ctx.empty, psi)
     end
-
-  type 'a tactic = 'a -> 'a state
-  type 'a multitactic = 'a state tactic
 end
