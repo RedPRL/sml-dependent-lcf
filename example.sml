@@ -141,7 +141,7 @@ struct
   open L Refiner Judgment
   open Lcf Term
   structure ShowTm = PlainShowAbt (Term)
-  structure ShowTel = ShowTelescope (Tl)
+  structure ShowTel = TelescopeUtil (Tl)
   infix 5 $ \ then_ orelse_
 
   val x = Var.named "x"
