@@ -11,6 +11,7 @@ Library
   functor LcfUtil
 is
   $/basis.cm
+  $libs/sml-cats/cats.cm
   $libs/sml-telescopes/telescopes.cm
   $libs/cmlib.cm
   src/dependent_lcf/language.sig

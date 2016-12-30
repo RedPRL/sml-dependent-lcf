@@ -1,6 +1,7 @@
 local
   $(SML_LIB)/basis/basis.mlb
   $(LIBS)/cmlib.mlb
+  $(LIBS)/sml-cats/cats.mlb
   $(LIBS)/sml-telescopes/telescopes.mlb
   src/dependent_lcf/language.sig
   src/dependent_lcf/lcf.sig
