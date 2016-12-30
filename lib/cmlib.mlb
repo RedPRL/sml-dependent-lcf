@@ -1,0 +1,6 @@
+local
+  $(LIBS)/cmlib/cmlib.mlb
+in
+  signature ORDERED
+  signature DICT
+end

@@ -1,5 +1,6 @@
 local
-  $(LIBS)/cmlib/cmlib.mlb
+  $(SML_LIB)/basis/basis.mlb
+  $(LIBS)/cmlib.mlb
   $(LIBS)/sml-typed-abts/abt.mlb
   dependent_lcf.mlb
   src/abt/language.fun

@@ -10,8 +10,9 @@ Library
   signature LCF_UTIL_KIT
   functor LcfUtil
 is
+  $/basis.cm
   $libs/sml-telescopes/telescopes.cm
-  $libs/cmlib/cmlib.cm
+  $libs/cmlib.cm
   src/dependent_lcf/language.sig
   src/dependent_lcf/lcf.sig
   src/dependent_lcf/lcf.fun
