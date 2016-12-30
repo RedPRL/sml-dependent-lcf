@@ -15,3 +15,5 @@ is
   src/dependent_lcf/language.sig
   src/dependent_lcf/lcf.sig
   src/dependent_lcf/lcf.fun
+  src/dependent_lcf/lcf_util.sig
+  src/dependent_lcf/lcf_util.fun
