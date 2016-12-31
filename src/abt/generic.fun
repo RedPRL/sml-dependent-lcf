@@ -64,6 +64,8 @@ struct
       Tl.singleton x jdg' |> L.var x (sort jdg')
     end
 
+  structure Print = DebugShowAbt (L.Abt)
+
   fun commuteEff (isjdg : 'a isjdg) (bs || ((psi : 'a eff Tl.telescope) |> abs)) : 'a eff state = 
     let
       open L.Abt infix \ $#

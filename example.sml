@@ -76,16 +76,18 @@ struct
   fun subst env = map (Tm.substMetaenv env)
 end
 
-structure LcfGeneric = LcfGeneric (Language)
-structure Lcf = LcfUtil
-  (structure Lcf = LcfGeneric and J = Judgment
-   fun effEq (_, _) = raise Fail "ASDF")
-structure Lcf = struct open LcfGeneric Lcf end
+structure Lcf = 
+struct
+  local
+    structure Generic = LcfGeneric (Language)
+    structure Util = LcfUtil
+      (structure Lcf = Generic and J = Judgment
+       fun effEq (_, _) = raise Fail "ASDF")
+  in
+    open Generic Util
+  end
+end
 
-(*
-structure Lcf = LcfUtil 
-  (structure Lcf = Lcf (Language) and J = Judgment
-   fun effEq (jdg, jdg') = J.eq (jdg, jdg'))*)
 
 signature REFINER =
 sig
@@ -119,6 +121,13 @@ struct
         val x = newMeta ()
       in
         ((x, ([],[]) || jdg), fn ps => fn ms => check (x $# (ps, ms), ()))
+      end
+
+    fun makeGoal' (us, xs) jdg =
+      let
+        val x = newMeta ()
+      in
+        ((x, (us, xs) || jdg), fn ps => fn ms => check (x $# (ps, ms), ()))
       end
   end
 
