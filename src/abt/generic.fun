@@ -99,13 +99,6 @@ struct
       psi' |> abs'
     end
   
-  fun collapseEff isjdg e =
-    let
-      val psi |> m = commuteEff isjdg e
-    in
-      Tl.map (Eff.bind (fn x => x)) psi |> m
-    end
-
   fun 'a mul isjdg =
     let
       open Tl.ConsView
