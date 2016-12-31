@@ -1,11 +1,17 @@
-signature LCF_UTIL_KIT =
+signature LCF_UTIL_KIT_PURE =
 sig
   structure Lcf : LCF
   structure J : LCF_JUDGMENT
     where type sort = Lcf.L.sort
     where type env = Lcf.L.term Lcf.L.Ctx.dict
+end
+
+signature LCF_UTIL_KIT =
+sig
+  include LCF_UTIL_KIT_PURE
   val effEq : J.jdg Lcf.eff * J.jdg Lcf.eff -> bool
 end
+
 
 functor LcfUtil (Kit : LCF_UTIL_KIT) : LCF_UTIL =
 struct
@@ -137,5 +143,7 @@ struct
       else
         raise Complete
     end
-
 end
+
+functor LcfUtilPure (Kit : LCF_UTIL_KIT_PURE where type 'a Lcf.Eff.t = 'a) = 
+  LcfUtil (struct open Kit val effEq = J.eq end)

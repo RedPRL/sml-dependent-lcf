@@ -1,7 +1,9 @@
 Library
+  signature LCF_BINDING_JUDGMENT
   functor LcfAbtLanguage
   functor LcfGeneric
   signature LCF_GENERIC
+  functor LcfGenericUtil
 is
   $/basis.cm
   $libs/cmlib.cm

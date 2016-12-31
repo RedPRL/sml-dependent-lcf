@@ -70,7 +70,8 @@ struct
 
   type sort = Language.sort
   type env = Language.env
-
+  type symenv = Tm.symenv
+  type varenv = Tm.varenv
   datatype jdg = TRUE of Tm.abt
 
   fun toString (TRUE p) =
@@ -82,15 +83,15 @@ struct
   fun map f (TRUE m) = TRUE (f m)
   fun eq (TRUE m, TRUE n) = Tm.eq (m, n)
   fun subst env = map (Tm.substMetaenv env)
+  val substSymenv = map o Tm.substSymenv
+  val substVarenv = map o Tm.substVarenv
 end
 
 structure Lcf = 
 struct
   local
     structure Generic = LcfGeneric (Language)
-    structure Util = LcfUtil
-      (structure Lcf = Generic and J = Judgment
-       fun effEq (_, _) = raise Fail "ASDF")
+    structure Util = LcfGenericUtil (structure Lcf = Generic and J = Judgment)
   in
     open Generic Util
   end

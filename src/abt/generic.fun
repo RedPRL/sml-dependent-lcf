@@ -1,23 +1,66 @@
 signature LCF_GENERIC =
 sig
-  type ovar
-  type osym
-  type vsort
-  type psort
-  datatype 'a generic = || of ((osym * psort) list * (ovar * vsort) list) * 'a
+  structure Abt : ABT
+  datatype 'a generic = || of ((Abt.symbol * Abt.psort) list * (Abt.variable * Abt.sort) list) * 'a
   include LCF where type 'a Eff.t = 'a generic
+end
+
+signature LCF_BINDING_JUDGMENT = 
+sig
+  type symenv
+  type varenv
+
+  include LCF_JUDGMENT
+
+  val substSymenv : symenv -> jdg -> jdg
+  val substVarenv : varenv -> jdg -> jdg
+end
+
+signature LCF_GENERIC_UTIL_KIT =
+sig
+  structure Lcf : LCF_GENERIC
+  structure J : LCF_BINDING_JUDGMENT
+    where type sort = Lcf.L.sort
+    where type env = Lcf.L.term Lcf.L.Ctx.dict
+    where type symenv = Lcf.Abt.symenv
+    where type varenv = Lcf.Abt.varenv
+end
+
+functor LcfGenericUtil (Kit : LCF_GENERIC_UTIL_KIT) : LCF_UTIL =
+struct
+  local
+    local
+      open Kit Kit.Lcf Kit.Lcf.Abt infix ||
+    in
+      fun effEq ((us1, xs1) || jdg1, (us2, xs2) || jdg2) =
+        let
+          val (srho1, srho2) =
+            ListPair.foldl 
+              (fn ((u1, _), (u2, _), (r1, r2)) => let val u = O.P.ret (Sym.named "u") in (Sym.Ctx.insert r1 u1 u, Sym.Ctx.insert r2 u2 u) end)
+              (Sym.Ctx.empty, Sym.Ctx.empty)
+              (us1, us2)
+          val (vrho1, vrho2) =
+            ListPair.foldl 
+              (fn ((x1, tau), (x2, _), (r1, r2)) => let val x = check (` (Var.named "x"), tau) in (Var.Ctx.insert r1 x1 x, Var.Ctx.insert r2 x2 x) end)
+              (Var.Ctx.empty, Var.Ctx.empty)
+              (xs1, xs2)
+          val jdg1 = J.substVarenv vrho1 (J.substSymenv srho1 jdg1)
+          val jdg2 = J.substVarenv vrho2 (J.substSymenv srho2 jdg2)
+        in
+          J.eq (jdg1, jdg2)
+        end
+    end
+    structure Util = LcfUtil (open Kit val effEq = effEq)
+  in
+    open Util
+  end
 end
 
 functor LcfGeneric (L : LCF_ABT_LANGUAGE) : LCF_GENERIC =
 struct
-  structure L = L and Tl = Telescope (L.Var)
+  structure L = L and Tl = Telescope (L.Var) and Abt = L.Abt
 
-  type ovar = L.Abt.variable
-  type osym = L.Abt.symbol
-  type vsort = L.Abt.sort
-  type psort = L.Abt.psort
-
-  datatype 'a generic = || of ((osym * psort) list * (ovar * vsort) list) * 'a
+  datatype 'a generic = || of ((Abt.symbol * Abt.psort) list * (Abt.variable * Abt.sort) list) * 'a
   type 'a eff = 'a generic
   datatype 'a state = |> of 'a eff Tl.telescope * L.term
 
