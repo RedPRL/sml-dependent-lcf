@@ -67,9 +67,10 @@ struct
   structure Print = DebugShowAbt (L.Abt)
 
   local
-    open L.Abt Tl.ConsView infix \ $$ $#
-    fun substState (isjdg : 'a isjdg) env (psi |> m) : 'a state =
-      Tl.map (G.map (#subst isjdg env)) psi |> L.subst env m
+    open L.Abt Tl.ConsView infix \ $#
+    fun substState {subst, sort} env (psi |> m) : 'a state =
+      Tl.map (G.map (subst env)) psi |> L.subst env m
+
     fun printVars lbl xs = print (lbl ^ ": [" ^ ListSpine.pretty Var.toString ", " xs ^ "]\n")
   in
     fun 'a mul isjdg (ppsi |> abs) = 
@@ -84,27 +85,23 @@ struct
              val (us', sigmas') = ListPair.unzip (#1 bs)
              val (xs', taus') = ListPair.unzip (#2 bs)
 
-             val mx' = 
+             val envx = 
                Tl.foldl 
-                 (fn (y : L.var, jdg : 'a eff, r) =>
-                   let
-                     val vl as ((psorts, vsorts), tau) = #sort (liftJdg isjdg) jdg
-                     val us = List.map (fn _ => Sym.named "u") psorts
-                     val xs = List.map (fn _ => Var.named "x") vsorts
-
-                     val ps = ListPair.map (fn (u, sigma) => (O.P.ret u, sigma)) (us' @ us, sigmas' @ psorts)
-                     val ms = ListPair.map (fn (x, tau) => check (`x, tau)) (xs' @ xs, taus' @ vsorts)
-
-                     val binder = (us, xs) \ check (y $# (ps, ms), tau)
-                     val abs = checkb (binder, vl)
-                   in
-                     substMetavar (abs, y) r
-                   end) 
-                 mx 
+                 (fn (y, yjdg, r) => 
+                    let
+                      val vl as ((ysigmas, ytaus), tau) = #sort (liftJdg isjdg) yjdg
+                      val us = List.map (fn _ => Sym.named "u") ysigmas
+                      val xs = List.map (fn _ => Var.named "x") ytaus
+                      val ps = ListPair.map (fn (u, sigma) => (O.P.ret u, sigma)) (us' @ us, sigmas' @ ysigmas)
+                      val ms = ListPair.map (fn (x, tau) => check (`x, tau)) (xs' @ xs, taus' @ ytaus)
+                    in
+                      Metavar.Ctx.insert r y (checkb ((us, xs) \ check (y $# (ps, ms), tau), vl))
+                   end)
+                 Metavar.Ctx.empty
                  psix
-             
-             val bndx' = (us' @ usx, xs' @ xsx) \ mx'
-             val absx' = checkb (bndx', ((sigmas' @ sigmas, taus' @ taus), tau))
+
+             val vlx = ((sigmas' @ sigmas, taus' @ taus), tau)
+             val absx' = checkb ((us' @ usx, xs' @ xsx) \ substMetaenv envx mx, vlx)
              val env = Metavar.Ctx.insert Metavar.Ctx.empty x absx'
              val psi |> m' = substState isjdg env (mul isjdg (ppsi' |> abs))
            in
