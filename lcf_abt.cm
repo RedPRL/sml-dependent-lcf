@@ -6,7 +6,7 @@ Library
   functor LcfGenericUtil
 is
   $/basis.cm
-  $libs/cmlib.cm
+  lib/cmlib.cm
   $libs/sml-cats/cats.cm
   $libs/sml-typed-abts/abt.cm
   $libs/sml-telescopes/telescopes.cm

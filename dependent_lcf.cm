@@ -13,7 +13,7 @@ is
   $/basis.cm
   $libs/sml-cats/cats.cm
   $libs/sml-telescopes/telescopes.cm
-  $libs/cmlib.cm
+  lib/cmlib.cm
   src/dependent_lcf/language.sig
   src/dependent_lcf/lcf.sig
   src/dependent_lcf/lcf.fun
