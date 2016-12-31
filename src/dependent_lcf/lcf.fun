@@ -1,6 +1,7 @@
 functor Lcf (L : LCF_LANGUAGE) : LCF =
 struct
   structure L = L and Tl = Telescope (L.Var)
+  structure Eff = IdMonad
 
   type 'a eff = 'a
   datatype 'a state = |> of 'a eff Tl.telescope * L.term
@@ -12,7 +13,10 @@ struct
   infix |>
 
   fun liftJdg isjdg = isjdg
-
+  fun commuteEff _ x = x
+  fun collapseEff _ x = x
+  fun effEq f = f
+  
   fun map f (psi |> m) =
     Tl.map f psi |> m
 

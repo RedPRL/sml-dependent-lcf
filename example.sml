@@ -71,11 +71,21 @@ struct
   fun sort _ =
     (([], []), ())
 
+  fun map f (TRUE m) = TRUE (f m)
   fun eq (TRUE m, TRUE n) = Tm.eq (m, n)
-  fun subst env (TRUE m) = TRUE (Tm.substMetaenv env m)
+  fun subst env = map (Tm.substMetaenv env)
 end
 
-structure Lcf = LcfUtil (structure Lcf = Lcf (Language) and J = Judgment)
+structure LcfGeneric = LcfGeneric (Language)
+structure Lcf = LcfUtil
+  (structure Lcf = LcfGeneric and J = Judgment
+   fun effEq (_, _) = raise Fail "ASDF")
+structure Lcf = struct open LcfGeneric Lcf end
+
+(*
+structure Lcf = LcfUtil 
+  (structure Lcf = Lcf (Language) and J = Judgment
+   fun effEq (jdg, jdg') = J.eq (jdg, jdg'))*)
 
 signature REFINER =
 sig
@@ -93,6 +103,9 @@ struct
   val |> = Lcf.|>
   infix |>
 
+  val || = Lcf.||
+  infix ||
+
   local structure Notation = TelescopeNotation (Tl) in open Notation infix >: end
 
   local
@@ -105,7 +118,7 @@ struct
       let
         val x = newMeta ()
       in
-        ((x, jdg), fn ps => fn ms => check (x $# (ps, ms), ()))
+        ((x, ([],[]) || jdg), fn ps => fn ms => check (x $# (ps, ms), ()))
       end
   end
 
@@ -147,16 +160,13 @@ struct
 
   val x = Var.named "x"
 
-  val subgoalsToString =
-    ShowTel.toString (fn (TRUE p) => ShowTm.toString p ^ " true")
-
   fun run goal (tac : jdg tactic) =
     let
-      val Lcf.|> (psi, vld) = tac goal
+      val Lcf.|> (psi : jdg generic Tl.telescope, vld) = tac goal
       val (us, xs) \ m = outb vld
     in
       print "\n\n";
-      print (ShowTel.toString Judgment.toString psi);
+      print (ShowTel.toString (fn Lcf.|| (_, jdg) => J.toString jdg) psi);
       print "\n--------------------------------\n";
       print (ShowTm.toString m);
       print "\n\n"

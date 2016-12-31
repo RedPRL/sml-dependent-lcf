@@ -9,6 +9,7 @@ local
   src/abt/generic.fun
 in
   functor LcfAbtLanguage
+  signature LCF_GENERIC
   functor LcfGeneric
 end
 

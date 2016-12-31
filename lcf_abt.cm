@@ -1,6 +1,7 @@
 Library
   functor LcfAbtLanguage
   functor LcfGeneric
+  signature LCF_GENERIC
 is
   $/basis.cm
   $libs/cmlib.cm

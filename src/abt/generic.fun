@@ -5,7 +5,7 @@ sig
   type vsort
   type psort
   datatype 'a generic = || of ((osym * psort) list * (ovar * vsort) list) * 'a
-  include LCF where type 'a eff = 'a generic
+  include LCF where type 'a Eff.t = 'a generic
 end
 
 functor LcfGeneric (L : LCF_ABT_LANGUAGE) : LCF_GENERIC =
@@ -27,7 +27,7 @@ struct
 
   infix |> ||
 
-  structure G : MONAD =
+  structure Eff : MONAD =
   struct
     type 'a t = 'a generic
     fun ret x = ([],[]) || x
@@ -39,7 +39,7 @@ struct
       end
   end
 
-  structure G = struct structure F = MonadApplicative (G) open F G end
+  structure G = struct structure F = MonadApplicative (Eff) open F Eff end
 
   fun liftJdg {sort, subst} =
     {sort = 
@@ -51,7 +51,6 @@ struct
            ((sigmas @ sigmas', taus @ taus'), tau)
          end),
      subst = (fn env => G.map (subst env))}
-
 
   fun map f (psi |> m) =
     Tl.map (G.map f) psi |> m
@@ -65,15 +64,16 @@ struct
       Tl.singleton x jdg' |> L.var x (sort jdg')
     end
 
-  fun commuteGeneric (isjdg : 'a eff isjdg) (bs || ((psi : 'a eff Tl.telescope) |> abs)) : 'a eff state = 
+  fun commuteEff (isjdg : 'a isjdg) (bs || ((psi : 'a eff Tl.telescope) |> abs)) : 'a eff state = 
     let
       open L.Abt infix \ $#
+      val isjdg' = liftJdg isjdg
       val psi' : 'a eff eff Tl.telescope = Tl.map (fn a => bs || a) psi
       val env = 
         Tl.foldl
           (fn (x, bs' || jdg, r : L.env) => 
              let
-               val ((sigmas, taus), tau) = #sort isjdg (bs' || jdg)
+               val ((sigmas, taus), tau) = #sort isjdg' (bs' || jdg)
                val us = List.map (fn _ => Sym.named "u") sigmas
                val xs = List.map (fn _ => Var.named "x") taus
                val (us', sigmas') = ListPair.unzip (#1 bs)
@@ -83,7 +83,7 @@ struct
                val ms = ListPair.map (fn (x, tau) => check (`x, tau)) (xs' @ xs, taus' @ taus)
                val abs = checkb ((us' @ us, xs' @ xs) \ check (x $# (ps, ms), tau), vl')
              in
-               Metavar.Ctx.insert r x (raise Match)
+               Metavar.Ctx.insert r x abs
              end) 
           Metavar.Ctx.empty
           psi
@@ -97,6 +97,13 @@ struct
       val abs' = checkb ((us', xs') \ m', ((sigmas', taus'), tau))
     in
       psi' |> abs'
+    end
+  
+  fun collapseEff isjdg e =
+    let
+      val psi |> m = commuteEff isjdg e
+    in
+      Tl.map (Eff.bind (fn x => x)) psi |> m
     end
 
   fun 'a mul isjdg =
@@ -116,7 +123,7 @@ struct
              end
     in
       fn ((psi : 'a state eff telescope) |> m) => 
-        go (Tl.empty, m, L.Ctx.empty, Tl.map (commuteGeneric isjdg') psi)
+        go (Tl.empty, m, L.Ctx.empty, Tl.map (commuteEff isjdg) psi)
     end
 
 end
