@@ -13,9 +13,6 @@ struct
   infix |>
 
   fun liftJdg isjdg = isjdg
-  fun commuteEff _ x = x
-  fun collapseEff _ x = x
-  fun effEq f = f
   
   fun map f (psi |> m) =
     Tl.map f psi |> m
