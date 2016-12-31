@@ -137,7 +137,7 @@ struct
       let
         val x = newMeta ()
       in
-        ((x, (us, xs) || jdg), fn ps => fn ms => (check (x $# (ps, ms), ()) handle _ => raise Fail "incorrect metavar args!"))
+        ((x, (us, xs) || jdg), fn ps => fn ms => (check (x $# (ps, ms), ())))
       end
   end
 
