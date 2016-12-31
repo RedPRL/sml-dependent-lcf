@@ -1,6 +1,6 @@
 local
   $(SML_LIB)/basis/basis.mlb
-  $(LIBS)/cmlib.mlb
+  lib/cmlib.mlb
   $(LIBS)/sml-cats/cats.mlb
   $(LIBS)/sml-typed-abts/abt.mlb
   $(LIBS)/sml-telescopes/telescopes.mlb

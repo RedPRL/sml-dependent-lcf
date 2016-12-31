@@ -1,6 +1,6 @@
 local
   $(SML_LIB)/basis/basis.mlb
-  $(LIBS)/cmlib.mlb
+  lib/cmlib.mlb
   dependent_lcf.mlb
 
   src/nominal_lcf/spread.sig
