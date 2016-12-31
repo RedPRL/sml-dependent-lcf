@@ -1,10 +1,14 @@
 local
   $(SML_LIB)/basis/basis.mlb
   $(LIBS)/cmlib.mlb
+  $(LIBS)/sml-cats/cats.mlb
   $(LIBS)/sml-typed-abts/abt.mlb
+  $(LIBS)/sml-telescopes/telescopes.mlb
   dependent_lcf.mlb
   src/abt/language.fun
+  src/abt/generic.fun
 in
   functor LcfAbtLanguage
+  functor LcfGeneric
 end
 

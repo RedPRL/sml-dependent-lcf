@@ -1,6 +1,6 @@
 signature LCF_UTIL_KIT =
 sig
-  structure Lcf : LCF
+  structure Lcf : LCF where type 'a eff = 'a
   structure J : LCF_JUDGMENT
     where type sort = Lcf.L.sort
     where type env = Lcf.L.term Lcf.L.Ctx.dict

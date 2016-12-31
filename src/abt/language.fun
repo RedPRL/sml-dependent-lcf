@@ -14,8 +14,19 @@ struct
     end
 end
 
-functor LcfAbtLanguage (Abt : ABT where type 'a O.Ar.Vl.Sp.t = 'a list) : LCF_LANGUAGE =
+signature LCF_ABT_LANGUAGE =
+sig
+  structure Abt : ABT where type 'a O.Ar.Vl.Sp.t = 'a list
+  include LCF_LANGUAGE
+    where type sort = Abt.valence
+    where type Var.t = Abt.Metavar.t
+    where type 'a Ctx.dict = 'a Abt.Metavar.Ctx.dict
+    where type term = Abt.abs
+end
+
+functor LcfAbtLanguage (Abt : ABT where type 'a O.Ar.Vl.Sp.t = 'a list) : LCF_ABT_LANGUAGE =
 struct
+  structure Abt = Abt
   structure Var = Abt.Metavar
   structure Ctx = Abt.Metavar.Ctx
   type sort = Abt.valence

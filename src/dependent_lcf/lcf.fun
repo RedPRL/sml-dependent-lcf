@@ -2,13 +2,16 @@ functor Lcf (L : LCF_LANGUAGE) : LCF =
 struct
   structure L = L and Tl = Telescope (L.Var)
 
-  datatype 'a state = |> of 'a Tl.telescope * L.term
+  type 'a eff = 'a
+  datatype 'a state = |> of 'a eff Tl.telescope * L.term
 
   type 'a isjdg =
      {sort : 'a -> L.sort,
       subst : L.env -> 'a -> 'a}
 
   infix |>
+
+  fun liftJdg isjdg = isjdg
 
   fun map f (psi |> m) =
     Tl.map f psi |> m
@@ -20,11 +23,11 @@ struct
       Tl.singleton x jdg |> L.var x (sort jdg)
     end
 
-  fun mul {sort, subst} =
+  fun 'a mul {sort, subst} =
     let
       open Tl.ConsView
 
-      fun go (psi, m, env, ppsi) =
+      fun go (psi : 'a telescope, m : L.term, env : L.env, ppsi : 'a state telescope) =
         case out ppsi of
            EMPTY => psi |> L.subst env m
          | CONS (x, psix |> mx, ppsi') =>

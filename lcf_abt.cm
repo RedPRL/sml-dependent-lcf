@@ -1,8 +1,12 @@
 Library
   functor LcfAbtLanguage
+  functor LcfGeneric
 is
   $/basis.cm
   $libs/cmlib.cm
+  $libs/sml-cats/cats.cm
   $libs/sml-typed-abts/abt.cm
+  $libs/sml-telescopes/telescopes.cm
   dependent_lcf.cm
   src/abt/language.fun
+  src/abt/generic.fun

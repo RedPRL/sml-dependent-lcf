@@ -54,6 +54,7 @@ structure Term = SimpleAbt (L)
 structure ShowTm = DebugShowAbt (Term)
 
 structure Language = LcfAbtLanguage (Term)
+structure Generic = LcfGeneric (Language)
 
 structure Judgment =
 struct
