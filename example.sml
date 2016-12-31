@@ -1,4 +1,4 @@
-structure Sort : ABT_SORT =
+structure Sort =
 struct
   type t = unit
   val eq : t * t -> bool = op=
@@ -16,8 +16,10 @@ struct
   datatype 'i t =
       UNIT
     | SIGMA
+    | PI
     | AX
     | PAIR
+    | LAM
     | FOO (* a dummy proposition to demonstrate dependency *)
 
   fun eq _ =
@@ -30,23 +32,29 @@ struct
 
   fun arity UNIT = ([], ())
     | arity SIGMA = ([(([],[]),()), (([], [()]), ())], ())
+    | arity PI = ([(([],[]),()), (([], [()]), ())], ())
     | arity AX = ([], ())
     | arity PAIR = ([(([],[]),()), (([], []), ())], ())
+    | arity LAM = ([(([],[()]), ())], ())
     | arity FOO = ([(([],[]),()), (([], []), ())], ())
 
   fun map _ =
     fn UNIT => UNIT
      | SIGMA => SIGMA
+     | PI => PI
      | AX => AX
      | PAIR => PAIR
+     | LAM => LAM
      | FOO => FOO
 
   fun support _ = []
 
   fun toString _ UNIT = "Unit"
     | toString _ SIGMA = "Σ"
+    | toString _ PI = "Π"
     | toString _ AX = "Ax"
     | toString _ PAIR = "Pair"
+    | toString _ LAM = "λ"
     | toString _ FOO = "Foo"
 end
 
@@ -93,6 +101,7 @@ signature REFINER =
 sig
   val UnitIntro : Lcf.jdg Lcf.tactic
   val SigmaIntro : Lcf.jdg Lcf.tactic
+  val PiIntro : Lcf.jdg Lcf.tactic
   val FooIntro : Lcf.jdg Lcf.tactic
 end
 
@@ -127,7 +136,7 @@ struct
       let
         val x = newMeta ()
       in
-        ((x, (us, xs) || jdg), fn ps => fn ms => check (x $# (ps, ms), ()))
+        ((x, (us, xs) || jdg), fn ps => fn ms => (check (x $# (ps, ms), ()) handle _ => raise Fail "incorrect metavar args!"))
       end
   end
 
@@ -148,6 +157,15 @@ struct
     in
       Tl.empty >: goalA >: goalB
         |> abtToAbs pair
+    end
+  
+  fun PiIntro (TRUE P) = 
+    let
+      val L.PI $ [_ \ A, (_, [x]) \ B] = out P
+      val (goal, hole) = makeGoal' ([], [(x, ())]) (TRUE B)
+      val lam = L.LAM $$ [([],[x]) \ hole [] [check (`x, ())]]
+    in
+      Tl.empty >: goal |> abtToAbs lam
     end
 
   fun FooIntro (TRUE P) =
@@ -183,21 +201,24 @@ struct
 
   val mkUnit = check (UNIT $ [], ())
   fun mkSigma x a b = check (SIGMA $ [([],[]) \ a, ([],[x]) \ b], ())
+  fun mkPi x a b = check (PI $ [([],[]) \ a, ([],[x]) \ b], ())
   fun mkFoo a b = check (FOO $ [([],[]) \ a, ([],[]) \ b], ())
 
   val x = Var.named "x"
   val y = Var.named "y"
+  val z = Var.named "z"
 
   val goal =
     mkSigma y
       (mkSigma x mkUnit mkUnit)
-      (mkFoo mkUnit (check (`y, ())))
+      (mkPi z (mkFoo mkUnit (check (`y, ()))) (mkFoo mkUnit (check (`z, ()))))
 
   (* to interact with the refiner, try commenting out some of the following lines *)
   val script =
     SigmaIntro
       then_ try SigmaIntro
       then_ try UnitIntro
+      then_ PiIntro
       then_ FooIntro
       then_ UnitIntro
 

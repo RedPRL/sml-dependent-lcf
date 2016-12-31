@@ -66,59 +66,50 @@ struct
 
   structure Print = DebugShowAbt (L.Abt)
 
-  fun commuteEff (isjdg : 'a isjdg) (bs || ((psi : 'a eff Tl.telescope) |> abs)) : 'a eff state = 
-    let
-      open L.Abt infix \ $#
-      val isjdg' = liftJdg isjdg
-      val psi' : 'a eff eff Tl.telescope = Tl.map (fn a => bs || a) psi
-      val env = 
-        Tl.foldl
-          (fn (x, bs' || jdg, r : L.env) => 
-             let
-               val ((sigmas, taus), tau) = #sort isjdg' (bs' || jdg)
-               val us = List.map (fn _ => Sym.named "u") sigmas
-               val xs = List.map (fn _ => Var.named "x") taus
-               val (us', sigmas') = ListPair.unzip (#1 bs)
-               val (xs', taus') = ListPair.unzip (#2 bs)
-               val vl' = ((sigmas' @ sigmas, taus' @ taus), tau)
-               val ps = ListPair.map (fn (u, sigma) => (O.P.ret u, sigma)) (us' @ us, sigmas' @ sigmas)
-               val ms = ListPair.map (fn (x, tau) => check (`x, tau)) (xs' @ xs, taus' @ taus)
-               val abs = checkb ((us' @ us, xs' @ xs) \ check (x $# (ps, ms), tau), vl')
-             in
-               Metavar.Ctx.insert r x abs
-             end) 
-          Metavar.Ctx.empty
-          psi
+  local
+    open L.Abt Tl.ConsView infix \ $$ $#
+    fun substState (isjdg : 'a isjdg) env (psi |> m) : 'a state =
+      Tl.map (G.map (#subst isjdg env)) psi |> L.subst env m
+    fun printVars lbl xs = print (lbl ^ ": [" ^ ListSpine.pretty Var.toString ", " xs ^ "]\n")
+  in
+    fun 'a mul isjdg (ppsi |> abs) = 
+      case out ppsi of 
+         EMPTY => Tl.empty |> abs
+       | CONS (x, stx : 'a state eff, ppsi') =>
+           let
+             val bs || ((psix : 'a eff telescope) |> absx) = stx
+             val psix' = Tl.map (Eff.bind (fn x => bs || x)) psix
 
-      val (sbs, vbs) = bs
-      val (slen, vlen) = (List.length sbs, List.length vbs)
-      val ((us, xs) \ m, ((sigmas, taus), tau)) = inferb abs
-      val (us', xs') = (List.drop (us, slen), List.drop (xs, vlen))
-      val (sigmas', taus') = (List.drop (sigmas, slen), List.drop (taus, vlen))
-      val m' = substMetaenv env m
-      val abs' = checkb ((us', xs') \ m', ((sigmas', taus'), tau))
-    in
-      psi' |> abs'
-    end
-  
-  fun 'a mul isjdg =
-    let
-      open Tl.ConsView
-      val isjdg' as {sort,subst} = liftJdg isjdg
-      fun go (psi : 'a eff telescope, m : L.term, env : L.env, ppsi : 'a eff state telescope) =
-        case out ppsi of
-           EMPTY => psi |> L.subst env m
-         | CONS (x : L.var, (psix : 'a eff eff telescope) |> (mx : L.term), ppsi' : 'a eff state telescope) =>
-             let
-               val psix' : 'a eff telescope = Tl.map (subst env o G.bind (fn x => x)) psix
-               val psi' = Tl.append psi psix'
-               val env' = L.Ctx.insert env x mx
-             in
-               go (psi', m, env', ppsi')
-             end
-    in
-      fn ((psi : 'a state eff telescope) |> m) => 
-        go (Tl.empty, m, L.Ctx.empty, Tl.map (commuteEff isjdg) psi)
-    end
+             val ((usx, xsx) \ mx, ((sigmas, taus), tau)) = inferb absx
+             val (us', sigmas') = ListPair.unzip (#1 bs)
+             val (xs', taus') = ListPair.unzip (#2 bs)
+
+             val mx' = 
+               Tl.foldl 
+                 (fn (y : L.var, jdg : 'a eff, r) =>
+                   let
+                     val vl as ((psorts, vsorts), tau) = #sort (liftJdg isjdg) jdg
+                     val us = List.map (fn _ => Sym.named "u") psorts
+                     val xs = List.map (fn _ => Var.named "x") vsorts
+
+                     val ps = ListPair.map (fn (u, sigma) => (O.P.ret u, sigma)) (us' @ us, sigmas' @ psorts)
+                     val ms = ListPair.map (fn (x, tau) => check (`x, tau)) (xs' @ xs, taus' @ vsorts)
+
+                     val binder = (us, xs) \ check (y $# (ps, ms), tau)
+                     val abs = checkb (binder, vl)
+                   in
+                     substMetavar (abs, y) r
+                   end) 
+                 mx 
+                 psix
+             
+             val bndx' = (us' @ usx, xs' @ xsx) \ mx'
+             val absx' = checkb (bndx', ((sigmas' @ sigmas, taus' @ taus), tau))
+             val env = Metavar.Ctx.insert Metavar.Ctx.empty x absx'
+             val psi |> m' = substState isjdg env (mul isjdg (ppsi' |> abs))
+           in
+             Tl.append psix' psi |> m'
+           end
+  end
 
 end
