@@ -91,7 +91,7 @@ struct
            val ((sigmas, taus), tau) = sort m
            val (sigmas', taus') = (List.map #2 us, List.map #2 xs)
          in
-           ((sigmas @ sigmas', taus @ taus'), tau)
+           ((sigmas' @ sigmas, taus' @ taus), tau)
          end),
      subst = (fn env => G.map (subst env))}
 
@@ -133,11 +133,37 @@ struct
         checkb (binder, valence)
       end
 
+
     fun ::= (x, abs) = Metavar.Ctx.insert Metavar.Ctx.empty x abs
     infix ::=
     
     fun fwderr msg exn =
       raise Fail (msg ^ " / " ^ exnMessage exn)
+
+    fun makeRebindingEnv (isjdg : 'a isjdg) bindings (psi : 'a telescope) =
+      let
+        val (symBindings, varBindings) = bindings
+        val (us', sigmas') = ListPair.unzip symBindings
+        val (xs', taus') = ListPair.unzip varBindings
+      in
+        Tl.foldl 
+          (fn (x, jdg, env) => 
+             let
+               val ((sigmas, taus), tau) = #sort isjdg jdg
+               val us = List.map (fn _ => Sym.named "u") sigmas
+               val xs = List.map (fn _ => Var.named "x") taus
+               (*check order of application here*)
+               val ps = ListPair.map (fn (u, sigma) => (O.P.ret u, sigma)) (us' @ us, sigmas' @ sigmas)
+               val ms = ListPair.map (fn (x, tau) => check (`x, tau)) (xs' @ xs, taus' @ taus)
+               val meta = check (x $# (ps, ms), tau)
+               val binder = (us, xs) \ meta
+               val abs = checkb (binder, ((sigmas, taus), tau))
+             in
+               Metavar.Ctx.insert env x abs
+             end)
+          Metavar.Ctx.empty
+          psi
+      end
 
   in
     fun 'a mul isjdg (ppsi |> abs) = 
@@ -145,36 +171,16 @@ struct
          EMPTY => Tl.empty |> abs
        | CONS (x, bindings || (psix |> absx), ppsi') =>
            let
-             val envx = 
-               Tl.foldl
-                 (fn (y, ejdg : 'a eff, rho) => 
-                    let
-                      val (symBindings, varBindings) = bindings
-                      val (us', sigmas') = ListPair.unzip symBindings
-                      val (xs', taus') = ListPair.unzip varBindings
+             val ppsi'' = Tl.map (G.map (substState isjdg (x ::= absx))) ppsi' handle exn => fwderr "ppsi'" exn
 
-                      val ((sigmas, taus), tau) = #sort (liftJdg isjdg) ejdg
-                      val us = List.map (fn _ => Sym.named "u") sigmas
-                      val xs = List.map (fn _ => Var.named "x") taus
+             val envx = makeRebindingEnv (liftJdg isjdg) bindings psix
+             val absx' = mapAbs (substMetaenv envx) absx handle exn => fwderr "absx'" exn
+             val absx'' = prependBindings bindings absx' handle exn => fwderr "absx''" exn
+             val abs' = L.subst (x ::= absx'') abs handle exn => fwderr "abs'" exn
 
-                      (*check order of application here*)
-                      val ps = ListPair.map (fn (u, sigma) => (O.P.ret u, sigma)) (us @ us', sigmas @ sigmas')
-                      val ms = ListPair.map (fn (x, tau) => check (`x, tau)) (xs @ xs', taus @ taus')
-                      val meta = check (y $# (ps, ms), tau)
-                      val binder = (us, xs) \ meta
-                      val abs = checkb (binder, ((sigmas, taus), tau))
-                    in
-                      Metavar.Ctx.insert rho y abs
-                    end)
-                 Metavar.Ctx.empty
-                 psix
+             val state' = mul isjdg (ppsi'' |> abs') handle exn => fwderr "state'" exn
 
-             val ppsi'' = Tl.map (Eff.bind (Eff.ret o substState isjdg (x ::= absx))) ppsi'
-             val absx' = prependBindings bindings (mapAbs (substMetaenv envx) absx)
-             val abs' = L.subst (x ::= absx') abs
-             val state' = mul isjdg (ppsi'' |> abs')
-
-             val psix' = Tl.map (Eff.bind (fn jdg => bindings || jdg)) psix
+             val psix' = Tl.map (Eff.bind (fn jdg => bindings || jdg)) psix handle exn => fwderr "psix'" exn
            in
              prependState psix' state'
            end
