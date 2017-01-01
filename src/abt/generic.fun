@@ -111,44 +111,72 @@ struct
 
   local
     open L.Abt Tl.ConsView infix \ $#
-    fun substState {subst, sort} env (psi |> m) : 'a state =
-      Tl.map (G.map (subst env)) psi |> L.subst env m
+    structure Tl = TelescopeUtil (Tl)
+    fun substTele {subst, sort} env psi = 
+      Tl.map (G.map (subst env)) psi
+
+    fun substState isjdg env (psi |> m) : 'a state =
+      substTele isjdg env psi |> L.subst env m
 
     fun printVars lbl xs = print (lbl ^ ": [" ^ ListSpine.pretty Var.toString ", " xs ^ "]\n")
+    fun prependState psi' (psi |> abs) =
+      Tl.append psi' psi |> abs
+
+    fun prependBindings (symBindings, varBindings) abs = 
+      let
+        val (us', sigmas') = ListPair.unzip symBindings
+        val (xs', taus') = ListPair.unzip varBindings
+        val ((us, xs) \ m, ((sigmas, taus), tau)) = inferb abs
+        val binder = (us' @ us, xs' @ xs) \ m
+        val valence = ((sigmas' @ sigmas, taus' @ taus), tau)
+      in
+        checkb (binder, valence)
+      end
+
+    fun ::= (x, abs) = Metavar.Ctx.insert Metavar.Ctx.empty x abs
+    infix ::=
+    
+    fun fwderr msg exn =
+      raise Fail (msg ^ " / " ^ exnMessage exn)
+
   in
     fun 'a mul isjdg (ppsi |> abs) = 
       case out ppsi of 
          EMPTY => Tl.empty |> abs
-       | CONS (x, stx : 'a state eff, ppsi') =>
+       | CONS (x, bindings || (psix |> absx), ppsi') =>
            let
-             val bs || ((psix : 'a eff telescope) |> absx) = stx
-             val psix' = Tl.map (Eff.bind (fn x => bs || x)) psix
-
-             val ((usx, xsx) \ mx, ((sigmas, taus), tau)) = inferb absx
-             val (us', sigmas') = ListPair.unzip (#1 bs)
-             val (xs', taus') = ListPair.unzip (#2 bs)
-
              val envx = 
-               Tl.foldl 
-                 (fn (y, yjdg, r) => 
+               Tl.foldl
+                 (fn (y, ejdg : 'a eff, rho) => 
                     let
-                      val vl as ((ysigmas, ytaus), tau) = #sort (liftJdg isjdg) yjdg
-                      val us = List.map (fn _ => Sym.named "u") ysigmas
-                      val xs = List.map (fn _ => Var.named "x") ytaus
-                      val ps = ListPair.map (fn (u, sigma) => (O.P.ret u, sigma)) (us' @ us, sigmas' @ ysigmas)
-                      val ms = ListPair.map (fn (x, tau) => check (`x, tau)) (xs' @ xs, taus' @ ytaus)
+                      val (symBindings, varBindings) = bindings
+                      val (us', sigmas') = ListPair.unzip symBindings
+                      val (xs', taus') = ListPair.unzip varBindings
+
+                      val ((sigmas, taus), tau) = #sort (liftJdg isjdg) ejdg
+                      val us = List.map (fn _ => Sym.named "u") sigmas
+                      val xs = List.map (fn _ => Var.named "x") taus
+
+                      (*check order of application here*)
+                      val ps = ListPair.map (fn (u, sigma) => (O.P.ret u, sigma)) (us @ us', sigmas @ sigmas')
+                      val ms = ListPair.map (fn (x, tau) => check (`x, tau)) (xs @ xs', taus @ taus')
+                      val meta = check (y $# (ps, ms), tau)
+                      val binder = (us, xs) \ meta
+                      val abs = checkb (binder, ((sigmas, taus), tau))
                     in
-                      Metavar.Ctx.insert r y (checkb ((us, xs) \ check (y $# (ps, ms), tau), vl))
-                   end)
+                      Metavar.Ctx.insert rho y abs
+                    end)
                  Metavar.Ctx.empty
                  psix
 
-             val vlx = ((sigmas' @ sigmas, taus' @ taus), tau)
-             val absx' = checkb ((us' @ usx, xs' @ xsx) \ substMetaenv envx mx, vlx)
-             val env = Metavar.Ctx.insert Metavar.Ctx.empty x absx'
-             val psi |> m' = substState isjdg env (mul isjdg (ppsi' |> abs))
+             val ppsi'' = Tl.map (Eff.bind (Eff.ret o substState isjdg (x ::= absx))) ppsi'
+             val absx' = prependBindings bindings (mapAbs (substMetaenv envx) absx)
+             val abs' = L.subst (x ::= absx') abs
+             val state' = mul isjdg (ppsi'' |> abs')
+
+             val psix' = Tl.map (Eff.bind (fn jdg => bindings || jdg)) psix
            in
-             Tl.append psix' psi |> m'
+             prependState psix' state'
            end
   end
 

@@ -2,15 +2,15 @@ functor FreshSymbols (S : ABT_SYMBOL) =
 struct
   fun freshSyms ss =
     let
-      fun go ctx [] = []
-        | go ctx (s :: ss) =
+      fun go i ctx [] = []
+        | go i ctx (s :: ss) =
             let
-              val u = S.fresh ctx "?"
+              val u = S.fresh ctx ("?" ^ Int.toString i)
             in
-              (u, s) :: go (S.Ctx.insert ctx u ()) ss
+              (u, s) :: go (i + 1) (S.Ctx.insert ctx u ()) ss
             end
     in
-      go S.Ctx.empty ss
+      go 0 S.Ctx.empty ss
     end
 end
 
@@ -60,6 +60,6 @@ struct
       end
   end
 
-  val subst = Abt.mapAbs o Abt.substMetaenv
+  fun subst env abs = Abt.mapAbs (Abt.substMetaenv env) abs handle _ => raise Fail "Language.subst"
   val eq = Abt.eqAbs
 end
