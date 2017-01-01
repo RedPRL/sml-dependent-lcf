@@ -68,17 +68,18 @@ struct
      {sort : 'a -> L.sort,
       subst : L.env -> 'a -> 'a}
 
-  infix |> ||
+  fun @@ (f, x) = f x
+  infix @@ |> ||
 
   structure Eff : MONAD =
   struct
     type 'a t = 'a generic
     fun ret x = ([],[]) || x
-    fun bind f ((us, xs) || m) =
+    fun bind f ((us', xs') || m) =
       let
-        val (us', xs') || m' = f m
+        val (us, xs) || m' = f m
       in
-        (us @ us', xs @ xs') || m'
+        (us' @ us, xs' @ xs) || m'
       end
   end
 
@@ -112,13 +113,13 @@ struct
   local
     open L.Abt Tl.ConsView infix \ $#
     structure Tl = TelescopeUtil (Tl)
-    fun substTele {subst, sort} env psi = 
-      Tl.map (G.map (subst env)) psi
+
+    fun substTele (isjdg : 'a isjdg) env (psi : 'a eff telescope) = 
+      Tl.map (G.map (#subst isjdg env)) psi
 
     fun substState isjdg env (psi |> m) : 'a state =
       substTele isjdg env psi |> L.subst env m
 
-    fun printVars lbl xs = print (lbl ^ ": [" ^ ListSpine.pretty Var.toString ", " xs ^ "]\n")
     fun prependState psi' (psi |> abs) =
       Tl.append psi' psi |> abs
 
@@ -133,12 +134,8 @@ struct
         checkb (binder, valence)
       end
 
-
     fun ::= (x, abs) = Metavar.Ctx.insert Metavar.Ctx.empty x abs
     infix ::=
-    
-    fun fwderr msg exn =
-      raise Fail (msg ^ " / " ^ exnMessage exn)
 
     fun makeRebindingEnv (isjdg : 'a isjdg) bindings (psi : 'a telescope) =
       let
@@ -164,25 +161,21 @@ struct
           Metavar.Ctx.empty
           psi
       end
-
   in
     fun 'a mul isjdg (ppsi |> abs) = 
       case out ppsi of 
          EMPTY => Tl.empty |> abs
        | CONS (x, bindings || (psix |> absx), ppsi') =>
            let
-             val ppsi'' = Tl.map (G.map (substState isjdg (x ::= absx))) ppsi' handle exn => fwderr "ppsi'" exn
-
              val envx = makeRebindingEnv (liftJdg isjdg) bindings psix
-             val absx' = mapAbs (substMetaenv envx) absx handle exn => fwderr "absx'" exn
-             val absx'' = prependBindings bindings absx' handle exn => fwderr "absx''" exn
-             val abs' = L.subst (x ::= absx'') abs handle exn => fwderr "abs'" exn
+             val absx' = prependBindings bindings @@ mapAbs (substMetaenv envx) absx
+             val psix' = Tl.map (Eff.bind (fn jdg => bindings || #subst isjdg envx jdg)) psix
 
-             val state' = mul isjdg (ppsi'' |> abs') handle exn => fwderr "state'" exn
-
-             val psix' = Tl.map (Eff.bind (fn jdg => bindings || jdg)) psix handle exn => fwderr "psix'" exn
+             val state' = 
+               Tl.map (G.map (substState isjdg (x ::= absx'))) ppsi'
+                 |> L.subst (x ::= absx') abs
            in
-             prependState psix' state'
+             prependState psix' @@ mul isjdg state'
            end
   end
 
