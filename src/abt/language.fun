@@ -2,20 +2,31 @@ functor FreshSymbols (S : ABT_SYMBOL) =
 struct
   fun freshSyms ss =
     let
-      fun go ctx [] = []
-        | go ctx (s :: ss) =
+      fun go i ctx [] = []
+        | go i ctx (s :: ss) =
             let
-              val u = S.fresh ctx "?"
+              val u = S.fresh ctx ("?" ^ Int.toString i)
             in
-              (u, s) :: go (S.Ctx.insert ctx u ()) ss
+              (u, s) :: go (i + 1) (S.Ctx.insert ctx u ()) ss
             end
     in
-      go S.Ctx.empty ss
+      go 0 S.Ctx.empty ss
     end
 end
 
-functor LcfAbtLanguage (Abt : ABT where type 'a O.Ar.Vl.Sp.t = 'a list) : LCF_LANGUAGE =
+signature LCF_ABT_LANGUAGE =
+sig
+  structure Abt : ABT where type 'a O.Ar.Vl.Sp.t = 'a list
+  include LCF_LANGUAGE
+    where type sort = Abt.valence
+    where type Var.t = Abt.Metavar.t
+    where type 'a Ctx.dict = 'a Abt.Metavar.Ctx.dict
+    where type term = Abt.abs
+end
+
+functor LcfAbtLanguage (Abt : ABT where type 'a O.Ar.Vl.Sp.t = 'a list) : LCF_ABT_LANGUAGE =
 struct
+  structure Abt = Abt
   structure Var = Abt.Metavar
   structure Ctx = Abt.Metavar.Ctx
   type sort = Abt.valence

@@ -1,0 +1,5 @@
+Library
+  signature ORDERED
+  signature DICT
+is
+  $libs/cmlib/cmlib.cm
