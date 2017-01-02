@@ -60,6 +60,6 @@ struct
       end
   end
 
-  fun subst env abs = Abt.mapAbs (Abt.substMetaenv env) abs handle _ => raise Fail "Language.subst"
+  val subst = Abt.mapAbs o Abt.substMetaenv
   val eq = Abt.eqAbs
 end
