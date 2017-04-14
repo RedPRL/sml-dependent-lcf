@@ -79,7 +79,7 @@ struct
       let
         val (us, xs) || m' = f m
       in
-        (us' @ us, xs' @ xs) || m'
+        (us @ us', xs @ xs') || m'
       end
   end
 
@@ -92,7 +92,7 @@ struct
            val ((sigmas, taus), tau) = sort m
            val (sigmas', taus') = (List.map #2 us, List.map #2 xs)
          in
-           ((sigmas' @ sigmas, taus' @ taus), tau)
+           ((sigmas @ sigmas', taus @ taus'), tau)
          end),
      subst = (fn env => G.map (subst env))}
 
@@ -128,8 +128,8 @@ struct
         val (us', sigmas') = ListPair.unzip symBindings
         val (xs', taus') = ListPair.unzip varBindings
         val ((us, xs) \ m, ((sigmas, taus), tau)) = inferb abs
-        val binder = (us' @ us, xs' @ xs) \ m
-        val valence = ((sigmas' @ sigmas, taus' @ taus), tau)
+        val binder = (us @ us', xs @ xs') \ m
+        val valence = ((sigmas @ sigmas', taus @ taus'), tau)
       in
         checkb (binder, valence)
       end
