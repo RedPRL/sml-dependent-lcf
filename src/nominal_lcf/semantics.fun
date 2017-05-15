@@ -55,5 +55,12 @@ struct
                fn alpha =>
                  Lcf.morelse (mt1 alpha, mt2 alpha)
              end
+         | HOLE ann => 
+             fn alpha => fn state => 
+               let
+                 val _ = M.printHole ann state
+               in
+                 Lcf.all Lcf.idn state
+               end
   end
 end

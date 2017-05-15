@@ -31,5 +31,7 @@ sig
    *
    * [Σ |=[ρ] rule ==> T] *)
   val rule : Syn.sign * env -> Syn.rule -> tactic
+
+  val printHole : Syn.ann -> Lcf.jdg Lcf.state -> unit
 end
 

@@ -4,7 +4,7 @@ struct
       RULE of 'rule
     | MTAC of 'mtac
 
-  datatype ('mtac, 'tac, 'var, 'atom) multitactic_view =
+  datatype ('ann, 'mtac, 'tac, 'var, 'atom) multitactic_view =
       ALL of 'tac
     | EACH of 'tac list
     | FOCUS of int * 'tac
@@ -13,6 +13,7 @@ struct
     | REC of 'var * 'mtac
     | VAR of 'var
     | SEQ of 'atom list * 'mtac * 'mtac
+    | HOLE of 'ann 
 end
 
 signature NOMINAL_LCF_SYNTAX =
@@ -34,10 +35,13 @@ sig
    * Nominal LCF theory is completely agnostic on this count. *)
   type sign
 
+  (* The type of annotations *)
+  type ann
+
   structure VarCtx : DICT
     where type key = variable
 
   val tactic : sign -> tactic -> (multitactic, tactic, rule) NominalLcfView.tactic_view
-  val multitactic : sign -> multitactic -> (multitactic, tactic, variable, atom) NominalLcfView.multitactic_view
+  val multitactic : sign -> multitactic -> (ann, multitactic, tactic, variable, atom) NominalLcfView.multitactic_view
 end
 
