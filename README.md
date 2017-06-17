@@ -78,7 +78,7 @@ that you can implement in a sequential programming language like ML.
 ### Instructions
 
 ```
-git submodule init --recursive
+git submodule update --init --recursive
 rlwrap sml
 > CM.make "development.cm";
 ```
