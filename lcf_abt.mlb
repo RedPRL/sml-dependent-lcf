@@ -10,8 +10,5 @@ local
 in
   signature LCF_BINDING_JUDGMENT
   functor LcfAbtLanguage
-  signature LCF_GENERIC
-  functor LcfGeneric
-  functor LcfGenericUtil
 end
 
