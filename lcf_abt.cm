@@ -1,5 +1,4 @@
 Library
-  signature LCF_BINDING_JUDGMENT
   functor LcfAbtLanguage
 is
   $/basis.cm
@@ -9,4 +8,3 @@ is
   $libs/sml-telescopes/telescopes.cm
   dependent_lcf.cm
   src/abt/language.fun
-  src/abt/generic.fun

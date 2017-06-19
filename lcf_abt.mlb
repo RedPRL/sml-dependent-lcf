@@ -6,9 +6,7 @@ local
   $(LIBS)/sml-telescopes/telescopes.mlb
   dependent_lcf.mlb
   src/abt/language.fun
-  src/abt/generic.fun
 in
-  signature LCF_BINDING_JUDGMENT
   functor LcfAbtLanguage
 end
 
