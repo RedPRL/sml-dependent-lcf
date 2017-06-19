@@ -1,9 +1,5 @@
 Library
-  signature LCF_BINDING_JUDGMENT
   functor LcfAbtLanguage
-  functor LcfGeneric
-  signature LCF_GENERIC
-  functor LcfGenericUtil
 is
   $/basis.cm
   lib/cmlib.cm
@@ -12,4 +8,3 @@ is
   $libs/sml-telescopes/telescopes.cm
   dependent_lcf.cm
   src/abt/language.fun
-  src/abt/generic.fun
