@@ -1,7 +1,11 @@
 functor Lcf (L : LCF_LANGUAGE) : LCF =
 struct
   structure L = L and Tl = Telescope (L.Var)
-  structure Eff = IdMonad
+  structure Eff = 
+  struct 
+    open IdMonad
+    fun run x = x
+  end
 
   type 'a eff = 'a
   datatype 'a state = |> of 'a eff Tl.telescope * L.term
