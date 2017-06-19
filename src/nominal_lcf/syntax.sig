@@ -1,12 +1,16 @@
 structure NominalLcfView =
 struct
+  datatype seq_mode = 
+      PARALLEL
+    | SEQUENTIAL
+
   datatype ('mtac, 'tac, 'rule) tactic_view =
       RULE of 'rule
     | MTAC of 'mtac
 
   datatype ('ann, 'mtac, 'tac, 'var, 'atom) multitactic_view =
-      ALL of 'tac
-    | EACH of 'tac list
+      ALL of seq_mode * 'tac
+    | EACH of seq_mode * 'tac list
     | FOCUS of int * 'tac
     | PROGRESS of 'mtac
     | ORELSE of 'mtac * 'mtac

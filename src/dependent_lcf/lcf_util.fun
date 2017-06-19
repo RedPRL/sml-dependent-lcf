@@ -51,13 +51,51 @@ struct
       go Tl.empty (ts, out psi) |> vl
     end
 
-
   fun only (i, t) =
     let
       val ts = List.tabulate (i + 1, fn j => if i = j then t else idn)
     in
       each ts
     end
+
+  fun eachSeq (ts : jdg tactic list) (psi |> vl) =
+    let
+      open Tl.ConsView
+      fun go rho (r : jdg state eff telescope) =
+        fn (_, EMPTY) => r
+         | (t :: ts, CONS (x, jdg : jdg eff, psi)) =>
+             let
+               val etjdg = Eff.map (t o J.subst rho) jdg
+               val psix |> vlx = Eff.run etjdg
+               val rho' = L.Ctx.insert rho x vlx
+             in
+               go rho' (Tl.snoc r x etjdg) (ts, out psi)
+             end
+         | ([], CONS (x, jdg, psi)) => 
+             go rho (Tl.snoc r x (Eff.map idn jdg)) ([], out psi)
+    in
+      go L.Ctx.empty Tl.empty (ts, out psi) |> vl
+    end
+
+  fun allSeq (t : jdg tactic) (psi |> vl) =
+    let
+      open Tl.ConsView
+      fun go rho (r : jdg state eff telescope) =
+        fn EMPTY => r
+         | CONS (x, jdg : jdg eff, psi) =>
+             let
+               val etjdg = Eff.map (t o J.subst rho) jdg
+               val psix |> vlx = Eff.run etjdg
+               val rho' = L.Ctx.insert rho x vlx
+             in
+               go rho' (Tl.snoc r x etjdg) (out psi)
+             end
+    in
+      go L.Ctx.empty Tl.empty (out psi) |> vl
+    end
+
+  fun allSeq t (psi |> vl) = 
+    eachSeq (Tl.foldr (fn (_,_,ts) => t :: ts) [] psi) (psi |> vl)
 
   fun seq (t, m) =
     mul isjdg o m o t

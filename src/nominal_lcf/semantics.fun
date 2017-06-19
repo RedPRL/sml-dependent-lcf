@@ -17,6 +17,14 @@ struct
     open NominalLcfView
   in
 
+    val all = 
+      fn PARALLEL => Lcf.all
+       | SEQUENTIAL => Lcf.allSeq
+
+    val each = 
+      fn PARALLEL => Lcf.each
+       | SEQUENTIAL => Lcf.eachSeq
+
     fun Rec f alpha =
       f (Rec f) alpha
 
@@ -29,14 +37,14 @@ struct
     (* [Σ |=[ρ] mtac ==> M] *)
     and multitactic (sign, rho) mtac =
       case Syn.multitactic sign mtac of
-           ALL tac =>
-             Lcf.all o tactic (sign, rho) tac
-         | EACH tacs =>
+           ALL (mode, tac) =>
+             all mode o tactic (sign, rho) tac
+         | EACH (mode, tacs) =>
              let
                val ts = List.map (tactic (sign, rho)) tacs
              in
                fn alpha =>
-                 Lcf.each (List.map (fn t => t alpha) ts)
+                 each mode (List.map (fn t => t alpha) ts)
              end
          | FOCUS (i, tac) =>
              (fn t => Lcf.only (i, t)) o tactic (sign, rho) tac

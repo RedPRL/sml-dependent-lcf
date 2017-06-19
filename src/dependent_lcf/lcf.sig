@@ -3,7 +3,12 @@ sig
   structure L : LCF_LANGUAGE
   structure Tl : TELESCOPE where type Label.t = L.var
 
-  structure Eff : MONAD
+  structure Eff : 
+  sig 
+    include MONAD
+    val run : 'a t -> 'a
+  end
+
   type 'a eff = 'a Eff.t
 
   datatype 'a state = |> of 'a eff Tl.telescope * L.term
