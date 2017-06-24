@@ -1,4 +1,0 @@
-name: dependent-lcf
-include:
-  modules/agda-prelude/src
-  .
