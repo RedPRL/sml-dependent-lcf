@@ -1,11 +1,5 @@
-(* A model of Nominal LCF consists in a tactic metalanguage, a spread of
- * sequences of atoms, and an interpretation of the primitive rules of inference
- * into the metalanguage. *)
-signature NOMINAL_LCF_MODEL =
+signature NOMINAL_LCF_STRUCTURE = 
 sig
-  (* We will construct a model for a Nominal LCF theory [Syn]. *)
-  structure Syn : NOMINAL_LCF_SYNTAX
-
   (* A model begins with a tactic metalanguage. *)
   structure Lcf : LCF_UTIL
 
@@ -14,6 +8,17 @@ sig
    * sequence is a stream of constructible objects which are chosen not by a
    * computable function, but by interaction with a subject (i.e. a user). *)
   structure Spr : SPREAD
+end
+
+(* A model of Nominal LCF consists in a tactic metalanguage, a spread of
+ * sequences of atoms, and an interpretation of the primitive rules of inference
+ * into the metalanguage. *)
+signature NOMINAL_LCF_MODEL =
+sig
+  include NOMINAL_LCF_STRUCTURE
+
+  (* We will construct a model for a Nominal LCF theory [Syn]. *)
+  structure Syn : NOMINAL_LCF_SYNTAX
 
   (* A "nominal" object is a functional which _continuously_ transforms a free
    * choice sequence into a result. *)

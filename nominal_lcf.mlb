@@ -8,6 +8,7 @@ local
 
   src/nominal_lcf/syntax.sig
   src/nominal_lcf/model.sig
+  src/nominal_lcf/tactical.fun
   src/nominal_lcf/semantics.sig
   src/nominal_lcf/semantics.fun
 in
@@ -16,7 +17,9 @@ in
 
   structure NominalLcfView
   signature NOMINAL_LCF_SYNTAX
+  signature NOMINAL_LCF_STRUCTURE
   signature NOMINAL_LCF_MODEL
   signature NOMINAL_LCF_SEMANTICS
+  functor NominalLcfTactical
   functor NominalLcfSemantics
 end

@@ -2,16 +2,7 @@ functor NominalLcfSemantics (M : NOMINAL_LCF_MODEL) : NOMINAL_LCF_SEMANTICS =
 struct
   open M
 
-  fun seq (mt1, us, mt2) alpha st =
-    let
-      val beta = Spr.prepend us alpha
-      val (beta', modulus) = Spr.probe (Spr.prepend us beta)
-      val st' = mt1 beta' st
-      val l = Int.max (0, !modulus - List.length us)
-    in
-      mt2 (Spr.bite l alpha) (Lcf.mul Lcf.isjdg st')
-    end
-
+  structure T = NominalLcfTactical (M)
 
   local
     open NominalLcfView
@@ -32,7 +23,7 @@ struct
     fun tactic (sign, rho) tac =
       case Syn.tactic sign tac of
            RULE rl => rule (sign, rho) rl
-         | MTAC mtac => (fn alpha => Lcf.mul Lcf.isjdg o multitactic (sign, rho) mtac alpha o Lcf.idn)
+         | MTAC mtac => T.multitacToTac (multitactic (sign, rho) mtac)
 
     (* [Σ |=[ρ] mtac ==> M] *)
     and multitactic (sign, rho) mtac =
@@ -54,7 +45,7 @@ struct
              Lcf.mprogress o multitactic (sign, rho) mtac'
          | VAR x => Syn.VarCtx.lookup rho x
          | SEQ (us, mt1, mt2) =>
-            seq (multitactic (sign, rho) mt1, us, multitactic (sign, rho) mt2)
+            T.seq (multitactic (sign, rho) mt1, us, multitactic (sign, rho) mt2)
          | ORELSE (mt1, mt2) =>
              let
                val mt1 = multitactic (sign, rho) mt1
