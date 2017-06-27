@@ -27,6 +27,9 @@ struct
     fun then_ (t1 : 'a tactic, t2 : 'a tactic) : 'a tactic = 
       multitacToTac (seq (tacToMultitac t1, [], tacToMultitac t2))
 
+    fun thenl (t : 'a tactic, ts : 'a tactic list) : 'a tactic = 
+      multitacToTac (seq (tacToMultitac t, [], fn alpha => Lcf.eachSeq (List.map (fn t => t alpha) ts)))
+
     fun orelse_ (t1 : 'a tactic, t2 : 'a tactic) : 'a tactic = 
       fn alpha => 
         Lcf.orelse_ (t1 alpha, t2 alpha)
