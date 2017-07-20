@@ -16,7 +16,7 @@ end
 
 signature LCF_ABT_LANGUAGE =
 sig
-  structure Abt : ABT where type 'a O.Ar.Vl.Sp.t = 'a list
+  structure Abt : ABT
   include LCF_LANGUAGE
     where type sort = Abt.valence
     where type Var.t = Abt.Metavar.t
@@ -24,7 +24,7 @@ sig
     where type term = Abt.abs
 end
 
-functor LcfAbtLanguage (Abt : ABT where type 'a O.Ar.Vl.Sp.t = 'a list) : LCF_ABT_LANGUAGE =
+functor LcfAbtLanguage (Abt : ABT) : LCF_ABT_LANGUAGE =
 struct
   structure Abt = Abt
   structure Var = Abt.Metavar
