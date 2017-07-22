@@ -15,7 +15,8 @@ sig
 
   type 'a isjdg =
      {sort : 'a -> L.sort,
-      subst : L.env -> 'a -> 'a}
+      subst : L.env -> 'a -> 'a,
+      ren : L.ren -> 'a -> 'a}
 
   val liftJdg : 'a isjdg -> 'a eff isjdg
 
@@ -29,9 +30,11 @@ sig
   type jdg
   type sort
   type env
+  type ren
 
   val sort : jdg -> sort
   val subst : env -> jdg -> jdg
+  val ren : ren -> jdg -> jdg
   val eq : jdg * jdg -> bool
   val toString : jdg -> string
 end

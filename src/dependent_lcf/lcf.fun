@@ -12,7 +12,8 @@ struct
 
   type 'a isjdg =
      {sort : 'a -> L.sort,
-      subst : L.env -> 'a -> 'a}
+      subst : L.env -> 'a -> 'a,
+      ren : L.ren -> 'a -> 'a}
 
   infix |>
 
@@ -21,14 +22,14 @@ struct
   fun map f (psi |> m) =
     Tl.map f psi |> m
 
-  fun ret {sort, subst} jdg =
+  fun ret {sort, subst, ren} jdg =
     let
       val x = L.fresh ()
     in
       Tl.singleton x jdg |> L.var x (sort jdg)
     end
 
-  fun 'a mul {sort, subst} =
+  fun 'a mul {sort, subst, ren} =
     let
       open Tl.ConsView
 

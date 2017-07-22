@@ -4,6 +4,7 @@ sig
   structure J : LCF_JUDGMENT
     where type sort = Lcf.L.sort
     where type env = Lcf.L.term Lcf.L.Ctx.dict
+    where type ren = Lcf.L.var Lcf.L.Ctx.dict
 end
 
 signature LCF_UTIL_KIT =
@@ -30,7 +31,8 @@ struct
 
   val isjdg : jdg isjdg =
     {sort = J.sort,
-     subst = J.subst}
+     subst = J.subst,
+     ren = J.ren}
 
   val idn =
     ret isjdg
@@ -125,17 +127,16 @@ struct
 
   local
     open Tl.ConsView
-    val {sort, subst} = liftJdg isjdg
+    val {sort, subst, ren} = liftJdg isjdg
     fun unifySubtelescopeAux (env1, env2) (psi1, psi2) =
       case (out psi1, out psi2) of
          (EMPTY, _) => SOME (env1, env2)
        | (CONS (x1, jdg1, psi1'), CONS (x2, jdg2, psi2')) =>
-            if effEq (subst env1 jdg1, subst env2 jdg2) then
+            if effEq (ren env1 jdg1, ren env2 jdg2) then
               let
                 val y = L.fresh ()
-                val ytm = L.var y (sort jdg1)
-                val env1y = L.Ctx.insert env1 x1 ytm
-                val env2y = L.Ctx.insert env2 x2 ytm
+                val env1y = L.Ctx.insert env1 x1 y
+                val env2y = L.Ctx.insert env2 x2 y
               in
                 unifySubtelescopeAux (env1y, env2y) (psi1', psi2')
               end

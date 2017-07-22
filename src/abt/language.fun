@@ -34,6 +34,7 @@ struct
   type term = Abt.abs
   type ctx = sort Ctx.dict
   type env = term Ctx.dict
+  type ren = var Ctx.dict
 
   local
     val counter = ref 0
@@ -61,5 +62,6 @@ struct
   end
 
   val subst = Abt.mapAbs o Abt.substMetaenv
+  val ren = Abt.mapAbs o Abt.renameMetavars
   val eq = Abt.eqAbs
 end
