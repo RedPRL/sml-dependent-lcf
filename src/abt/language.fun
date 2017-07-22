@@ -47,18 +47,8 @@ struct
   local
     structure FreshSyms = FreshSymbols (Abt.Sym) and FreshVars = FreshSymbols (Abt.Var)
   in
-    fun var v vl =
-      let
-        open Abt infix \ $#
-        val ((sigmas, taus), tau) = vl
-        val syms = FreshSyms.freshSyms sigmas
-        val params = List.map (fn (a, sigma) => (O.P.ret a, sigma)) syms
-        val vars = FreshVars.freshSyms taus
-        val varTerms = List.map (fn (x,tau) => check (`x, tau)) vars
-        val tm = check (v $# (params, varTerms), tau)
-      in
-        checkb ((List.map #1 syms, List.map #1 vars) \ tm, vl)
-      end
+    fun var v vl = 
+      Abt.metavar (v, vl)
   end
 
   val subst = Abt.mapAbs o Abt.substMetaenv
