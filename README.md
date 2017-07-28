@@ -1,5 +1,4 @@
-This repository contains a collection of very modular libraries for building
-tactic-based refiners in the LCF tradition.
+This repository contains a library for building tactic-based refiners in the LCF and Nuprl tradition.
 
 ### Dependent LCF: modernized refinement proof
 
