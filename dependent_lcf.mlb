@@ -19,5 +19,4 @@ in
   functor Lcf
   signature LCF_UTIL_KIT
   functor LcfUtil
-  functor LcfUtilPure
 end

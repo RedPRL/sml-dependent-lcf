@@ -74,7 +74,7 @@ struct
   fun subst env (TRUE m) = TRUE (Tm.substMetaenv env m)
 end
 
-structure Lcf = LcfUtilPure (structure Lcf = Lcf (Language) and J = Judgment)
+structure Lcf = LcfUtil (structure Lcf = Lcf (Language) and J = Judgment)
 
 signature REFINER =
 sig

@@ -7,8 +7,6 @@ sig
   type jdg = J.jdg
   val isjdg : jdg isjdg
 
-  val effEq : J.jdg eff * J.jdg eff -> bool
-
   type 'a tactic = 'a -> 'a state
   type 'a multitactic = 'a state tactic
 
