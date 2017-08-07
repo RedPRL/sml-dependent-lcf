@@ -1,4 +1,4 @@
-signature LCF_UTIL_KIT_PURE =
+signature LCF_UTIL_KIT =
 sig
   structure Lcf : LCF
   structure J : LCF_JUDGMENT
@@ -7,21 +7,9 @@ sig
     where type ren = Lcf.L.var Lcf.L.Ctx.dict
 end
 
-signature LCF_UTIL_KIT =
-sig
-  include LCF_UTIL_KIT_PURE
-  val effEq : J.jdg Lcf.eff * J.jdg Lcf.eff -> bool
-end
-
-
 functor LcfUtil (Kit : LCF_UTIL_KIT) : LCF_UTIL =
 struct
   open Kit Kit.Lcf
-  structure Eff = 
-  struct
-    structure F = MonadApplicative (Eff)
-    open Eff F
-  end
 
   infix |>
 
@@ -38,17 +26,17 @@ struct
     ret isjdg
 
   fun 'a all (t : 'a -> 'a state) (psi |> vl) =
-    Tl.map (Eff.map t) psi |> vl
+    Tl.map t psi |> vl
 
   fun each (ts : jdg tactic list) (psi |> vl) =
     let
       open Tl.ConsView
-      fun go (r : jdg state eff telescope) =
+      fun go (r : jdg state telescope) =
         fn (_, EMPTY) => r
-         | (t :: ts, CONS (x, jdg : jdg eff, psi)) =>
-             go (Tl.snoc r x (Eff.map t jdg)) (ts, out psi)
+         | (t :: ts, CONS (x, jdg : jdg, psi)) =>
+             go (Tl.snoc r x (t jdg)) (ts, out psi)
          | ([], CONS (x, jdg, psi)) => 
-             go (Tl.snoc r x (Eff.map idn jdg)) ([], out psi)
+             go (Tl.snoc r x (idn jdg)) ([], out psi)
     in
       go Tl.empty (ts, out psi) |> vl
     end
@@ -63,18 +51,17 @@ struct
   fun eachSeq (ts : jdg tactic list) (psi |> vl) =
     let
       open Tl.ConsView
-      fun go rho (r : jdg state eff telescope) =
+      fun go rho (r : jdg state telescope) =
         fn (_, EMPTY) => r
-         | (t :: ts, CONS (x, jdg : jdg eff, psi)) =>
+         | (t :: ts, CONS (x, jdg : jdg, psi)) =>
              let
-               val etjdg = Eff.map (t o J.subst rho) jdg
-               val psix |> vlx = Eff.run etjdg
+               val tjdg as (psix |> vlx) = t (J.subst rho jdg)
                val rho' = L.Ctx.insert rho x vlx
              in
-               go rho' (Tl.snoc r x etjdg) (ts, out psi)
+               go rho' (Tl.snoc r x tjdg) (ts, out psi)
              end
          | ([], CONS (x, jdg, psi)) => 
-             go rho (Tl.snoc r x (Eff.map idn jdg)) ([], out psi)
+             go rho (Tl.snoc r x (idn jdg)) ([], out psi)
     in
       go L.Ctx.empty Tl.empty (ts, out psi) |> vl
     end
@@ -82,15 +69,14 @@ struct
   fun allSeq (t : jdg tactic) (psi |> vl) =
     let
       open Tl.ConsView
-      fun go rho (r : jdg state eff telescope) =
+      fun go rho (r : jdg state telescope) =
         fn EMPTY => r
-         | CONS (x, jdg : jdg eff, psi) =>
+         | CONS (x, jdg : jdg, psi) =>
              let
-               val etjdg = Eff.map (t o J.subst rho) jdg
-               val psix |> vlx = Eff.run etjdg
+               val tjdg as psix |> vlx = t (J.subst rho jdg)
                val rho' = L.Ctx.insert rho x vlx
              in
-               go rho' (Tl.snoc r x etjdg) (out psi)
+               go rho' (Tl.snoc r x tjdg) (out psi)
              end
     in
       go L.Ctx.empty Tl.empty (out psi) |> vl
@@ -127,12 +113,11 @@ struct
 
   local
     open Tl.ConsView
-    val {sort, subst, ren} = liftJdg isjdg
     fun unifySubtelescopeAux (env1, env2) (psi1, psi2) =
       case (out psi1, out psi2) of
          (EMPTY, _) => SOME (env1, env2)
        | (CONS (x1, jdg1, psi1'), CONS (x2, jdg2, psi2')) =>
-            if effEq (ren env1 jdg1, ren env2 jdg2) then
+            if J.eq (J.ren env1 jdg1, J.ren env2 jdg2) then
               let
                 val y = L.fresh ()
                 val env1y = L.Ctx.insert env1 x1 y
@@ -156,7 +141,7 @@ struct
   fun progress t (jdg : jdg) =
     let
       val st as (psi |> vl) = t jdg
-      val psi' = Tl.singleton (L.fresh ()) (Eff.ret jdg)
+      val psi' = Tl.singleton (L.fresh ()) jdg
     in
       case unifySubtelescope (psi', psi) of
          SOME _ => raise Progress
@@ -183,6 +168,3 @@ struct
         raise Complete
     end
 end
-
-functor LcfUtilPure (Kit : LCF_UTIL_KIT_PURE where type 'a Lcf.Eff.t = 'a) = 
-  LcfUtil (struct open Kit val effEq = J.eq end)
