@@ -45,7 +45,7 @@ struct
   end
 
   local
-    structure FreshSyms = FreshSymbols (Abt.Sym) and FreshVars = FreshSymbols (Abt.Var)
+    structure FreshVars = FreshSymbols (Abt.Var)
   in
     fun var v vl = 
       Abt.metavar (v, vl)
