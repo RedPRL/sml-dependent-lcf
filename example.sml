@@ -11,43 +11,27 @@ structure Ar = AbtArity (Vl)
 structure L =
 struct
   structure Ar = Ar
-  structure P = AbtParameterTerm (AbtEmptyParameter (AbtEmptySort))
 
-  datatype 'i t =
+  datatype t =
       UNIT
     | SIGMA
     | AX
     | PAIR
     | FOO (* a dummy proposition to demonstrate dependency *)
 
-  fun eq _ =
-    fn (UNIT, UNIT) => true
-     | (SIGMA, SIGMA) => true
-     | (AX, AX) => true
-     | (PAIR, PAIR) => true
-     | (FOO, FOO) => true
-     | _ => false
+  val eq = op=
 
   fun arity UNIT = ([], ())
-    | arity SIGMA = ([(([],[]),()), (([], [()]), ())], ())
+    | arity SIGMA = ([([],()), ([()], ())], ())
     | arity AX = ([], ())
-    | arity PAIR = ([(([],[]),()), (([], []), ())], ())
-    | arity FOO = ([(([],[]),()), (([], []), ())], ())
+    | arity PAIR = ([([],()), ([], ())], ())
+    | arity FOO = ([([],()), ([], ())], ())
 
-  fun map _ =
-    fn UNIT => UNIT
-     | SIGMA => SIGMA
-     | AX => AX
-     | PAIR => PAIR
-     | FOO => FOO
-
-  fun support _ = []
-
-  fun toString _ UNIT = "Unit"
-    | toString _ SIGMA = "Σ"
-    | toString _ AX = "Ax"
-    | toString _ PAIR = "Pair"
-    | toString _ FOO = "Foo"
+  fun toString UNIT = "Unit"
+    | toString SIGMA = "Σ"
+    | toString AX = "Ax"
+    | toString PAIR = "Pair"
+    | toString FOO = "Foo"
 end
 
 structure Term = SimpleAbt (L)
@@ -61,6 +45,7 @@ struct
 
   type sort = Language.sort
   type env = Language.env
+  type ren = Language.ren
 
   datatype jdg = TRUE of Tm.abt
 
@@ -68,10 +53,11 @@ struct
     ShowTm.toString p ^ " true"
 
   fun sort _ =
-    (([], []), ())
+    ([], ())
 
   fun eq (TRUE m, TRUE n) = Tm.eq (m, n)
   fun subst env (TRUE m) = TRUE (Tm.substMetaenv env m)
+  fun ren env (TRUE m) = TRUE (Tm.renameMetavars env m)
 end
 
 structure Lcf = LcfUtil (structure Lcf = Lcf (Language) and J = Judgment)
@@ -104,7 +90,7 @@ struct
       let
         val x = newMeta ()
       in
-        ((x, jdg), fn ps => fn ms => check (x $# (ps, ms), ()))
+        ((x, jdg), fn ms => check (x $# ms, ()))
       end
   end
 
@@ -118,10 +104,10 @@ struct
 
   fun SigmaIntro (TRUE P) =
     let
-      val L.SIGMA $ [_ \ A, (_, [x]) \ B] = out P
+      val L.SIGMA $ [_ \ A, [x] \ B] = out P
       val (goalA, holeA) = makeGoal (TRUE A)
-      val (goalB, holeB) = makeGoal (TRUE (substVar (holeA [] [], x) B))
-      val pair = L.PAIR $$ [([],[]) \ holeA [] [], ([],[]) \ holeB [] []]
+      val (goalB, holeB) = makeGoal (TRUE (substVar (holeA [], x) B))
+      val pair = L.PAIR $$ [[] \ holeA [], [] \ holeB []]
     in
       Tl.empty >: goalA >: goalB
         |> abtToAbs pair
@@ -132,7 +118,7 @@ struct
       val L.FOO $ [_ \ A, _] = out P
       val (goalA, holeA) = makeGoal (TRUE A)
     in
-      Tl.empty >: goalA |> abtToAbs (holeA [] [])
+      Tl.empty >: goalA |> abtToAbs (holeA [])
     end
 end
 
@@ -152,7 +138,7 @@ struct
   fun run goal (tac : jdg tactic) =
     let
       val Lcf.|> (psi, vld) = tac goal
-      val (us, xs) \ m = outb vld
+      val xs \ m = outb vld
     in
       print "\n\n";
       print (ShowTel.toString Judgment.toString psi);
@@ -162,8 +148,8 @@ struct
     end
 
   val mkUnit = check (UNIT $ [], ())
-  fun mkSigma x a b = check (SIGMA $ [([],[]) \ a, ([],[x]) \ b], ())
-  fun mkFoo a b = check (FOO $ [([],[]) \ a, ([],[]) \ b], ())
+  fun mkSigma x a b = check (SIGMA $ [[] \ a, [x] \ b], ())
+  fun mkFoo a b = check (FOO $ [[] \ a, [] \ b], ())
 
   val x = Var.named "x"
   val y = Var.named "y"
