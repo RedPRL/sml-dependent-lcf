@@ -5,7 +5,7 @@ struct
   fun toString () = "exp"
 end
 
-structure Vl = AbtValence (structure S = Sort and PS = AbtEmptySort and Sp = ListSpine)
+structure Vl = AbtValence (structure S = Sort)
 structure Ar = AbtArity (Vl)
 
 structure L =
