@@ -2,8 +2,7 @@ functor Lcf (L : LCF_LANGUAGE) : LCF =
 struct
   structure L = L and Tl = Telescope (L.Var)
 
-  type 'a eff = 'a
-  datatype 'a state = |> of 'a eff Tl.telescope * L.term
+  datatype 'a state = |> of 'a Tl.telescope * L.term
 
   type 'a isjdg =
      {sort : 'a -> L.sort,

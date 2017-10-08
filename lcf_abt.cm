@@ -3,7 +3,6 @@ Library
 is
   $/basis.cm
   lib/cmlib.cm
-  $libs/sml-cats/cats.cm
   $libs/sml-typed-abts/abt.cm
   $libs/sml-telescopes/telescopes.cm
   dependent_lcf.cm
