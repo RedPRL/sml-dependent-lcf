@@ -7,6 +7,3 @@
 [submodule "lib/sml-typed-abts"]
 	path = lib/sml-typed-abts
 	url = https://github.com/JonPRL/sml-typed-abts
-[submodule "lib/sml-cats"]
-	path = lib/sml-cats
-	url = https://github.com/RedPRL/sml-cats.git
