@@ -60,8 +60,7 @@ struct
   fun ren env (TRUE m) = TRUE (Tm.renameMetavars env m)
 end
 
-structure LcfM = LcfMonadBT (structure Lcf = Lcf (Language) and J = Judgment)
-structure Lcf = LcfTactic (LcfM)
+structure Lcf = LcfTactic (structure Lcf = Lcf (Language) and J = Judgment and M = LcfMonadBT)
 
 
 signature REFINER =
@@ -139,7 +138,7 @@ struct
 
   fun run goal (tac : jdg tactic) =
     let
-      val Lcf.|> (psi, vld) = LcfM.run (tac goal)
+      val Lcf.|> (psi, vld) = Lcf.M.run (tac goal)
       val xs \ m = outb vld
     in
       print "\n\n";
