@@ -40,6 +40,7 @@ struct
      | NONE => m2
 
   fun map (f : 'a -> 'b) (m : 'a m) = Logic.map (fn OK a => OK (f a) | ERR exn => ERR exn) m
+  fun mapErr f = Logic.map (fn OK a => OK a | ERR exn => ERR (f exn))
   fun ret (a : 'a) : 'a m = Logic.return (OK a)
   fun bind (m, f) = Logic.>>- (m, fn OK a => f a | ERR exn => Logic.return (ERR exn))
   fun mul mm = bind (mm, fn x => x)

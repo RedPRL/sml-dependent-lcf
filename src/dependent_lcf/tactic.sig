@@ -1,6 +1,7 @@
 signature LCF_TACTIC_MONAD = 
 sig
   type 'a m
+
   val run : 'a m * ('a -> bool) -> 'a
 
   val throw : exn -> 'a m
@@ -8,6 +9,7 @@ sig
   val or : 'a m * 'a m -> 'a m
 
   val map : ('a -> 'b) -> 'a m -> 'b m
+  val mapErr : (exn -> exn) -> 'a m -> 'a m
   val ret : 'a -> 'a m
   val mul : 'a m m -> 'a m
 
