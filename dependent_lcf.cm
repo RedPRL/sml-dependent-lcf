@@ -19,7 +19,6 @@ is
   src/dependent_lcf/lcf.fun
   src/dependent_lcf/tactic.sig
   src/dependent_lcf/tactic.fun
-  src/dependent_lcf/tactic_bt.fun
   src/dependent_lcf/logic.sig
   src/dependent_lcf/logic.sml
 
