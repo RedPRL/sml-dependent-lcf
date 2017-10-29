@@ -7,8 +7,13 @@ sig
   type jdg = J.jdg
   val isjdg : jdg isjdg
 
-  type 'a tactic = 'a -> 'a state
+  type 'a m
+
+  type 'a rule = 'a -> 'a state
+  type 'a tactic = 'a -> 'a state m
   type 'a multitactic = 'a state tactic
+
+  val rule : 'a rule -> 'a tactic
 
   val all : jdg tactic -> jdg multitactic
   val each : jdg tactic list -> jdg multitactic

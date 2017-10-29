@@ -61,6 +61,8 @@ struct
 end
 
 structure Lcf = LcfUtil (structure Lcf = Lcf (Language) and J = Judgment)
+structure LcfBt = LcfUtilBt (structure Lcf = Lcf (Language) and J = Judgment)
+
 
 signature REFINER =
 sig

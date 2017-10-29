@@ -14,6 +14,9 @@ struct
   infix |>
 
   type jdg = J.jdg
+  type 'a m = 'a
+
+  type 'a rule = 'a -> 'a state
   type 'a tactic = 'a -> 'a state
   type 'a multitactic = 'a state tactic
 
@@ -21,6 +24,9 @@ struct
     {sort = J.sort,
      subst = J.subst,
      ren = J.ren}
+
+  fun rule r =
+    r
 
   val idn =
     ret isjdg
@@ -66,22 +72,6 @@ struct
       go L.Ctx.empty Tl.empty (ts, out psi) |> vl
     end
 
-  fun allSeq (t : jdg tactic) (psi |> vl) =
-    let
-      open Tl.ConsView
-      fun go rho (r : jdg state telescope) =
-        fn EMPTY => r
-         | CONS (x, jdg : jdg, psi) =>
-             let
-               val tjdg as psix |> vlx = t (J.subst rho jdg)
-               val rho' = L.Ctx.insert rho x vlx
-             in
-               go rho' (Tl.snoc r x tjdg) (out psi)
-             end
-    in
-      go L.Ctx.empty Tl.empty (out psi) |> vl
-    end
-
   fun allSeq t (psi |> vl) = 
     eachSeq (Tl.foldr (fn (_,_,ts) => t :: ts) [] psi) (psi |> vl)
 
@@ -92,15 +82,13 @@ struct
   exception Complete
 
   fun then_ (t1, t2) =
-    seq (t1, all t2)
+    seq (t1, allSeq t2)
 
   fun thenl (t, ts) =
-    seq (t, each ts)
-
+    seq (t, eachSeq ts)
 
   fun thenf (t, (i, t')) =
     seq (t, only (i, t'))
-
 
   fun orelse_ (t1, t2) jdg =
     t1 jdg handle _ => t2 jdg
