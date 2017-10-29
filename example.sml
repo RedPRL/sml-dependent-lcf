@@ -166,8 +166,8 @@ struct
     Lcf.rule SigmaIntro
       then_ try (Lcf.rule SigmaIntro)
       then_ try (Lcf.rule UnitIntro)
-      then_ (Lcf.rule FooIntro)
-      then_ (Lcf.rule UnitIntro)
+      then_ Lcf.rule FooIntro
+      then_ Lcf.rule UnitIntro
 
   val _ = run (TRUE goal) script
 end
