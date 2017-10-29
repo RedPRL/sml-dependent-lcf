@@ -72,6 +72,8 @@ sig
      *)
     val >>= : 'a t * ('a -> 'b t) -> 'b t
 
+    val shortcircuit : 'a t * ('a -> bool) * ('a -> 'b t) -> 'b t
+
     (* Creates a stream with a single element in it. *)
     val return : 'a -> 'a t
 

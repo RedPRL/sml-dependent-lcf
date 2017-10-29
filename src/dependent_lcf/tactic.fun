@@ -41,8 +41,11 @@ struct
 
   fun map (f : 'a -> 'b) (m : 'a m) = Logic.map (fn OK a => OK (f a) | ERR exn => ERR exn) m
   fun ret (a : 'a) : 'a m = Logic.return (OK a)
-  fun bind (m, f) = Logic.>>= (m, fn OK a => f a | ERR exn => Logic.return (ERR exn))
+  fun bind (m, f) = Logic.>>- (m, fn OK a => f a | ERR exn => Logic.return (ERR exn))
   fun mul mm = bind (mm, fn x => x)
+  fun shortcircuit (m, p, f) = 
+    Logic.shortcircuit
+      (m, fn OK x => p x | ERR _ => false, fn OK a => f a | ERR exn => Logic.return (ERR exn))
 end
 
 functor LcfTactic (include LCF_TACTIC_KIT structure M : LCF_TACTIC_MONAD) : LCF_TACTIC =
@@ -76,13 +79,18 @@ struct
 
   val idn = M.ret o ret isjdg
 
+  fun >>-* (m, f) = 
+    M.shortcircuit (m, fn psi |> _ => Tl.isEmpty psi, f)
+
+  infix >>-*
+
   fun each (ts : jdg tactic list) (psi |> vl) : jdg state state M.m =
     let
       open Tl.ConsView
       fun go (r : jdg state telescope) =
         fn (_, EMPTY) => M.ret r
          | (t :: ts, CONS (x, jdg : jdg, psi)) =>
-             wrap t jdg >>= (fn tjdg => go (Tl.snoc r x tjdg) (ts, out psi))
+             wrap t jdg >>-* (fn tjdg => go (Tl.snoc r x tjdg) (ts, out psi))
          | ([], CONS (x, jdg, psi)) => 
              go (Tl.snoc r x (ret isjdg jdg)) ([], out psi)
     in
@@ -96,7 +104,7 @@ struct
       fun go rho (r : jdg state telescope) =
         fn (_, EMPTY) => M.ret r
          | (t :: ts, CONS (x, jdg : jdg, psi)) =>
-            wrap t (J.subst rho jdg) >>=
+            wrap t (J.subst rho jdg) >>-*
               (fn tjdg as (psix |> vlx) =>
                let
                  val rho' = L.Ctx.insert rho x vlx
@@ -122,9 +130,8 @@ struct
   fun all t (psi |> vl) =
     each (Tl.foldr (fn (_,_,ts) => t :: ts) [] psi) (psi |> vl)
 
-  fun seq (t, m) jdg =
-    M.map m (wrap t jdg)
-      >>= M.map (mul isjdg)
+  fun seq (t: jdg tactic, m : jdg multitactic) jdg =
+     wrap t jdg >>-* M.map (mul isjdg) o m
 
   exception Progress
   exception Complete
@@ -182,7 +189,7 @@ struct
 
 
   fun progress t (jdg : jdg) =
-    t jdg >>= (fn st as (psi |> vl) =>
+    t jdg >>-* (fn st as (psi |> vl) =>
       let
         val psi' = Tl.singleton (L.fresh ()) jdg
       in
@@ -192,7 +199,7 @@ struct
       end)
 
   fun mprogress mt (st as (psi |> _)) =
-    mt st >>= (fn sst =>
+    mt st >>-* (fn sst =>
       let
         val psi' |> _ = mul isjdg sst
       in
@@ -202,7 +209,7 @@ struct
       end)
 
   fun complete t jdg =
-    wrap t jdg >>= (fn st as (psi |> _) => 
+    wrap t jdg >>-* (fn st as (psi |> _) => 
       if Tl.isEmpty psi then
         M.ret st
       else

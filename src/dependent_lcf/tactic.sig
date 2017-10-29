@@ -10,6 +10,8 @@ sig
   val map : ('a -> 'b) -> 'a m -> 'b m
   val ret : 'a -> 'a m
   val mul : 'a m m -> 'a m
+
+  val shortcircuit : 'a m * ('a -> bool) * ('a -> 'b m) -> 'b m
 end
 
 signature LCF_TACTIC =
