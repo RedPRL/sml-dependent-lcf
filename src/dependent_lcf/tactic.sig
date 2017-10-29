@@ -1,4 +1,4 @@
-signature LCF_UTIL =
+signature LCF_TACTIC =
 sig
   include LCF
 
@@ -7,11 +7,9 @@ sig
   type jdg = J.jdg
   val isjdg : jdg isjdg
 
-  type 'a m
-
   type 'a rule = 'a -> 'a state
-  type 'a tactic = 'a -> 'a state m
-  type 'a multitactic = 'a state tactic
+  type 'a tactic
+  type 'a multitactic
 
   val rule : 'a rule -> 'a tactic
 

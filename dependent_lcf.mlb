@@ -13,9 +13,9 @@ in
 
   signature LCF
   signature LCF_JUDGMENT
-  signature LCF_UTIL
+  signature LCF_TACTIC
 
   functor Lcf
-  signature LCF_UTIL_KIT
-  functor LcfUtil
+  signature LCF_TACTIC_KIT
+  functor LcfTactic
 end
