@@ -16,9 +16,10 @@ in
   signature LCF
   signature LCF_JUDGMENT
   signature LCF_TACTIC
+  signature LCF_TACTIC_MONAD
 
   functor Lcf
   signature LCF_TACTIC_KIT
   functor LcfTactic
-  functor LcfMonadBT
+  structure LcfMonadBT
 end

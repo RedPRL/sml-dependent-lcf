@@ -7,9 +7,10 @@ Library
   signature LCF_TACTIC
 
   functor Lcf
+  signature LCF_TACTIC_MONAD
   signature LCF_TACTIC_KIT
   functor LcfTactic
-  functor LcfMonadBT
+  structure LcfMonadBT
 is
   $/basis.cm
   $libs/sml-telescopes/telescopes.cm

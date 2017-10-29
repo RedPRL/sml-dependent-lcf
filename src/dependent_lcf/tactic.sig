@@ -1,3 +1,17 @@
+signature LCF_TACTIC_MONAD = 
+sig
+  type 'a m
+  val run : 'a m -> 'a
+
+  val throw : exn -> 'a m
+  val par : 'a m * 'a m -> 'a m
+  val or : 'a m * 'a m -> 'a m
+
+  val map : ('a -> 'b) -> 'a m -> 'b m
+  val ret : 'a -> 'a m
+  val mul : 'a m m -> 'a m
+end
+
 signature LCF_TACTIC =
 sig
   include LCF
@@ -7,9 +21,11 @@ sig
   type jdg = J.jdg
   val isjdg : jdg isjdg
 
+  structure M : LCF_TACTIC_MONAD
+
   type 'a rule = 'a -> 'a state
-  type 'a tactic
-  type 'a multitactic
+  type 'a tactic = 'a -> 'a state M.m
+  type 'a multitactic = 'a state tactic
 
   val rule : 'a rule -> 'a tactic
 
@@ -27,6 +43,8 @@ sig
 
   val idn : jdg tactic
   val orelse_ : jdg tactic * jdg tactic -> jdg tactic
+  val par : jdg tactic * jdg tactic -> jdg tactic
+  val mpar : jdg tactic * jdg tactic -> jdg tactic
   val try : jdg tactic -> jdg tactic
 
   val morelse : jdg multitactic * jdg multitactic -> jdg multitactic

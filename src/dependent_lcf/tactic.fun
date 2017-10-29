@@ -1,22 +1,3 @@
-signature LCF_TACTIC_MONAD = 
-sig
-  structure Lcf : LCF
-  structure J : LCF_JUDGMENT
-    where type sort = Lcf.L.sort
-    where type env = Lcf.L.term Lcf.L.Ctx.dict
-    where type ren = Lcf.L.var Lcf.L.Ctx.dict
-
-  type 'a m
-  val run : 'a m -> 'a
-
-  val throw : exn -> 'a m
-  val try : 'a m * 'a m -> 'a m
-
-  val map : ('a -> 'b) -> 'a m -> 'b m
-  val ret : 'a -> 'a m
-  val mul : 'a m m -> 'a m
-end
-
 signature LCF_TACTIC_KIT =
 sig
   structure Lcf : LCF
@@ -26,14 +7,12 @@ sig
     where type ren = Lcf.L.var Lcf.L.Ctx.dict
 end
 
-functor LcfMonadBT (K : LCF_TACTIC_KIT) :
+structure LcfMonadBT :
 sig
   include LCF_TACTIC_MONAD
   exception Refine of exn list
 end = 
 struct
-  open K
-
   datatype 'a result = 
      OK of 'a
    | ERR of exn
@@ -53,17 +32,23 @@ struct
   end
 
   fun throw exn = Logic.return (ERR exn)
-  fun try (m1, m2) = Logic.merge m1 m2
+  fun par (m1, m2) = Logic.merge m1 m2
+  fun or (m1, m2) = 
+    case Logic.uncons m1 of
+       SOME (OK a, _) => m1
+     | SOME (ERR _, m1') => or (m1', m2)
+     | NONE => m2
+
   fun map (f : 'a -> 'b) (m : 'a m) = Logic.map (fn OK a => OK (f a) | ERR exn => ERR exn) m
   fun ret (a : 'a) : 'a m = Logic.return (OK a)
   fun bind (m, f) = Logic.>>= (m, fn OK a => f a | ERR exn => Logic.return (ERR exn))
   fun mul mm = bind (mm, fn x => x)
 end
 
-functor LcfTactic (M : LCF_TACTIC_MONAD) : LCF_TACTIC =
+functor LcfTactic (include LCF_TACTIC_KIT structure M : LCF_TACTIC_MONAD) : LCF_TACTIC =
 struct
-  open M.Lcf
-  structure J = M.J
+  open Lcf
+  structure M = M and J = J
 
   infix |>
 
@@ -154,10 +139,16 @@ struct
     seq (t, only (i, t'))
 
   fun orelse_ (t1, t2) jdg =
-    M.try (wrap t1 jdg, wrap t2 jdg)
+    M.or (wrap t1 jdg, wrap t2 jdg)
+
+  fun par (t1, t2) jdg =
+    M.par(wrap t1 jdg, wrap t2 jdg)
 
   fun morelse (mt1, mt2) st =
-    M.try (wrap mt1 st, wrap mt2 st)
+    M.or (wrap mt1 st, wrap mt2 st)
+
+  fun mpar (mt1, mt2) st =
+    M.par (wrap mt1 st, wrap mt2 st)
 
   fun try t =
     orelse_ (t, idn)
