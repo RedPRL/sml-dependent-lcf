@@ -26,7 +26,7 @@ struct
       case Logic.uncons m of 
          SOME (OK r, _) => r
        | SOME (ERR exn, t) => runAux (exn :: exns) t
-       | NONE => raise Refine (rev exns)
+       | NONE => raise Refine exns
   in
     fun run m = runAux [] m
   end
