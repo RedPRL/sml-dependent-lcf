@@ -22,13 +22,13 @@ struct
   exception Refine of exn list
 
   local
-    fun runAux exns m = 
+    fun runAux p exns m = 
       case Logic.uncons m of 
-         SOME (OK r, _) => r
-       | SOME (ERR exn, t) => runAux (exn :: exns) t
+         SOME (OK r, t) => if p r then r else runAux p exns t
+       | SOME (ERR exn, t) => runAux p (exn :: exns) t
        | NONE => raise Refine exns
   in
-    fun run m = runAux [] m
+    fun run (m, p) = runAux p [] m
   end
 
   fun throw exn = Logic.return (ERR exn)
@@ -67,8 +67,7 @@ struct
      ren = J.ren}
 
   fun @@ (f, x) = f x
-  fun >>= (m, f) = M.mul (M.map f m)
-  infix @@ >>=
+  infix @@
 
   fun wrap (t : 'a tactic) : 'a tactic = fn jdg =>
     t jdg handle exn => M.throw exn
@@ -94,7 +93,7 @@ struct
          | ([], CONS (x, jdg, psi)) => 
              go (Tl.snoc r x (ret isjdg jdg)) ([], out psi)
     in
-      M.map (fn psi => psi |> vl) @@ go Tl.empty (ts, out psi)
+      M.shortcircuit (go Tl.empty (ts, out psi), Tl.isEmpty, fn psi => M.ret (psi |> vl))
     end
 
 
@@ -114,7 +113,7 @@ struct
          | ([], CONS (x, jdg, psi)) => 
             go rho (Tl.snoc r x (ret isjdg jdg)) ([], out psi)
     in
-      M.map (fn psi => psi |> vl) @@ go L.Ctx.empty Tl.empty (ts, out psi)
+      M.shortcircuit (go L.Ctx.empty Tl.empty (ts, out psi), Tl.isEmpty, fn psi => M.ret (psi |> vl))
     end
 
   fun only (i, t) =
@@ -131,7 +130,7 @@ struct
     each (Tl.foldr (fn (_,_,ts) => t :: ts) [] psi) (psi |> vl)
 
   fun seq (t: jdg tactic, m : jdg multitactic) jdg =
-     wrap t jdg >>-* M.map (mul isjdg) o m
+    wrap t jdg >>-* M.map (mul isjdg) o m
 
   exception Progress
   exception Complete
