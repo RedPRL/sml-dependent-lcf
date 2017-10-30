@@ -60,13 +60,14 @@ struct
   fun ren env (TRUE m) = TRUE (Tm.renameMetavars env m)
 end
 
-structure Lcf = LcfUtil (structure Lcf = Lcf (Language) and J = Judgment)
+structure Lcf = LcfTactic (structure Lcf = Lcf (Language) and J = Judgment and M = LcfMonadBT)
+
 
 signature REFINER =
 sig
-  val UnitIntro : Lcf.jdg Lcf.tactic
-  val SigmaIntro : Lcf.jdg Lcf.tactic
-  val FooIntro : Lcf.jdg Lcf.tactic
+  val UnitIntro : Lcf.jdg Lcf.rule
+  val SigmaIntro : Lcf.jdg Lcf.rule
+  val FooIntro : Lcf.jdg Lcf.rule
 end
 
 structure Refiner :> REFINER =
@@ -137,7 +138,7 @@ struct
 
   fun run goal (tac : jdg tactic) =
     let
-      val Lcf.|> (psi, vld) = tac goal
+      val Lcf.|> (psi, vld) = Lcf.M.run (tac goal)
       val xs \ m = outb vld
     in
       print "\n\n";
@@ -161,11 +162,11 @@ struct
 
   (* to interact with the refiner, try commenting out some of the following lines *)
   val script =
-    SigmaIntro
-      then_ try SigmaIntro
-      then_ try UnitIntro
-      then_ FooIntro
-      then_ UnitIntro
+    Lcf.rule SigmaIntro
+      then_ try (Lcf.rule SigmaIntro)
+      then_ try (Lcf.rule UnitIntro)
+      then_ Lcf.rule FooIntro
+      then_ Lcf.rule UnitIntro
 
   val _ = run (TRUE goal) script
 end

@@ -4,11 +4,13 @@ Library
 
   signature LCF
   signature LCF_JUDGMENT
-  signature LCF_UTIL
+  signature LCF_TACTIC
 
   functor Lcf
-  signature LCF_UTIL_KIT
-  functor LcfUtil
+  signature LCF_TACTIC_MONAD
+  signature LCF_TACTIC_KIT
+  functor LcfTactic
+  structure LcfMonadBT
 is
   $/basis.cm
   $libs/sml-telescopes/telescopes.cm
@@ -16,5 +18,9 @@ is
   src/dependent_lcf/language.sig
   src/dependent_lcf/lcf.sig
   src/dependent_lcf/lcf.fun
-  src/dependent_lcf/lcf_util.sig
-  src/dependent_lcf/lcf_util.fun
+  src/dependent_lcf/tactic.sig
+  src/dependent_lcf/tactic.fun
+  src/dependent_lcf/logic.sig
+  src/dependent_lcf/logic.sml
+
+
