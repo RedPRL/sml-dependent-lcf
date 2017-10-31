@@ -1,5 +1,6 @@
 Library
   signature ORDERED
   signature DICT
+  structure Susp
 is
   $libs/cmlib/cmlib.cm

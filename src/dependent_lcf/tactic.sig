@@ -12,6 +12,7 @@ sig
   val mapErr : (exn -> exn) -> 'a m -> 'a m
   val ret : 'a -> 'a m
   val mul : 'a m m -> 'a m
+  val bind : 'a m * ('a -> 'b m) -> 'b m
 
   val shortcircuit : 'a m * ('a -> bool) * ('a -> 'b m) -> 'b m
 end
@@ -32,6 +33,8 @@ sig
   type 'a multitactic = 'a state tactic
 
   val rule : 'a rule -> 'a tactic
+
+  val matchGoal : ('a -> 'a tactic) -> 'a tactic
 
   val all : jdg tactic -> jdg multitactic
   val each : jdg tactic list -> jdg multitactic

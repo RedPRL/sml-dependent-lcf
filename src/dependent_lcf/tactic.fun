@@ -7,46 +7,230 @@ sig
     where type ren = Lcf.L.var Lcf.L.Ctx.dict
 end
 
-structure LcfMonadBT :
+signature MONAD =
 sig
-  include LCF_TACTIC_MONAD
-  exception Refine of exn list
+  type 'a m
+  val ret : 'a -> 'a m
+  val map : ('a -> 'b) -> 'a m -> 'b m
+  val bind : 'a m * ('a -> 'b m) -> 'b m
+end
+
+structure Identity : MONAD where type 'a m = 'a = 
+struct
+  type 'a m = 'a
+  fun ret a = a
+  fun map f = f
+  fun bind (m, f) = f m
+end
+
+structure Result :
+sig
+  datatype 'a result = 
+     OK of 'a
+   | ERR of exn
+
+  include MONAD where type 'a m = 'a result
+
+  val mapErr : (exn -> exn) -> 'a result -> 'a result
 end = 
 struct
   datatype 'a result = 
      OK of 'a
    | ERR of exn
 
-  type 'a m = 'a result Logic.t
+  type 'a m = 'a result
 
+  val ret = OK
+  
+  fun map f = 
+    fn OK a => OK (f a)
+     | ERR exn => ERR exn
+
+  fun bind (m, k) =
+    case m of 
+       OK a => k a
+     | ERR exn => ERR exn
+
+  fun mapErr f =
+    fn OK a => OK a
+     | ERR exn => ERR (f exn)
+end
+
+functor ErrorT (M : MONAD) : 
+sig
+  datatype result = datatype Result.result
+  include MONAD where type 'a m = 'a result M.m
+  val lift : 'a M.m -> 'a m
+  val throw : exn -> 'a m
+  val mapErr : (exn -> exn) -> 'a m -> 'a m
+  val or : 'a m * 'a m -> 'a m
+end = 
+struct
+  structure R = Result
+  datatype result = datatype R.result
+  type 'a m = 'a result M.m
+
+  fun lift (a : 'a M.m) = M.map OK a
+  fun throw exn = M.ret (ERR exn)
+  fun mapErr f = M.map (R.mapErr f)
+  fun or (m1, m2) = M.bind (m1, fn OK a => M.ret (OK a) | ERR exn => m2)
+  fun ret a = M.ret (OK a)
+  fun map f = M.map (Result.map f)
+  fun bind (m, k) = M.bind (m, fn OK a => k a | ERR exn => M.ret (ERR exn))
+end
+
+functor ReaderT (type r structure M : MONAD) :
+sig
+  include MONAD where type 'a m = r -> 'a M.m
+  val lift : 'a M.m -> 'a m
+  val mapR : (r -> r) -> 'a m -> 'a m
+end =
+struct
+  type 'a m = r -> 'a M.m
+  fun lift m _ = m
+  fun mapR f m = m o f
+  fun ret a = lift (M.ret a)
+  fun map f m = M.map f o m
+  fun bind (m, f) r = M.bind (m r, fn a => f a r)
+end
+
+functor Reader (type r) = ReaderT (type r = r structure M = Identity)
+
+functor ListT (M : MONAD) : 
+sig
+  include MONAD
+  val lift : 'a M.m -> 'a m
+  val concat : 'a m * 'a m -> 'a m
+  val emp : unit -> 'a m
+  val cons : 'a * 'a m -> 'a m
+  val uncons : 'a m -> ('a * 'a m) option M.m
+end = 
+struct
+  fun @@ (f, x) = f x
+  infix @@
+
+  datatype ('a, 's) step = 
+      YIELD of 'a * 's Susp.susp
+    | SKIP of 's Susp.susp
+    | DONE
+
+  datatype 'a m = ROLL of ('a, 'a m) step M.m
+
+  fun emp () = ROLL @@ M.ret DONE
+
+  fun lift (m : 'a M.m) : 'a m =
+    ROLL @@ M.map (fn a => YIELD (a, Susp.delay (fn _ => ROLL @@ M.ret DONE))) m
+
+  fun stepMap (f : ('a, 'a m) step -> ('b, 'b m) step) : 'a m -> 'b m = 
+    fn ROLL m =>
+      ROLL (M.map f m)
+
+  fun ret (a : 'a) : 'a m =
+    lift @@ M.ret a
+
+  fun suspMap (f : 'a -> 'b) (s : 'a Susp.susp) : 'b Susp.susp = 
+    Susp.delay (fn _ => 
+      f (Susp.force s))
+
+  fun map f =
+    stepMap
+      (fn YIELD (a, s) => YIELD (f a, suspMap (map f) s)
+        | SKIP s => SKIP (suspMap (map f) s)
+        | DONE => DONE)
+
+  fun consSusp (a : 'a, xs : 'a m Susp.susp) : 'a m =
+    ROLL (M.ret (YIELD (a, xs)))
+
+  fun cons (a : 'a, xs : 'a m) : 'a m = 
+    consSusp (a, Susp.delay (fn _ => xs))
+
+  fun concat (m : 'a m, n : 'a m) =
+    stepMap
+      (fn YIELD (a, s) => YIELD (a, suspMap (fn m' => concat (m', n)) s)
+        | SKIP s => SKIP (suspMap (fn m' => concat (m', n)) s)
+        | DONE => DONE)
+      m
+
+  fun bind (m, f) = 
+    stepMap
+      (fn YIELD (a, s) => SKIP (suspMap (fn n => concat (f a, bind (n, f))) s)
+        | SKIP s => SKIP (suspMap (fn n => bind (n, f)) s)
+        | DONE => DONE)
+      m
+
+  fun uncons (ROLL m) = 
+    let
+      val f = 
+        fn YIELD (a, s) => M.ret @@ SOME (a, Susp.force s)
+         | SKIP s => uncons (Susp.force s)
+         | DONE => M.ret NONE
+    in
+      M.bind (m, f)
+    end
+
+
+end
+
+
+structure LcfMonadBT :
+sig
+  include LCF_TACTIC_MONAD
+  exception Refine of exn list
+end = 
+struct
+  fun @@ (f, x) = f x
+  infix @@
+
+  type name = string
   exception Refine of exn list
 
+  structure R = Reader (type r = name list)
+  structure L = ListT (R)
+  structure M = ErrorT (L)
+
+  open M
+
+
   local
-    fun runAux p exns m = 
-      case Logic.uncons m of 
-         SOME (OK r, t) => if p r then r else runAux p exns t
-       | SOME (ERR exn, t) => runAux p (exn :: exns) t
+    fun runAux p exns m =
+      case L.uncons m ["a","b"] of
+         SOME (OK a, n) => if p a then a else runAux p exns n
+       | SOME (ERR exn, n) => runAux p (exn :: exns) n
        | NONE => raise Refine exns
   in
-    fun run (m, p) = runAux p [] m
+    fun run (m, p) =
+      runAux p [] m
   end
 
-  fun throw exn = Logic.return (ERR exn)
-  fun par (m1, m2) = Logic.merge m1 m2
-  fun or (m1, m2) = 
-    case Logic.uncons m1 of
-       SOME (OK a, _) => m1
-     | SOME (ERR _, m1') => or (m1', m2)
-     | NONE => m2
+  fun shortcircuit (m : 'a m, p, f : 'a -> 'b m) =
+  
+   (* M.bind (m, f) *)
+  
+    let
+      fun h alpha = 
+        case L.uncons m alpha of
+           SOME (OK a, n) => if p a then f a else L.concat (f a, shortcircuit (n, p, f))
+         | SOME (ERR exn, n) => L.cons (ERR exn, shortcircuit (n, p, f))
+         | NONE => L.emp ()
+    in
+      M.bind (M.lift (L.lift h), fn x => x)
+    end
 
-  fun map (f : 'a -> 'b) (m : 'a m) = Logic.map (fn OK a => OK (f a) | ERR exn => ERR exn) m
-  fun mapErr f = Logic.map (fn OK a => OK a | ERR exn => ERR (f exn))
-  fun ret (a : 'a) : 'a m = Logic.return (OK a)
-  fun bind (m, f) = Logic.>>- (m, fn OK a => f a | ERR exn => Logic.return (ERR exn))
-  fun mul mm = bind (mm, fn x => x)
-  fun shortcircuit (m, p, f) = 
-    Logic.shortcircuit
-      (m, fn OK x => p x | ERR _ => false, fn OK a => f a | ERR exn => Logic.return (ERR exn))
+
+  fun getEnv h = 
+    M.bind (M.lift (L.lift h), fn x => x)
+
+  fun or (m1 : 'a m, m2 : 'a m) =
+    getEnv (fn alpha =>
+      case L.uncons m1 alpha of 
+         SOME (OK a, _) => M.ret a
+       | SOME (ERR exn, n1) => or (n1, m2)
+       | _ => m2)
+
+  val par : 'a m * 'a m -> 'a m = or
+
+  fun mul m = 
+    bind (m, fn x => x)
 end
 
 functor LcfTactic (include LCF_TACTIC_KIT structure M : LCF_TACTIC_MONAD) : LCF_TACTIC =
@@ -78,6 +262,9 @@ struct
     handle exn => M.throw exn
 
   val idn = M.ret o ret isjdg
+
+  fun matchGoal f jdg = 
+    f jdg jdg
 
   fun >>-* (m, f) = 
     M.shortcircuit (m, fn psi |> _ => Tl.isEmpty psi, f)
@@ -149,7 +336,7 @@ struct
     M.or (wrap t1 jdg, wrap t2 jdg)
 
   fun par (t1, t2) jdg =
-    M.par(wrap t1 jdg, wrap t2 jdg)
+    M.par (wrap t1 jdg, wrap t2 jdg)
 
   fun morelse (mt1, mt2) st =
     M.or (wrap mt1 st, wrap mt2 st)
