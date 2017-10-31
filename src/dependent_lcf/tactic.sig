@@ -10,8 +10,6 @@ sig
   val or : 'a m * 'a m -> 'a m
 
   val mapErr : (exn -> exn) -> 'a m -> 'a m
-
-  val shortcircuit : 'a m * ('a -> bool) * ('a -> 'b m) -> 'b m
 end
 
 signature LCF_TACTIC =

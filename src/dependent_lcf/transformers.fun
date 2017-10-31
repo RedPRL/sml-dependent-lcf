@@ -92,8 +92,8 @@ struct
   infix @@
 
   datatype ('a, 's) step = 
-      YIELD of 'a * 's Susp.susp
-    | SKIP of 's Susp.susp
+      YIELD of 'a * 's
+    | SKIP of 's
     | DONE
 
   datatype 'a m = ROLL of ('a, 'a m) step M.m
@@ -101,7 +101,7 @@ struct
   fun emp () = ROLL @@ M.ret DONE
 
   fun lift (m : 'a M.m) : 'a m =
-    ROLL @@ M.map (fn a => YIELD (a, Susp.delay (fn _ => ROLL @@ M.ret DONE))) m
+    ROLL @@ M.map (fn a => YIELD (a, ROLL @@ M.ret DONE)) m
 
   fun stepMap (f : ('a, 'a m) step -> ('b, 'b m) step) : 'a m -> 'b m = 
     fn ROLL m =>
@@ -110,41 +110,34 @@ struct
   fun ret (a : 'a) : 'a m =
     lift @@ M.ret a
 
-  fun suspMap (f : 'a -> 'b) (s : 'a Susp.susp) : 'b Susp.susp = 
-    Susp.delay (fn _ => 
-      f (Susp.force s))
-
   fun map f =
     stepMap
-      (fn YIELD (a, s) => YIELD (f a, suspMap (map f) s)
-        | SKIP s => SKIP (suspMap (map f) s)
+      (fn YIELD (a, s) => YIELD (f a, map f s)
+        | SKIP s => SKIP (map f s)
         | DONE => DONE)
 
-  fun consSusp (a : 'a, xs : 'a m Susp.susp) : 'a m =
+  fun cons (a : 'a, xs : 'a m) : 'a m =
     ROLL (M.ret (YIELD (a, xs)))
-
-  fun cons (a : 'a, xs : 'a m) : 'a m = 
-    consSusp (a, Susp.delay (fn _ => xs))
 
   fun concat (m : 'a m, n : 'a m) =
     stepMap
-      (fn YIELD (a, s) => YIELD (a, suspMap (fn m' => concat (m', n)) s)
-        | SKIP s => SKIP (suspMap (fn m' => concat (m', n)) s)
-        | DONE => SKIP (Susp.delay (fn _ => n)))
+      (fn YIELD (a, s) => YIELD (a, concat (s, n))
+        | SKIP s => SKIP (concat (s, n))
+        | DONE => SKIP n)
       m
 
   fun bind (m, f) = 
     stepMap
-      (fn YIELD (a, s) => SKIP (suspMap (fn n => concat (f a, bind (n, f))) s)
-        | SKIP s => SKIP (suspMap (fn n => bind (n, f)) s)
+      (fn YIELD (a, s) => SKIP (concat (f a, bind (s, f)))
+        | SKIP s => SKIP (bind (s, f))
         | DONE => DONE)
       m
 
   fun uncons (ROLL m) = 
     let
       val f = 
-        fn YIELD (a, s) => M.ret @@ SOME (a, Susp.force s)
-         | SKIP s => uncons (Susp.force s)
+        fn YIELD (a, s) => M.ret @@ SOME (a, s)
+         | SKIP s => uncons s
          | DONE => M.ret NONE
     in
       M.bind (m, f)
