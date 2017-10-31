@@ -5,9 +5,9 @@ local
   src/dependent_lcf/language.sig
   src/dependent_lcf/lcf.sig
   src/dependent_lcf/lcf.fun
+  src/dependent_lcf/monad.sig
+  src/dependent_lcf/transformers.fun
   src/dependent_lcf/tactic.sig
-  src/dependent_lcf/logic.sig
-  src/dependent_lcf/logic.sml
   src/dependent_lcf/tactic.fun
 in
   signature LCF_VAR
@@ -21,5 +21,5 @@ in
   functor Lcf
   signature LCF_TACTIC_KIT
   functor LcfTactic
-  structure LcfMonadBT
+  structure LcfMonad
 end
