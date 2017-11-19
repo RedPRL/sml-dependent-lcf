@@ -117,6 +117,13 @@ struct
       M.shortcircuit (go L.Ctx.empty Tl.empty (ts, out psi), Tl.isEmpty, fn psi => M.ret (psi |> vl))
     end
 
+  fun tabulate (f : int -> jdg tactic) (psi |> vl) =
+    let
+      val len = Tl.foldl (fn (_, _, n) => n + 1) 0 psi
+    in
+      eachSeq (List.tabulate (len, f)) (psi |> vl)
+    end
+
   fun only (i, t) =
     let
       val ts = List.tabulate (i + 1, fn j => if i = j then t else idn)

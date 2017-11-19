@@ -39,6 +39,7 @@ sig
 
   val allSeq : jdg tactic -> jdg multitactic
   val eachSeq : jdg tactic list -> jdg multitactic
+  val tabulate : (int -> jdg tactic) -> jdg multitactic
 
   val seq : jdg tactic * jdg multitactic -> jdg tactic
   val then_ : jdg tactic * jdg tactic -> jdg tactic
