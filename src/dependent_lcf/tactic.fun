@@ -124,6 +124,9 @@ struct
       eachSeq (List.tabulate (len, f)) (psi |> vl)
     end
 
+  fun eachSeqWithDefault (ts, tdef) =
+    tabulate (fn i => List.nth (ts, i) handle _ => tdef)
+
   fun only (i, t) =
     let
       val ts = List.tabulate (i + 1, fn j => if i = j then t else idn)
