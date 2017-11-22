@@ -138,7 +138,7 @@ struct
 
   fun run goal (tac : jdg tactic) =
     let
-      val Lcf.|> (psi, vld) = Lcf.M.run (tac goal)
+      val Lcf.|> (psi, vld) = Lcf.M.run (tac goal, fn _ => true)
       val xs \ m = outb vld
     in
       print "\n\n";
