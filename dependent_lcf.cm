@@ -10,7 +10,8 @@ Library
   signature LCF_TACTIC_MONAD
   signature LCF_TACTIC_KIT
   functor LcfTactic
-  structure LcfMonad
+  functor LcfTacticMonad
+  structure LcfTacticMonad
 is
   $/basis.cm
   $libs/sml-telescopes/telescopes.cm
@@ -19,8 +20,10 @@ is
   src/dependent_lcf/lcf.sig
   src/dependent_lcf/lcf.fun
   src/dependent_lcf/monad.sig
+  src/dependent_lcf/tactic_monad.sig
+  src/dependent_lcf/tactic.sig  
   src/dependent_lcf/transformers.fun
-  src/dependent_lcf/tactic.sig
+  src/dependent_lcf/tactic_monad.fun  
   src/dependent_lcf/tactic.fun
 
 

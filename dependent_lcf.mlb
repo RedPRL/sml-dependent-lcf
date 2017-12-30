@@ -7,6 +7,8 @@ local
   src/dependent_lcf/lcf.fun
   src/dependent_lcf/monad.sig
   src/dependent_lcf/transformers.fun
+  src/dependent_lcf/tactic_monad.sig
+  src/dependent_lcf/tactic_monad.fun  
   src/dependent_lcf/tactic.sig
   src/dependent_lcf/tactic.fun
 in
@@ -20,6 +22,7 @@ in
 
   functor Lcf
   signature LCF_TACTIC_KIT
+  functor LcfTacticMonad
+  structure LcfTacticMonad
   functor LcfTactic
-  structure LcfMonad
 end

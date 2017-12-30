@@ -62,7 +62,7 @@ end
 
 structure Lcf = LcfTactic
   (structure Lcf = Lcf (Language) and J = Judgment   
-   structure M = LcfMonad)
+   structure M = LcfTacticMonad)
 
 
 signature REFINER =
