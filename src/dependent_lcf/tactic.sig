@@ -3,12 +3,16 @@ signature LCF_TACTIC_MONAD =
 sig
   include MONAD
 
-  val run : 'a m * ('a -> bool) -> 'a
+  type env (* local state *)
+
+  val run : env -> 'a m * ('a -> bool) -> 'a
 
   val throw : exn -> 'a m
   val par : 'a m * 'a m -> 'a m
   val or : 'a m * 'a m -> 'a m
 
+  val getEnv : env m
+  val mapEnv : (env -> env) -> 'a m -> 'a m
   val mapErr : (exn -> exn) -> 'a m -> 'a m
 end
 
@@ -21,15 +25,18 @@ sig
   type jdg = J.jdg
   val isjdg : jdg isjdg
 
+  structure R : MONAD
   structure M : LCF_TACTIC_MONAD
 
-  type 'a rule = 'a -> 'a state
+  type 'a rule = 'a -> 'a state R.m
   type 'a tactic = 'a -> 'a state M.m
   type 'a multitactic = 'a state tactic
 
   val rule : 'a rule -> 'a tactic
 
   val matchGoal : ('a -> 'a tactic) -> 'a tactic
+
+  val mapEnv : (M.env -> M.env) -> 'a tactic -> 'a tactic
 
   val all : jdg tactic -> jdg multitactic
   val each : jdg tactic list -> jdg multitactic

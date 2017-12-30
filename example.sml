@@ -60,7 +60,9 @@ struct
   fun ren env (TRUE m) = TRUE (Tm.renameMetavars env m)
 end
 
-structure Lcf = LcfTactic (structure Lcf = Lcf (Language) and J = Judgment and M = LcfMonadBT)
+structure Lcf = LcfTactic
+  (structure Lcf = Lcf (Language) and J = Judgment   
+   structure M = LcfMonad)
 
 
 signature REFINER =
@@ -95,7 +97,7 @@ struct
       end
   end
 
-  fun UnitIntro (TRUE P) =
+  fun UnitIntro (TRUE P) env =
     let
       val L.UNIT $ [] = out P
       val ax = L.AX $$ []
@@ -103,7 +105,7 @@ struct
       Tl.empty |> abtToAbs ax
     end
 
-  fun SigmaIntro (TRUE P) =
+  fun SigmaIntro (TRUE P) env =
     let
       val L.SIGMA $ [_ \ A, [x] \ B] = out P
       val (goalA, holeA) = makeGoal (TRUE A)
@@ -114,7 +116,7 @@ struct
         |> abtToAbs pair
     end
 
-  fun FooIntro (TRUE P) =
+  fun FooIntro (TRUE P) env =
     let
       val L.FOO $ [_ \ A, _] = out P
       val (goalA, holeA) = makeGoal (TRUE A)
@@ -138,7 +140,7 @@ struct
 
   fun run goal (tac : jdg tactic) =
     let
-      val Lcf.|> (psi, vld) = Lcf.M.run (tac goal)
+      val Lcf.|> (psi, vld) = Lcf.M.run () (tac goal, fn _ => true)
       val xs \ m = outb vld
     in
       print "\n\n";

@@ -7,57 +7,79 @@ sig
     where type ren = Lcf.L.var Lcf.L.Ctx.dict
 end
 
-structure LcfMonad :
+functor LcfMonad (type env) :>
 sig
-  include LCF_TACTIC_MONAD
+  include LCF_TACTIC_MONAD where type env = env
   exception Refine of exn list
 end = 
 struct
+  type env = env
+
   fun @@ (f, x) = f x
   infix @@
 
-  (* type name = string *)
   exception Refine of exn list
-
-  (* structure R = Reader (type r = name list) *)
   structure L = ListT (Identity)
-  structure M = ErrorT (L)
+  structure E = ErrorT (L)
+  structure M = ReaderT (type r = env structure M = E)
 
   open M
 
+  exception todo
+  fun ?e = raise e
+
   local
     fun runAux p exns m =
-      case L.uncons m of
-         SOME (OK a, n) => if p a then a else runAux p exns n
-       | SOME (ERR exn, n) => runAux p (exn :: exns) n
+      case L.uncons m of 
+         SOME (Result.OK a, n) => if p a then a else runAux p exns n
+       | SOME (Result.ERR exn, n) => runAux p (exn :: exns) n
        | NONE => raise Refine exns
   in
-    fun run (m, p) =
-      runAux p [] m
+    fun run (env : env) (m, p) =
+      runAux p [] (m env)
   end
 
-  (* fun getEnv h = 
-    M.bind (M.lift (L.lift h), fn x => x) *)
+  fun mapEnv (f : env -> env) : 'a m -> 'a m =
+    fn m => fn env => 
+      m (f env)
 
- fun or (m1 : 'a m, m2 : 'a m) =
-    case L.uncons m1 of 
-        SOME (OK a, _) => m1
-      | SOME (ERR exn, n1) => or (n1, m2)
-      | _ => m2
+  fun getEnv env = 
+    E.ret env
+  
+ fun throw exn env =
+   E.throw exn
 
-  val par : 'a m * 'a m -> 'a m = L.concat
+ fun mapErr f m env =
+   E.mapErr f (m env)
+
+ fun orAux env (m1, m2) = 
+   case L.uncons m1 of 
+      SOME (Result.OK a, _) => m1
+    | SOME (Result.ERR exn, n1) => orAux env (n1, m2)
+    | _ => m2 env
+
+ fun or (m1 : 'a m, m2 : 'a m) : 'a m =
+   fn env => 
+     orAux env (m1 env, m2)
+   
+  fun par (m1, m2) env =
+    L.concat (m1 env, m2 env)
 end
 
-functor LcfTactic (include LCF_TACTIC_KIT structure M : LCF_TACTIC_MONAD) : LCF_TACTIC =
+structure LcfMonad = LcfMonad (type env = unit)
+
+functor LcfTactic
+  (include LCF_TACTIC_KIT
+   structure M : LCF_TACTIC_MONAD) : LCF_TACTIC =
 struct
   open Lcf
-  structure M = M and J = J
+  structure R = Reader (type r = M.env) and M = M and J = J
 
   infix |>
 
   type jdg = J.jdg
 
-  type 'a rule = 'a -> 'a state
+  type 'a rule = 'a -> 'a state R.m
   type 'a tactic = 'a -> 'a state M.m
   type 'a multitactic = 'a state tactic
 
@@ -72,9 +94,13 @@ struct
   fun wrap (t : 'a tactic) : 'a tactic = fn jdg =>
     t jdg handle exn => M.throw exn
 
-  fun rule r jdg = 
-    M.ret (r jdg)
-    handle exn => M.throw exn
+  fun rule r jdg =
+    M.bind (M.getEnv, fn env =>
+      M.ret (r jdg env)
+      handle exn => M.throw exn)
+
+  fun mapEnv f tac jdg =
+    M.mapEnv f (tac jdg)
 
   val idn = M.ret o ret isjdg
 
