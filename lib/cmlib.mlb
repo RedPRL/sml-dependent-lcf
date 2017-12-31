@@ -3,4 +3,5 @@ local
 in
   signature ORDERED
   signature DICT
+  structure Susp
 end

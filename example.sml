@@ -60,7 +60,9 @@ struct
   fun ren env (TRUE m) = TRUE (Tm.renameMetavars env m)
 end
 
-structure Lcf = LcfTactic (structure Lcf = Lcf (Language) and J = Judgment and M = LcfMonadBT)
+structure Lcf = LcfTactic
+  (structure Lcf = Lcf (Language) and J = Judgment   
+   structure M = LcfTacticMonad (type env = unit type log = string * Judgment.jdg))
 
 
 signature REFINER =
@@ -95,7 +97,7 @@ struct
       end
   end
 
-  fun UnitIntro (TRUE P) =
+  fun UnitIntro (TRUE P) env =
     let
       val L.UNIT $ [] = out P
       val ax = L.AX $$ []
@@ -103,7 +105,7 @@ struct
       Tl.empty |> abtToAbs ax
     end
 
-  fun SigmaIntro (TRUE P) =
+  fun SigmaIntro (TRUE P) env =
     let
       val L.SIGMA $ [_ \ A, [x] \ B] = out P
       val (goalA, holeA) = makeGoal (TRUE A)
@@ -114,7 +116,7 @@ struct
         |> abtToAbs pair
     end
 
-  fun FooIntro (TRUE P) =
+  fun FooIntro (TRUE P) env =
     let
       val L.FOO $ [_ \ A, _] = out P
       val (goalA, holeA) = makeGoal (TRUE A)
@@ -138,7 +140,7 @@ struct
 
   fun run goal (tac : jdg tactic) =
     let
-      val Lcf.|> (psi, vld) = Lcf.M.run (tac goal, fn _ => true)
+      val (Lcf.|> (psi, vld), log) = Lcf.M.run () (Lcf.M.listen (tac goal), fn _ => true)
       val xs \ m = outb vld
     in
       print "\n\n";
@@ -160,13 +162,16 @@ struct
       (mkSigma x mkUnit mkUnit)
       (mkFoo mkUnit (check (`y, ())))
 
+  fun listen log =
+    List.app (fn _ => print "ASDF") log
+  
   (* to interact with the refiner, try commenting out some of the following lines *)
   val script =
-    Lcf.rule SigmaIntro
-      then_ try (Lcf.rule SigmaIntro)
-      then_ try (Lcf.rule UnitIntro)
-      then_ Lcf.rule FooIntro
-      then_ Lcf.rule UnitIntro
+    Lcf.trace "Sigma/I" (Lcf.rule SigmaIntro)
+      then_ try (Lcf.trace "Sigma/I" (Lcf.rule SigmaIntro))
+      then_ try (Lcf.trace "Unit/I" (Lcf.rule UnitIntro))
+      then_ Lcf.listen listen (Lcf.trace "Foo/I" (Lcf.rule FooIntro))
+      then_ Lcf.trace "Unit/I" (Lcf.rule UnitIntro)
 
   val _ = run (TRUE goal) script
 end

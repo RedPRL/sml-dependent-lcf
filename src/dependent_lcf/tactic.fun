@@ -7,58 +7,19 @@ sig
     where type ren = Lcf.L.var Lcf.L.Ctx.dict
 end
 
-structure LcfMonadBT :
-sig
-  include LCF_TACTIC_MONAD
-  exception Refine of exn list
-end = 
-struct
-  datatype 'a result = 
-     OK of 'a
-   | ERR of exn
-
-  type 'a m = 'a result Logic.t
-
-  exception Refine of exn list
-
-  local
-    fun runAux p exns m = 
-      case Logic.uncons m of 
-         SOME (OK r, t) => if p r then r else runAux p exns t
-       | SOME (ERR exn, t) => runAux p (exn :: exns) t
-       | NONE => raise Refine exns
-  in
-    fun run (m, p) = runAux p [] m
-  end
-
-  fun throw exn = Logic.return (ERR exn)
-  fun par (m1, m2) = Logic.merge m1 m2
-  fun or (m1, m2) = 
-    case Logic.uncons m1 of
-       SOME (OK a, _) => m1
-     | SOME (ERR _, m1') => or (m1', m2)
-     | NONE => m2
-
-  fun map (f : 'a -> 'b) (m : 'a m) = Logic.map (fn OK a => OK (f a) | ERR exn => ERR exn) m
-  fun mapErr f = Logic.map (fn OK a => OK a | ERR exn => ERR (f exn))
-  fun ret (a : 'a) : 'a m = Logic.return (OK a)
-  fun bind (m, f) = Logic.>>- (m, fn OK a => f a | ERR exn => Logic.return (ERR exn))
-  fun mul mm = bind (mm, fn x => x)
-  fun shortcircuit (m, p, f) = 
-    Logic.shortcircuit
-      (m, fn OK x => p x | ERR _ => false, fn OK a => f a | ERR exn => Logic.return (ERR exn))
-end
-
-functor LcfTactic (include LCF_TACTIC_KIT structure M : LCF_TACTIC_MONAD) : LCF_TACTIC =
+functor LcfTactic
+  (include LCF_TACTIC_KIT
+   structure M : LCF_TACTIC_MONAD
+     where type w = (string * J.jdg) list) : LCF_TACTIC =
 struct
   open Lcf
-  structure M = M and J = J
+  structure R = Reader (type r = M.env) and M = M and J = J
 
   infix |>
 
   type jdg = J.jdg
 
-  type 'a rule = 'a -> 'a state
+  type 'a rule = 'a -> 'a state R.m
   type 'a tactic = 'a -> 'a state M.m
   type 'a multitactic = 'a state tactic
 
@@ -73,16 +34,28 @@ struct
   fun wrap (t : 'a tactic) : 'a tactic = fn jdg =>
     t jdg handle exn => M.throw exn
 
-  fun rule r jdg = 
-    M.ret (r jdg)
-    handle exn => M.throw exn
+  fun rule r jdg =
+    M.bind (M.getEnv, fn env =>
+      M.ret (r jdg env)
+      handle exn => M.throw exn)
+
+  fun mapEnv f tac jdg =
+    M.mapEnv f (tac jdg)
 
   val idn = M.ret o ret isjdg
 
-  fun >>-* (m, f) = 
-    M.shortcircuit (m, fn psi |> _ => Tl.isEmpty psi, f)
+  fun matchGoal f jdg = 
+    f jdg jdg
 
-  infix >>-*
+  (* This may be a bad idea ! *)
+  fun >>= (m, f) = M.bind (m, f)
+  infix >>=
+
+  fun trace (s : string) (tac : J.jdg tactic) jdg = 
+    M.bind (M.trace [(s, jdg)], fn _ => tac jdg)
+
+  fun listen (handler : M.w -> unit) (tac : 'a tactic) jdg = 
+    M.bind (M.listen (tac jdg), fn (a, w) => (handler w; M.ret a))
 
   fun each (ts : jdg tactic list) (psi |> vl) : jdg state state M.m =
     let
@@ -90,11 +63,11 @@ struct
       fun go (r : jdg state telescope) =
         fn (_, EMPTY) => M.ret r
          | (t :: ts, CONS (x, jdg : jdg, psi)) =>
-             wrap t jdg >>-* (fn tjdg => go (Tl.snoc r x tjdg) (ts, out psi))
+             wrap t jdg >>= (fn tjdg => go (Tl.snoc r x tjdg) (ts, out psi))
          | ([], CONS (x, jdg, psi)) => 
              go (Tl.snoc r x (ret isjdg jdg)) ([], out psi)
     in
-      M.shortcircuit (go Tl.empty (ts, out psi), Tl.isEmpty, fn psi => M.ret (psi |> vl))
+      go Tl.empty (ts, out psi) >>= (fn psi => M.ret (psi |> vl))
     end
 
 
@@ -104,7 +77,7 @@ struct
       fun go rho (r : jdg state telescope) =
         fn (_, EMPTY) => M.ret r
          | (t :: ts, CONS (x, jdg : jdg, psi)) =>
-            wrap t (J.subst rho jdg) >>-*
+            wrap t (J.subst rho jdg) >>=
               (fn tjdg as (psix |> vlx) =>
                let
                  val rho' = L.Ctx.insert rho x vlx
@@ -114,7 +87,7 @@ struct
          | ([], CONS (x, jdg, psi)) => 
             go rho (Tl.snoc r x (ret isjdg jdg)) ([], out psi)
     in
-      M.shortcircuit (go L.Ctx.empty Tl.empty (ts, out psi), Tl.isEmpty, fn psi => M.ret (psi |> vl))
+      go L.Ctx.empty Tl.empty (ts, out psi) >>= (fn psi => M.ret (psi |> vl))
     end
 
   fun tabulate (f : int -> jdg tactic) (psi |> vl) =
@@ -141,7 +114,7 @@ struct
     each (Tl.foldr (fn (_,_,ts) => t :: ts) [] psi) (psi |> vl)
 
   fun seq (t: jdg tactic, m : jdg multitactic) jdg =
-    wrap t jdg >>-* M.map (mul isjdg) o m
+    wrap t jdg >>= M.map (mul isjdg) o m
 
   exception Progress
   exception Complete
@@ -159,7 +132,7 @@ struct
     M.or (wrap t1 jdg, wrap t2 jdg)
 
   fun par (t1, t2) jdg =
-    M.par(wrap t1 jdg, wrap t2 jdg)
+    M.par (wrap t1 jdg, wrap t2 jdg)
 
   fun morelse (mt1, mt2) st =
     M.or (wrap mt1 st, wrap mt2 st)
@@ -199,7 +172,7 @@ struct
 
 
   fun progress t (jdg : jdg) =
-    t jdg >>-* (fn st as (psi |> vl) =>
+    t jdg >>= (fn st as (psi |> vl) =>
       let
         val psi' = Tl.singleton (L.fresh ()) jdg
       in
@@ -209,7 +182,7 @@ struct
       end)
 
   fun mprogress mt (st as (psi |> _)) =
-    mt st >>-* (fn sst =>
+    mt st >>= (fn sst =>
       let
         val psi' |> _ = mul isjdg sst
       in
@@ -219,7 +192,7 @@ struct
       end)
 
   fun complete t jdg =
-    wrap t jdg >>-* (fn st as (psi |> _) => 
+    wrap t jdg >>= (fn st as (psi |> _) => 
       if Tl.isEmpty psi then
         M.ret st
       else
