@@ -3,6 +3,7 @@ sig
   include MONAD
 
   type env (* local state *)
+  type log
 
   val run : env -> 'a m * ('a -> bool) -> 'a
 
@@ -13,4 +14,6 @@ sig
   val getEnv : env m
   val mapEnv : (env -> env) -> 'a m -> 'a m
   val mapErr : (exn -> exn) -> 'a m -> 'a m
+
+  val trace : log -> unit m
 end

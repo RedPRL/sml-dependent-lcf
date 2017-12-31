@@ -78,6 +78,44 @@ end
 
 functor Reader (type r) = ReaderT (type r = r structure M = Identity)
 
+signature MONOID = 
+sig
+  type t
+  val zero : t
+  val plus : t * t -> t
+end
+
+functor WriterT (structure W : MONOID structure M : MONAD) :>
+sig
+  include MONAD where type 'a m = ('a * W.t) M.m
+  val lift : 'a M.m -> 'a m
+  val tell : W.t -> unit m
+  val listen : 'a m -> ('a * W.t) m
+end = 
+struct
+  type 'a m = ('a * W.t) M.m
+
+  fun ret a =
+    M.ret (a, W.zero)
+
+  fun map f =
+    M.map (fn (a, w) => (f a, w))
+
+  fun bind (m : 'a m, k : 'a -> 'b m) =
+    M.bind (m, fn (a, w) => 
+      M.bind (k a, fn (b, w') => 
+        M.ret (b, W.plus (w, w'))))
+
+  fun lift m = 
+    M.bind (m, ret)
+
+  fun tell w = 
+    M.ret ((), w)
+
+  fun listen m = 
+    M.bind (m, ret)
+end
+
 functor ListT (M : MONAD) :>
 sig
   include MONAD
