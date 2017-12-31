@@ -1,14 +1,17 @@
+signature LCF_LOG = 
+sig
+    type t
+    val empty : t
+    val append : t * t -> t
+end
+
 signature LCF =
 sig
   structure L : LCF_LANGUAGE
   structure Tl : TELESCOPE where type Label.t = L.var
+  structure Log : LCF_LOG
 
-  datatype 'a info = ::@ of string list * 'a
-
-  val newInfo : 'a -> 'a info
-  val mapInfo : ('a -> 'b) -> 'a info -> 'b info
-  val projInfo : 'a info -> 'a
-  
+  datatype 'a info = ::@ of Log.t * 'a
   datatype 'a state = |> of 'a info Tl.telescope * L.term
 
   type 'a isjdg =
