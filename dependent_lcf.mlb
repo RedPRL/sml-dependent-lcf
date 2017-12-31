@@ -16,12 +16,12 @@ in
   signature LCF
   signature LCF_JUDGMENT
   signature LCF_TACTIC
-  signature LCF_LOG
+  signature LCF_TRACE
 
-  functor LoggedLcf
+  functor TracedLcf
   functor Lcf
-  functor LcfListLog
-  structure LcfBlankLog
+  functor LcfListTrace
+  structure LcfBlankTrace
   signature LCF_TACTIC_MONAD
   signature LCF_TACTIC_KIT
   functor LcfTactic

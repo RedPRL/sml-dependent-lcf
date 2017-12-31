@@ -85,10 +85,10 @@ struct
 
   infix >>-*
 
-  fun each (ts : jdg tactic list) ((psi : jdg info Tl.telescope) |> vl) : jdg state state M.m =
+  fun each (ts : jdg tactic list) (psi |> vl) : jdg state state M.m =
     let
       open Tl.ConsView
-      fun go (r : jdg state info telescope) =
+      fun go (r : jdg state traced telescope) =
         fn (_, EMPTY) => M.ret r
          | (t :: ts, CONS (x, log ::@ jdg, psi)) =>
              wrap t jdg >>-* (fn tjdg =>
@@ -103,7 +103,7 @@ struct
   fun eachSeq (ts : jdg tactic list) (psi |> vl) =
     let
       open Tl.ConsView
-      fun go rho (r : jdg state info telescope) =
+      fun go rho (r : jdg state traced telescope) =
         fn (_, EMPTY) => M.ret r
          | (t :: ts, CONS (x, log ::@ jdg, psi)) =>
             wrap t (J.subst rho jdg) >>-*
@@ -199,11 +199,10 @@ struct
   exception Progress
   exception Complete
 
-
   fun progress t (jdg : jdg) =
     t jdg >>-* (fn st as (psi |> vl) =>
       let
-        val psi' = Tl.singleton (L.fresh ()) (Log.empty ::@ jdg)
+        val psi' = Tl.singleton (L.fresh ()) (Tr.empty ::@ jdg)
       in
         case unifySubtelescope (psi', psi) of
            SOME _ => M.throw Progress

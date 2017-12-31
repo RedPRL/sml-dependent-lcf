@@ -60,7 +60,7 @@ struct
   fun ren env (TRUE m) = TRUE (Tm.renameMetavars env m)
 end
 
-structure Lcf = LcfTactic (structure Lcf = LoggedLcf (structure L = Language and Log = LcfListLog (type e = string)) and J = Judgment and M = LcfMonadBT)
+structure Lcf = LcfTactic (structure Lcf = TracedLcf (structure L = Language and Tr = LcfListTrace (type e = string)) and J = Judgment and M = LcfMonadBT)
 
 
 signature REFINER =
