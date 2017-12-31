@@ -22,7 +22,6 @@ in
   functor TracedLcf
   functor Lcf
   functor LcfListTrace
-  structure LcfBlankTrace
   signature LCF_TACTIC_MONAD
   signature LCF_TACTIC_KIT
   functor LcfTactic

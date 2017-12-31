@@ -51,13 +51,6 @@ struct
   val append = op@
 end
 
-structure LcfBlankTrace :> LCF_TRACE = 
-struct
-  type t = unit
-  val empty = ()
-  fun append _ = ()
-end
-
 functor LcfTraceInfo (Tr : LCF_TRACE) : 
 sig
   datatype 'a traced = ::@ of Tr.t * 'a
