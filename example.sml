@@ -60,14 +60,15 @@ struct
   fun ren env (TRUE m) = TRUE (Tm.renameMetavars env m)
 end
 
-structure Lcf = LcfTactic (structure Lcf = Lcf (Language) and J = Judgment and M = LcfMonadBT)
+structure Lcf = TracedLcf (structure L = Language and Tr = LcfListTrace (type e = string)) 
+structure Tac = LcfTactic (structure Lcf = Lcf and J = Judgment and M = LcfMonadBT)
 
 
 signature REFINER =
 sig
-  val UnitIntro : Lcf.jdg Lcf.rule
-  val SigmaIntro : Lcf.jdg Lcf.rule
-  val FooIntro : Lcf.jdg Lcf.rule
+  val UnitIntro : Tac.jdg Tac.rule
+  val SigmaIntro : Tac.jdg Tac.rule
+  val FooIntro : Tac.jdg Tac.rule
 end
 
 structure Refiner :> REFINER =
@@ -77,9 +78,11 @@ struct
   structure Tl = Lcf.Tl and V = Term.Metavar
 
   val |> = Lcf.|>
-  infix |>
+  val ::@ = Lcf.::@
+  infix 2 ::@
+  infix 3 |>
 
-  local structure Notation = TelescopeNotation (Tl) in open Notation infix >: end
+  local structure Notation = TelescopeNotation (Tl) in open Notation infix 4 >: end
 
   local
     val i = ref 0
@@ -106,8 +109,8 @@ struct
   fun SigmaIntro (TRUE P) =
     let
       val L.SIGMA $ [_ \ A, [x] \ B] = out P
-      val (goalA, holeA) = makeGoal (TRUE A)
-      val (goalB, holeB) = makeGoal (TRUE (substVar (holeA [], x) B))
+      val (goalA, holeA) = makeGoal (["SigmaI/proj1"] ::@ TRUE A)
+      val (goalB, holeB) = makeGoal (["SigmaI/proj2"] ::@ TRUE (substVar (holeA [], x) B))
       val pair = L.PAIR $$ [[] \ holeA [], [] \ holeB []]
     in
       Tl.empty >: goalA >: goalB
@@ -117,7 +120,7 @@ struct
   fun FooIntro (TRUE P) =
     let
       val L.FOO $ [_ \ A, _] = out P
-      val (goalA, holeA) = makeGoal (TRUE A)
+      val (goalA, holeA) = makeGoal (["FooI"] ::@ TRUE A)
     in
       Tl.empty >: goalA |> abtToAbs (holeA [])
     end
@@ -126,7 +129,7 @@ end
 structure Example =
 struct
   open L Refiner Judgment
-  open Lcf Term
+  open Tac Lcf Term
   structure ShowTm = PlainShowAbt (Term)
   structure ShowTel = TelescopeUtil (Tl)
   infix 5 $ \ then_ orelse_
@@ -138,11 +141,15 @@ struct
 
   fun run goal (tac : jdg tactic) =
     let
-      val Lcf.|> (psi, vld) = Lcf.M.run (tac goal, fn _ => true)
+      val Lcf.|> (psi, vld) = Tac.M.run (tac goal, fn _ => true)
       val xs \ m = outb vld
+      fun prettyGoal (Lcf.::@ (i, jdg)) =
+        "{[" ^ List.foldr (fn (x, s) => x ^ "." ^ s) "" i ^ "] @ " ^
+        Judgment.toString jdg
+         ^ "}"
     in
       print "\n\n";
-      print (ShowTel.toString Judgment.toString psi);
+      print (ShowTel.toString prettyGoal psi);
       print "\n--------------------------------\n";
       print (ShowTm.toString m);
       print "\n\n"
@@ -162,11 +169,12 @@ struct
 
   (* to interact with the refiner, try commenting out some of the following lines *)
   val script =
-    Lcf.rule SigmaIntro
-      then_ try (Lcf.rule SigmaIntro)
-      then_ try (Lcf.rule UnitIntro)
-      then_ Lcf.rule FooIntro
-      then_ Lcf.rule UnitIntro
+    Tac.rule SigmaIntro
+      then_ try (Tac.rule SigmaIntro)
+      then_ try (Tac.rule UnitIntro)
+      then_ Tac.rule FooIntro
+      then_ Tac.rule UnitIntro
+      
 
   val _ = run (TRUE goal) script
 end

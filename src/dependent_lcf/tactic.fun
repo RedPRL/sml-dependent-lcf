@@ -54,7 +54,8 @@ struct
   open Lcf
   structure M = M and J = J
 
-  infix |>
+  infix 2 ::@
+  infix 3 |>
 
   type jdg = J.jdg
 
@@ -79,20 +80,21 @@ struct
 
   val idn = M.ret o ret isjdg
 
-  fun >>-* (m, f) = 
-    M.shortcircuit (m, fn psi |> _ => Tl.isEmpty psi, f)
+  fun >>-* (m : 'a state M.m, k : 'a state -> 'b M.m) : 'b M.m = 
+    M.shortcircuit (m, fn psi |> _ => Tl.isEmpty psi, k)
 
   infix >>-*
 
   fun each (ts : jdg tactic list) (psi |> vl) : jdg state state M.m =
     let
       open Tl.ConsView
-      fun go (r : jdg state telescope) =
+      fun go (r : jdg state I.t telescope) =
         fn (_, EMPTY) => M.ret r
-         | (t :: ts, CONS (x, jdg : jdg, psi)) =>
-             wrap t jdg >>-* (fn tjdg => go (Tl.snoc r x tjdg) (ts, out psi))
+         | (t :: ts, CONS (x, jdg, psi)) =>
+             wrap t (I.run jdg) >>-* (fn tjdg =>
+               go (Tl.snoc r x (I.replace tjdg jdg)) (ts, out psi))
          | ([], CONS (x, jdg, psi)) => 
-             go (Tl.snoc r x (ret isjdg jdg)) ([], out psi)
+             go (Tl.snoc r x (I.map (ret isjdg) jdg)) ([], out psi)
     in
       M.shortcircuit (go Tl.empty (ts, out psi), Tl.isEmpty, fn psi => M.ret (psi |> vl))
     end
@@ -101,18 +103,18 @@ struct
   fun eachSeq (ts : jdg tactic list) (psi |> vl) =
     let
       open Tl.ConsView
-      fun go rho (r : jdg state telescope) =
+      fun go rho (r : jdg state I.t telescope) =
         fn (_, EMPTY) => M.ret r
-         | (t :: ts, CONS (x, jdg : jdg, psi)) =>
-            wrap t (J.subst rho jdg) >>-*
+         | (t :: ts, CONS (x, jdg, psi)) =>
+            wrap t (J.subst rho (I.run jdg)) >>-*
               (fn tjdg as (psix |> vlx) =>
                let
                  val rho' = L.Ctx.insert rho x vlx
                in
-                 go rho' (Tl.snoc r x tjdg) (ts, out psi)
+                 go rho' (Tl.snoc r x (I.replace tjdg jdg)) (ts, out psi)
                end)
          | ([], CONS (x, jdg, psi)) => 
-            go rho (Tl.snoc r x (ret isjdg jdg)) ([], out psi)
+            go rho (Tl.snoc r x (I.map (ret isjdg) jdg)) ([], out psi)
     in
       M.shortcircuit (go L.Ctx.empty Tl.empty (ts, out psi), Tl.isEmpty, fn psi => M.ret (psi |> vl))
     end
@@ -176,7 +178,7 @@ struct
       case (out psi1, out psi2) of
          (EMPTY, _) => SOME (env1, env2)
        | (CONS (x1, jdg1, psi1'), CONS (x2, jdg2, psi2')) =>
-            if J.eq (J.ren env1 jdg1, J.ren env2 jdg2) then
+            if J.eq (J.ren env1 (I.run jdg1), J.ren env2 (I.run jdg2)) then
               let
                 val y = L.fresh ()
                 val env1y = L.Ctx.insert env1 x1 y
@@ -197,11 +199,10 @@ struct
   exception Progress
   exception Complete
 
-
   fun progress t (jdg : jdg) =
     t jdg >>-* (fn st as (psi |> vl) =>
       let
-        val psi' = Tl.singleton (L.fresh ()) jdg
+        val psi' = Tl.singleton (L.fresh ()) (I.ret jdg)
       in
         case unifySubtelescope (psi', psi) of
            SOME _ => M.throw Progress

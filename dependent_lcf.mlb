@@ -16,9 +16,13 @@ in
   signature LCF
   signature LCF_JUDGMENT
   signature LCF_TACTIC
-  signature LCF_TACTIC_MONAD
+  signature LCF_TRACE
+  signature LCF_INFO
 
+  functor TracedLcf
   functor Lcf
+  functor LcfListTrace
+  signature LCF_TACTIC_MONAD
   signature LCF_TACTIC_KIT
   functor LcfTactic
   structure LcfMonadBT
