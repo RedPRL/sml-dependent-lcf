@@ -60,14 +60,15 @@ struct
   fun ren env (TRUE m) = TRUE (Tm.renameMetavars env m)
 end
 
-structure Lcf = LcfTactic (structure Lcf = TracedLcf (structure L = Language and Tr = LcfListTrace (type e = string)) and J = Judgment and M = LcfMonadBT)
+structure Lcf = TracedLcf (structure L = Language and Tr = LcfListTrace (type e = string)) 
+structure Tac = LcfTactic (structure Lcf = Lcf and J = Judgment and M = LcfMonadBT)
 
 
 signature REFINER =
 sig
-  val UnitIntro : Lcf.jdg Lcf.rule
-  val SigmaIntro : Lcf.jdg Lcf.rule
-  val FooIntro : Lcf.jdg Lcf.rule
+  val UnitIntro : Tac.jdg Tac.rule
+  val SigmaIntro : Tac.jdg Tac.rule
+  val FooIntro : Tac.jdg Tac.rule
 end
 
 structure Refiner :> REFINER =
@@ -128,7 +129,7 @@ end
 structure Example =
 struct
   open L Refiner Judgment
-  open Lcf Term
+  open Tac Lcf Term
   structure ShowTm = PlainShowAbt (Term)
   structure ShowTel = TelescopeUtil (Tl)
   infix 5 $ \ then_ orelse_
@@ -140,7 +141,7 @@ struct
 
   fun run goal (tac : jdg tactic) =
     let
-      val Lcf.|> (psi, vld) = Lcf.M.run (tac goal, fn _ => true)
+      val Lcf.|> (psi, vld) = Tac.M.run (tac goal, fn _ => true)
       val xs \ m = outb vld
       fun prettyGoal (Lcf.::@ (i, jdg)) =
         "{[" ^ List.foldr (fn (x, s) => x ^ "." ^ s) "" i ^ "] @ " ^
@@ -168,11 +169,12 @@ struct
 
   (* to interact with the refiner, try commenting out some of the following lines *)
   val script =
-    Lcf.rule SigmaIntro
-      then_ try (Lcf.rule SigmaIntro)
-      then_ try (Lcf.rule UnitIntro)
-      then_ Lcf.rule FooIntro
-      then_ Lcf.rule UnitIntro
+    Tac.rule SigmaIntro
+      then_ try (Tac.rule SigmaIntro)
+      then_ try (Tac.rule UnitIntro)
+      then_ Tac.rule FooIntro
+      then_ Tac.rule UnitIntro
+      
 
   val _ = run (TRUE goal) script
 end

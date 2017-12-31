@@ -6,8 +6,10 @@ Library
   signature LCF_JUDGMENT
   signature LCF_TACTIC
   signature LCF_TRACE
+  signature LCF_INFO
 
   functor TracedLcf
+  functor PlainLcf
   functor Lcf
   functor LcfListTrace
   structure LcfBlankTrace
