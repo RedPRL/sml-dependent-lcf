@@ -9,7 +9,8 @@ end
 
 functor LcfTactic
   (include LCF_TACTIC_KIT
-   structure M : LCF_TACTIC_MONAD) : LCF_TACTIC =
+   structure M : LCF_TACTIC_MONAD
+     where type w = (string * J.jdg) list) : LCF_TACTIC =
 struct
   open Lcf
   structure R = Reader (type r = M.env) and M = M and J = J
@@ -49,6 +50,12 @@ struct
   (* This may be a bad idea ! *)
   fun >>= (m, f) = M.bind (m, f)
   infix >>=
+
+  fun trace (s : string) (tac : J.jdg tactic) jdg = 
+    M.bind (M.trace [(s, jdg)], fn _ => tac jdg)
+
+  fun listen (handler : M.w -> unit) (tac : 'a tactic) jdg = 
+    M.bind (M.listen (tac jdg), fn (a, w) => (handler w; M.ret a))
 
   fun each (ts : jdg tactic list) (psi |> vl) : jdg state state M.m =
     let

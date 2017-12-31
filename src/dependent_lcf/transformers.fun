@@ -118,12 +118,22 @@ end
 
 functor ListT (M : MONAD) :>
 sig
-  include MONAD
+  datatype ('a, 's) step = 
+      YIELD of 'a * 's
+    | SKIP of 's
+    | DONE
+
+  datatype 'a list_t = ROLL of ('a, 'a list_t) step M.m
+
+  include MONAD where type 'a m = 'a list_t
+
   val lift : 'a M.m -> 'a m
   val concat : 'a m * 'a m -> 'a m
   val emp : unit -> 'a m
   val cons : 'a * 'a m -> 'a m
   val uncons : 'a m -> ('a * 'a m) option M.m
+
+  val stepMap : (('a, 'a m) step -> ('b, 'b m) step) -> 'a m -> 'b m
 end = 
 struct
   fun @@ (f, x) = f x
@@ -134,7 +144,8 @@ struct
     | SKIP of 's
     | DONE
 
-  datatype 'a m = ROLL of ('a, 'a m) step M.m
+  datatype 'a list_t = ROLL of ('a, 'a list_t) step M.m
+  type 'a m = 'a list_t
 
   fun emp () = ROLL @@ M.ret DONE
 

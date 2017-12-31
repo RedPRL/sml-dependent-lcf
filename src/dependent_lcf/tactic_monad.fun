@@ -1,12 +1,11 @@
-
-functor LcfTacticMonad (type env) :>
+functor LcfTacticMonad (type env type log) :>
 sig
-  include LCF_TACTIC_MONAD where type env = env and type log = string list
+  include LCF_TACTIC_MONAD where type env = env and type w = log list
   exception Refine of exn list
 end = 
 struct
   type env = env
-  type log = string list
+  type w = log list
 
   fun @@ (f, x) = f x
   infix @@
@@ -16,7 +15,7 @@ struct
     WriterT
       (structure W = 
        struct
-         type t = log
+         type t = w
          val zero = []
          val plus = op@
        end
@@ -43,6 +42,23 @@ struct
   end
 
   val trace = M.lift o E.lift o L.lift o W.tell
+
+  fun listen (m : 'a m) : ('a * w) m =
+    fn env => 
+      let
+        val menv = m env
+        val L.ROLL (m', w) = menv
+
+        val annResult = Result.map (fn x => (x, w))
+
+        fun go s = 
+          case s of 
+             L.YIELD (r : 'a Result.m, l) => L.YIELD (annResult r, L.map annResult l)
+           | L.SKIP l => L.SKIP (L.map annResult l)
+           | L.DONE => L.DONE
+      in
+        L.stepMap go (m env)
+      end
   
   fun mapEnv (f : env -> env) : 'a m -> 'a m =
     fn m => fn env =>
@@ -71,4 +87,4 @@ struct
     L.concat (m1 env, m2 env)
 end
 
-structure LcfTacticMonad = LcfTacticMonad (type env = unit)
+structure LcfTacticMonad = LcfTacticMonad (type env = unit type log = unit)

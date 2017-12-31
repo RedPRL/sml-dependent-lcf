@@ -15,6 +15,8 @@ sig
   type 'a multitactic = 'a state tactic
 
   val rule : 'a rule -> 'a tactic
+  val trace : string -> jdg tactic -> jdg tactic
+  val listen : (M.w -> unit) -> 'a tactic -> 'a tactic
 
   val matchGoal : ('a -> 'a tactic) -> 'a tactic
 

@@ -62,7 +62,7 @@ end
 
 structure Lcf = LcfTactic
   (structure Lcf = Lcf (Language) and J = Judgment   
-   structure M = LcfTacticMonad)
+   structure M = LcfTacticMonad (type env = unit type log = string * Judgment.jdg))
 
 
 signature REFINER =
@@ -140,7 +140,7 @@ struct
 
   fun run goal (tac : jdg tactic) =
     let
-      val Lcf.|> (psi, vld) = Lcf.M.run () (tac goal, fn _ => true)
+      val (Lcf.|> (psi, vld), log) = Lcf.M.run () (Lcf.M.listen (tac goal), fn _ => true)
       val xs \ m = outb vld
     in
       print "\n\n";
@@ -162,13 +162,16 @@ struct
       (mkSigma x mkUnit mkUnit)
       (mkFoo mkUnit (check (`y, ())))
 
+  fun listen log =
+    List.app (fn _ => print "ASDF") log
+  
   (* to interact with the refiner, try commenting out some of the following lines *)
   val script =
-    Lcf.rule SigmaIntro
-      then_ try (Lcf.rule SigmaIntro)
-      then_ try (Lcf.rule UnitIntro)
-      then_ Lcf.rule FooIntro
-      then_ Lcf.rule UnitIntro
+    Lcf.trace "Sigma/I" (Lcf.rule SigmaIntro)
+      then_ try (Lcf.trace "Sigma/I" (Lcf.rule SigmaIntro))
+      then_ try (Lcf.trace "Unit/I" (Lcf.rule UnitIntro))
+      then_ Lcf.listen listen (Lcf.trace "Foo/I" (Lcf.rule FooIntro))
+      then_ Lcf.trace "Unit/I" (Lcf.rule UnitIntro)
 
   val _ = run (TRUE goal) script
 end
