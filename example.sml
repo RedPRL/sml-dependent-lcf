@@ -77,9 +77,11 @@ struct
   structure Tl = Lcf.Tl and V = Term.Metavar
 
   val |> = Lcf.|>
-  infix |>
+  val ::@ = Lcf.::@
+  infix 2 ::@
+  infix 3 |>
 
-  local structure Notation = TelescopeNotation (Tl) in open Notation infix >: end
+  local structure Notation = TelescopeNotation (Tl) in open Notation infix 4 >: end
 
   local
     val i = ref 0
@@ -106,8 +108,8 @@ struct
   fun SigmaIntro (TRUE P) =
     let
       val L.SIGMA $ [_ \ A, [x] \ B] = out P
-      val (goalA, holeA) = makeGoal (TRUE A)
-      val (goalB, holeB) = makeGoal (TRUE (substVar (holeA [], x) B))
+      val (goalA, holeA) = makeGoal (["SigmaI/proj1"] ::@ TRUE A)
+      val (goalB, holeB) = makeGoal (["SigmaI/proj2"] ::@ TRUE (substVar (holeA [], x) B))
       val pair = L.PAIR $$ [[] \ holeA [], [] \ holeB []]
     in
       Tl.empty >: goalA >: goalB
@@ -117,7 +119,7 @@ struct
   fun FooIntro (TRUE P) =
     let
       val L.FOO $ [_ \ A, _] = out P
-      val (goalA, holeA) = makeGoal (TRUE A)
+      val (goalA, holeA) = makeGoal (["FooI"] ::@ TRUE A)
     in
       Tl.empty >: goalA |> abtToAbs (holeA [])
     end
@@ -140,9 +142,13 @@ struct
     let
       val Lcf.|> (psi, vld) = Lcf.M.run (tac goal, fn _ => true)
       val xs \ m = outb vld
+      fun prettyGoal (Lcf.::@ (i, jdg)) =
+        "{[" ^ List.foldr (fn (x, s) => x ^ "." ^ s) "" i ^ "] @ " ^
+        Judgment.toString jdg
+         ^ "}"
     in
       print "\n\n";
-      print (ShowTel.toString Judgment.toString psi);
+      print (ShowTel.toString prettyGoal psi);
       print "\n--------------------------------\n";
       print (ShowTm.toString m);
       print "\n\n"

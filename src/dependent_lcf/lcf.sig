@@ -3,7 +3,13 @@ sig
   structure L : LCF_LANGUAGE
   structure Tl : TELESCOPE where type Label.t = L.var
 
-  datatype 'a state = |> of 'a Tl.telescope * L.term
+  datatype 'a info = ::@ of string list * 'a
+
+  val newInfo : 'a -> 'a info
+  val mapInfo : ('a -> 'b) -> 'a info -> 'b info
+  val projInfo : 'a info -> 'a
+  
+  datatype 'a state = |> of 'a info Tl.telescope * L.term
 
   type 'a isjdg =
      {sort : 'a -> L.sort,
