@@ -202,11 +202,16 @@ struct
   fun progress t (jdg : jdg) =
     t jdg >>-* (fn st as (psi |> vl) =>
       let
+        open Tl.ConsView
         val psi' = Tl.singleton (L.fresh ()) (I.ret jdg)
       in
-        case unifySubtelescope (psi', psi) of
-           SOME _ => M.throw Progress
-         | NONE => M.ret st
+        case out psi of
+           CONS (_, jdg', rest) => 
+             if J.eq (jdg, I.run jdg') then
+               M.throw Progress
+             else
+               M.ret st
+         | _ => M.ret st
       end)
 
   fun mprogress mt (st as (psi |> _)) =
